@@ -1,3 +1,0 @@
-/home/hln/ToyC_compiler_antlr4/src/build/CMakeFiles/parser.dir
-/home/hln/ToyC_compiler_antlr4/src/build/CMakeFiles/edit_cache.dir
-/home/hln/ToyC_compiler_antlr4/src/build/CMakeFiles/rebuild_cache.dir
