@@ -34,9 +34,15 @@ cd ../lib
 sudo \cp -r * /usr/local/lib
 sudo ldconfig
 
-使用
-antlr4 -Dlanguage=Cpp ToyC.g4
-
-生成指令
+//生成指令
 antlr4 ToyC.g4 -Dlanguage=Cpp -no-listener -visitor -o generated/
+
+//编译
+mkdir build && cd build
+cmake ..
+make
+
+//对目标文件进行处理
+./parser ../test.tc
+
 ```
