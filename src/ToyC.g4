@@ -2,44 +2,55 @@ grammar ToyC;               // 定义文法的名字
 
 compUnit: funcDef+;
 
-funcDef: (INT | VOID) ID '(' (param (',' param)*)? ')' block;
+funcDef: (INT | VOID) ID LPAREN (param (COMMA param)*)? RPAREN block;
 
 param: INT ID;
 
-block: '{' stmt* '}';
-
-stmt: block                                  # blockStmt
-    | ';'                                    # emptyStmt
-    | expr ';'                               # exprStmt
-    | ID '=' expr ';'                        # assignStmt
-    | INT ID '=' expr ';'                    # declStmt
-    | IF '(' expr ')' stmt (ELSE stmt)?      # ifStmt
-    | WHILE '(' expr ')' stmt                # whileStmt
-    | BREAK ';'                              # breakStmt
-    | CONTINUE ';'                           # continueStmt
-    | RETURN expr ';'                        # returnStmt
+stmt: block                             # BlockStmt
+    | SEMI                              # EmptyStmt
+    | expr SEMI                         # ExprStmt
+    | ID ASSIGN expr SEMI               # AssignStmt
+    | INT ID ASSIGN expr SEMI           # DeclStmt
+    | IF LPAREN expr RPAREN stmt (ELSE stmt)?  # IfStmt
+    | WHILE LPAREN expr RPAREN stmt     # WhileStmt
+    | BREAK SEMI                        # BreakStmt
+    | CONTINUE SEMI                     # ContinueStmt
+    | RETURN expr SEMI                  # ReturnStmt
     ;
+
+block: LBRACE stmt* RBRACE;
 
 expr: lOrExpr;
 
-lOrExpr: lAndExpr ('||' lAndExpr)*;
+lOrExpr: lAndExpr                 # SingleLOr
+       | lOrExpr OR lAndExpr      # mulLOrExpr
+       ;
 
-lAndExpr: relExpr ('&&' relExpr)*;
+lAndExpr: relExpr                 # SingleLAnd
+        | lAndExpr AND relExpr    # mulLAndExpr
+        ;
 
-relExpr: addExpr (('<' | '>' | '<=' | '>=' | '==' | '!=') addExpr)?;
+relExpr: addExpr                            # SingleRel
+       | relExpr (LT | GT | LE | GE | EQ | NE) addExpr  # mulRelExpr
+       ;
 
-addExpr: mulExpr (('+' | '-') mulExpr)*;
+addExpr: mulExpr                     # SingleAdd
+       | addExpr (ADD | SUB) mulExpr  # mulAddExpr
+       ;
 
-mulExpr: unaryExpr (('*' | '/' | '%') unaryExpr)*;
+mulExpr: unaryExpr                     # SingleMul
+       | mulExpr (MUL | DIV | MOD) unaryExpr  # mulMulExpr
+       ;
 
-unaryExpr: ('+' | '-' | '!') unaryExpr | primaryExpr;
+unaryExpr: primaryExpr              # SingleUnary
+         | (ADD | SUB | NOT) unaryExpr  # mulUnaryOp
+         ;
 
-primaryExpr
-    : ID                                    # idExpr
-    | NUMBER                                 # numExpr
-    | '(' expr ')'                           # parenExpr
-    | ID '(' (expr (',' expr)*)? ')'        # callExpr
-    ;
+primaryExpr: ID                          # Identifier
+           | NUMBER                      # NumberLiteral
+           | LPAREN expr RPAREN          # ParenthesizedExpr
+           | ID LPAREN (expr (COMMA expr)*)? RPAREN  # FunctionCall
+           ;
 
 // Lexer Rules
 INT: 'int';
@@ -51,32 +62,30 @@ BREAK: 'break';
 CONTINUE: 'continue';
 RETURN: 'return';
 
-ID: [a-zA-Z_] [a-zA-Z_0-9]*;
-NUMBER: [0-9]+;
-
-// Operators
-PLUS: '+';
-MINUS: '-';
-MUL: '*';
-DIV: '/';
-MOD: '%';
-NOT: '!';
-ASSIGN: '=';
+OR: '||';
+AND: '&&';
 LT: '<';
 GT: '>';
 LE: '<=';
 GE: '>=';
 EQ: '==';
 NE: '!=';
-AND: '&&';
-OR: '||';
-
-// Separators
+ADD: '+';
+SUB: '-';
+MUL: '*';
+DIV: '/';
+MOD: '%';
+NOT: '!';
+ASSIGN: '=';
+SEMI: ';';
+COMMA: ',';
 LPAREN: '(';
 RPAREN: ')';
 LBRACE: '{';
 RBRACE: '}';
-COMMA: ',';
-SEMI: ';';
 
-WS: [ \t\r\n]+ -> skip;
+ID: [a-zA-Z_][a-zA-Z0-9_]*;//标识符
+NUMBER: '-'? ('0' | [1-9][0-9]*);//整数
+LINE_COMMENT : '//' ~[\r\n]* -> skip;//单行注释
+COMMENT : '/*' .*? '*/' -> skip;//多行注释
+WS: [ \t\r\n]+ -> skip;//空格

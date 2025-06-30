@@ -25,8 +25,6 @@ public:
 
     virtual std::any visitParam(ToyCParser::ParamContext *context) = 0;
 
-    virtual std::any visitBlock(ToyCParser::BlockContext *context) = 0;
-
     virtual std::any visitBlockStmt(ToyCParser::BlockStmtContext *context) = 0;
 
     virtual std::any visitEmptyStmt(ToyCParser::EmptyStmtContext *context) = 0;
@@ -47,27 +45,41 @@ public:
 
     virtual std::any visitReturnStmt(ToyCParser::ReturnStmtContext *context) = 0;
 
+    virtual std::any visitBlock(ToyCParser::BlockContext *context) = 0;
+
     virtual std::any visitExpr(ToyCParser::ExprContext *context) = 0;
 
-    virtual std::any visitLOrExpr(ToyCParser::LOrExprContext *context) = 0;
+    virtual std::any visitMulLOrExpr(ToyCParser::MulLOrExprContext *context) = 0;
 
-    virtual std::any visitLAndExpr(ToyCParser::LAndExprContext *context) = 0;
+    virtual std::any visitSingleLOr(ToyCParser::SingleLOrContext *context) = 0;
 
-    virtual std::any visitRelExpr(ToyCParser::RelExprContext *context) = 0;
+    virtual std::any visitSingleLAnd(ToyCParser::SingleLAndContext *context) = 0;
 
-    virtual std::any visitAddExpr(ToyCParser::AddExprContext *context) = 0;
+    virtual std::any visitMulLAndExpr(ToyCParser::MulLAndExprContext *context) = 0;
 
-    virtual std::any visitMulExpr(ToyCParser::MulExprContext *context) = 0;
+    virtual std::any visitSingleRel(ToyCParser::SingleRelContext *context) = 0;
 
-    virtual std::any visitUnaryExpr(ToyCParser::UnaryExprContext *context) = 0;
+    virtual std::any visitMulRelExpr(ToyCParser::MulRelExprContext *context) = 0;
 
-    virtual std::any visitIdExpr(ToyCParser::IdExprContext *context) = 0;
+    virtual std::any visitMulAddExpr(ToyCParser::MulAddExprContext *context) = 0;
 
-    virtual std::any visitNumExpr(ToyCParser::NumExprContext *context) = 0;
+    virtual std::any visitSingleAdd(ToyCParser::SingleAddContext *context) = 0;
 
-    virtual std::any visitParenExpr(ToyCParser::ParenExprContext *context) = 0;
+    virtual std::any visitSingleMul(ToyCParser::SingleMulContext *context) = 0;
 
-    virtual std::any visitCallExpr(ToyCParser::CallExprContext *context) = 0;
+    virtual std::any visitMulMulExpr(ToyCParser::MulMulExprContext *context) = 0;
+
+    virtual std::any visitSingleUnary(ToyCParser::SingleUnaryContext *context) = 0;
+
+    virtual std::any visitMulUnaryOp(ToyCParser::MulUnaryOpContext *context) = 0;
+
+    virtual std::any visitIdentifier(ToyCParser::IdentifierContext *context) = 0;
+
+    virtual std::any visitNumberLiteral(ToyCParser::NumberLiteralContext *context) = 0;
+
+    virtual std::any visitParenthesizedExpr(ToyCParser::ParenthesizedExprContext *context) = 0;
+
+    virtual std::any visitFunctionCall(ToyCParser::FunctionCallContext *context) = 0;
 
 
 };

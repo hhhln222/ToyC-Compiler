@@ -43,76 +43,81 @@ void toycParserInitialize() {
   assert(toycParserStaticData == nullptr);
   auto staticData = std::make_unique<ToyCParserStaticData>(
     std::vector<std::string>{
-      "compUnit", "funcDef", "param", "block", "stmt", "expr", "lOrExpr", 
+      "compUnit", "funcDef", "param", "stmt", "block", "expr", "lOrExpr", 
       "lAndExpr", "relExpr", "addExpr", "mulExpr", "unaryExpr", "primaryExpr"
     },
     std::vector<std::string>{
       "", "'int'", "'void'", "'if'", "'else'", "'while'", "'break'", "'continue'", 
-      "'return'", "", "", "'+'", "'-'", "'*'", "'/'", "'%'", "'!'", "'='", 
-      "'<'", "'>'", "'<='", "'>='", "'=='", "'!='", "'&&'", "'||'", "'('", 
-      "')'", "'{'", "'}'", "','", "';'"
+      "'return'", "'||'", "'&&'", "'<'", "'>'", "'<='", "'>='", "'=='", 
+      "'!='", "'+'", "'-'", "'*'", "'/'", "'%'", "'!'", "'='", "';'", "','", 
+      "'('", "')'", "'{'", "'}'"
     },
     std::vector<std::string>{
       "", "INT", "VOID", "IF", "ELSE", "WHILE", "BREAK", "CONTINUE", "RETURN", 
-      "ID", "NUMBER", "PLUS", "MINUS", "MUL", "DIV", "MOD", "NOT", "ASSIGN", 
-      "LT", "GT", "LE", "GE", "EQ", "NE", "AND", "OR", "LPAREN", "RPAREN", 
-      "LBRACE", "RBRACE", "COMMA", "SEMI", "WS"
+      "OR", "AND", "LT", "GT", "LE", "GE", "EQ", "NE", "ADD", "SUB", "MUL", 
+      "DIV", "MOD", "NOT", "ASSIGN", "SEMI", "COMMA", "LPAREN", "RPAREN", 
+      "LBRACE", "RBRACE", "ID", "NUMBER", "LINE_COMMENT", "COMMENT", "WS"
     }
   );
   static const int32_t serializedATNSegment[] = {
-  	4,1,32,166,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
+  	4,1,34,184,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
   	7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,1,0,4,0,28,8,0,11,
   	0,12,0,29,1,1,1,1,1,1,1,1,1,1,1,1,5,1,38,8,1,10,1,12,1,41,9,1,3,1,43,
-  	8,1,1,1,1,1,1,1,1,2,1,2,1,2,1,3,1,3,5,3,53,8,3,10,3,12,3,56,9,3,1,3,1,
-  	3,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,
-  	1,4,1,4,1,4,1,4,1,4,1,4,3,4,83,8,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,4,1,
-  	4,1,4,1,4,1,4,1,4,1,4,3,4,99,8,4,1,5,1,5,1,6,1,6,1,6,5,6,106,8,6,10,6,
-  	12,6,109,9,6,1,7,1,7,1,7,5,7,114,8,7,10,7,12,7,117,9,7,1,8,1,8,1,8,3,
-  	8,122,8,8,1,9,1,9,1,9,5,9,127,8,9,10,9,12,9,130,9,9,1,10,1,10,1,10,5,
-  	10,135,8,10,10,10,12,10,138,9,10,1,11,1,11,1,11,3,11,143,8,11,1,12,1,
-  	12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,5,12,156,8,12,10,12,12,
-  	12,159,9,12,3,12,161,8,12,1,12,3,12,164,8,12,1,12,0,0,13,0,2,4,6,8,10,
-  	12,14,16,18,20,22,24,0,5,1,0,1,2,1,0,18,23,1,0,11,12,1,0,13,15,2,0,11,
-  	12,16,16,177,0,27,1,0,0,0,2,31,1,0,0,0,4,47,1,0,0,0,6,50,1,0,0,0,8,98,
-  	1,0,0,0,10,100,1,0,0,0,12,102,1,0,0,0,14,110,1,0,0,0,16,118,1,0,0,0,18,
-  	123,1,0,0,0,20,131,1,0,0,0,22,142,1,0,0,0,24,163,1,0,0,0,26,28,3,2,1,
-  	0,27,26,1,0,0,0,28,29,1,0,0,0,29,27,1,0,0,0,29,30,1,0,0,0,30,1,1,0,0,
-  	0,31,32,7,0,0,0,32,33,5,9,0,0,33,42,5,26,0,0,34,39,3,4,2,0,35,36,5,30,
-  	0,0,36,38,3,4,2,0,37,35,1,0,0,0,38,41,1,0,0,0,39,37,1,0,0,0,39,40,1,0,
-  	0,0,40,43,1,0,0,0,41,39,1,0,0,0,42,34,1,0,0,0,42,43,1,0,0,0,43,44,1,0,
-  	0,0,44,45,5,27,0,0,45,46,3,6,3,0,46,3,1,0,0,0,47,48,5,1,0,0,48,49,5,9,
-  	0,0,49,5,1,0,0,0,50,54,5,28,0,0,51,53,3,8,4,0,52,51,1,0,0,0,53,56,1,0,
-  	0,0,54,52,1,0,0,0,54,55,1,0,0,0,55,57,1,0,0,0,56,54,1,0,0,0,57,58,5,29,
-  	0,0,58,7,1,0,0,0,59,99,3,6,3,0,60,99,5,31,0,0,61,62,3,10,5,0,62,63,5,
-  	31,0,0,63,99,1,0,0,0,64,65,5,9,0,0,65,66,5,17,0,0,66,67,3,10,5,0,67,68,
-  	5,31,0,0,68,99,1,0,0,0,69,70,5,1,0,0,70,71,5,9,0,0,71,72,5,17,0,0,72,
-  	73,3,10,5,0,73,74,5,31,0,0,74,99,1,0,0,0,75,76,5,3,0,0,76,77,5,26,0,0,
-  	77,78,3,10,5,0,78,79,5,27,0,0,79,82,3,8,4,0,80,81,5,4,0,0,81,83,3,8,4,
-  	0,82,80,1,0,0,0,82,83,1,0,0,0,83,99,1,0,0,0,84,85,5,5,0,0,85,86,5,26,
-  	0,0,86,87,3,10,5,0,87,88,5,27,0,0,88,89,3,8,4,0,89,99,1,0,0,0,90,91,5,
-  	6,0,0,91,99,5,31,0,0,92,93,5,7,0,0,93,99,5,31,0,0,94,95,5,8,0,0,95,96,
-  	3,10,5,0,96,97,5,31,0,0,97,99,1,0,0,0,98,59,1,0,0,0,98,60,1,0,0,0,98,
-  	61,1,0,0,0,98,64,1,0,0,0,98,69,1,0,0,0,98,75,1,0,0,0,98,84,1,0,0,0,98,
-  	90,1,0,0,0,98,92,1,0,0,0,98,94,1,0,0,0,99,9,1,0,0,0,100,101,3,12,6,0,
-  	101,11,1,0,0,0,102,107,3,14,7,0,103,104,5,25,0,0,104,106,3,14,7,0,105,
-  	103,1,0,0,0,106,109,1,0,0,0,107,105,1,0,0,0,107,108,1,0,0,0,108,13,1,
-  	0,0,0,109,107,1,0,0,0,110,115,3,16,8,0,111,112,5,24,0,0,112,114,3,16,
-  	8,0,113,111,1,0,0,0,114,117,1,0,0,0,115,113,1,0,0,0,115,116,1,0,0,0,116,
-  	15,1,0,0,0,117,115,1,0,0,0,118,121,3,18,9,0,119,120,7,1,0,0,120,122,3,
-  	18,9,0,121,119,1,0,0,0,121,122,1,0,0,0,122,17,1,0,0,0,123,128,3,20,10,
-  	0,124,125,7,2,0,0,125,127,3,20,10,0,126,124,1,0,0,0,127,130,1,0,0,0,128,
-  	126,1,0,0,0,128,129,1,0,0,0,129,19,1,0,0,0,130,128,1,0,0,0,131,136,3,
-  	22,11,0,132,133,7,3,0,0,133,135,3,22,11,0,134,132,1,0,0,0,135,138,1,0,
-  	0,0,136,134,1,0,0,0,136,137,1,0,0,0,137,21,1,0,0,0,138,136,1,0,0,0,139,
-  	140,7,4,0,0,140,143,3,22,11,0,141,143,3,24,12,0,142,139,1,0,0,0,142,141,
-  	1,0,0,0,143,23,1,0,0,0,144,164,5,9,0,0,145,164,5,10,0,0,146,147,5,26,
-  	0,0,147,148,3,10,5,0,148,149,5,27,0,0,149,164,1,0,0,0,150,151,5,9,0,0,
-  	151,160,5,26,0,0,152,157,3,10,5,0,153,154,5,30,0,0,154,156,3,10,5,0,155,
-  	153,1,0,0,0,156,159,1,0,0,0,157,155,1,0,0,0,157,158,1,0,0,0,158,161,1,
-  	0,0,0,159,157,1,0,0,0,160,152,1,0,0,0,160,161,1,0,0,0,161,162,1,0,0,0,
-  	162,164,5,27,0,0,163,144,1,0,0,0,163,145,1,0,0,0,163,146,1,0,0,0,163,
-  	150,1,0,0,0,164,25,1,0,0,0,15,29,39,42,54,82,98,107,115,121,128,136,142,
-  	157,160,163
+  	8,1,1,1,1,1,1,1,1,2,1,2,1,2,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,
+  	3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,74,8,3,1,3,1,3,
+  	1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,90,8,3,1,4,1,4,5,
+  	4,94,8,4,10,4,12,4,97,9,4,1,4,1,4,1,5,1,5,1,6,1,6,1,6,1,6,1,6,1,6,5,6,
+  	109,8,6,10,6,12,6,112,9,6,1,7,1,7,1,7,1,7,1,7,1,7,5,7,120,8,7,10,7,12,
+  	7,123,9,7,1,8,1,8,1,8,1,8,1,8,1,8,5,8,131,8,8,10,8,12,8,134,9,8,1,9,1,
+  	9,1,9,1,9,1,9,1,9,5,9,142,8,9,10,9,12,9,145,9,9,1,10,1,10,1,10,1,10,1,
+  	10,1,10,5,10,153,8,10,10,10,12,10,156,9,10,1,11,1,11,1,11,3,11,161,8,
+  	11,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,5,12,174,8,
+  	12,10,12,12,12,177,9,12,3,12,179,8,12,1,12,3,12,182,8,12,1,12,0,5,12,
+  	14,16,18,20,13,0,2,4,6,8,10,12,14,16,18,20,22,24,0,5,1,0,1,2,1,0,11,16,
+  	1,0,17,18,1,0,19,21,2,0,17,18,22,22,195,0,27,1,0,0,0,2,31,1,0,0,0,4,47,
+  	1,0,0,0,6,89,1,0,0,0,8,91,1,0,0,0,10,100,1,0,0,0,12,102,1,0,0,0,14,113,
+  	1,0,0,0,16,124,1,0,0,0,18,135,1,0,0,0,20,146,1,0,0,0,22,160,1,0,0,0,24,
+  	181,1,0,0,0,26,28,3,2,1,0,27,26,1,0,0,0,28,29,1,0,0,0,29,27,1,0,0,0,29,
+  	30,1,0,0,0,30,1,1,0,0,0,31,32,7,0,0,0,32,33,5,30,0,0,33,42,5,26,0,0,34,
+  	39,3,4,2,0,35,36,5,25,0,0,36,38,3,4,2,0,37,35,1,0,0,0,38,41,1,0,0,0,39,
+  	37,1,0,0,0,39,40,1,0,0,0,40,43,1,0,0,0,41,39,1,0,0,0,42,34,1,0,0,0,42,
+  	43,1,0,0,0,43,44,1,0,0,0,44,45,5,27,0,0,45,46,3,8,4,0,46,3,1,0,0,0,47,
+  	48,5,1,0,0,48,49,5,30,0,0,49,5,1,0,0,0,50,90,3,8,4,0,51,90,5,24,0,0,52,
+  	53,3,10,5,0,53,54,5,24,0,0,54,90,1,0,0,0,55,56,5,30,0,0,56,57,5,23,0,
+  	0,57,58,3,10,5,0,58,59,5,24,0,0,59,90,1,0,0,0,60,61,5,1,0,0,61,62,5,30,
+  	0,0,62,63,5,23,0,0,63,64,3,10,5,0,64,65,5,24,0,0,65,90,1,0,0,0,66,67,
+  	5,3,0,0,67,68,5,26,0,0,68,69,3,10,5,0,69,70,5,27,0,0,70,73,3,6,3,0,71,
+  	72,5,4,0,0,72,74,3,6,3,0,73,71,1,0,0,0,73,74,1,0,0,0,74,90,1,0,0,0,75,
+  	76,5,5,0,0,76,77,5,26,0,0,77,78,3,10,5,0,78,79,5,27,0,0,79,80,3,6,3,0,
+  	80,90,1,0,0,0,81,82,5,6,0,0,82,90,5,24,0,0,83,84,5,7,0,0,84,90,5,24,0,
+  	0,85,86,5,8,0,0,86,87,3,10,5,0,87,88,5,24,0,0,88,90,1,0,0,0,89,50,1,0,
+  	0,0,89,51,1,0,0,0,89,52,1,0,0,0,89,55,1,0,0,0,89,60,1,0,0,0,89,66,1,0,
+  	0,0,89,75,1,0,0,0,89,81,1,0,0,0,89,83,1,0,0,0,89,85,1,0,0,0,90,7,1,0,
+  	0,0,91,95,5,28,0,0,92,94,3,6,3,0,93,92,1,0,0,0,94,97,1,0,0,0,95,93,1,
+  	0,0,0,95,96,1,0,0,0,96,98,1,0,0,0,97,95,1,0,0,0,98,99,5,29,0,0,99,9,1,
+  	0,0,0,100,101,3,12,6,0,101,11,1,0,0,0,102,103,6,6,-1,0,103,104,3,14,7,
+  	0,104,110,1,0,0,0,105,106,10,1,0,0,106,107,5,9,0,0,107,109,3,14,7,0,108,
+  	105,1,0,0,0,109,112,1,0,0,0,110,108,1,0,0,0,110,111,1,0,0,0,111,13,1,
+  	0,0,0,112,110,1,0,0,0,113,114,6,7,-1,0,114,115,3,16,8,0,115,121,1,0,0,
+  	0,116,117,10,1,0,0,117,118,5,10,0,0,118,120,3,16,8,0,119,116,1,0,0,0,
+  	120,123,1,0,0,0,121,119,1,0,0,0,121,122,1,0,0,0,122,15,1,0,0,0,123,121,
+  	1,0,0,0,124,125,6,8,-1,0,125,126,3,18,9,0,126,132,1,0,0,0,127,128,10,
+  	1,0,0,128,129,7,1,0,0,129,131,3,18,9,0,130,127,1,0,0,0,131,134,1,0,0,
+  	0,132,130,1,0,0,0,132,133,1,0,0,0,133,17,1,0,0,0,134,132,1,0,0,0,135,
+  	136,6,9,-1,0,136,137,3,20,10,0,137,143,1,0,0,0,138,139,10,1,0,0,139,140,
+  	7,2,0,0,140,142,3,20,10,0,141,138,1,0,0,0,142,145,1,0,0,0,143,141,1,0,
+  	0,0,143,144,1,0,0,0,144,19,1,0,0,0,145,143,1,0,0,0,146,147,6,10,-1,0,
+  	147,148,3,22,11,0,148,154,1,0,0,0,149,150,10,1,0,0,150,151,7,3,0,0,151,
+  	153,3,22,11,0,152,149,1,0,0,0,153,156,1,0,0,0,154,152,1,0,0,0,154,155,
+  	1,0,0,0,155,21,1,0,0,0,156,154,1,0,0,0,157,161,3,24,12,0,158,159,7,4,
+  	0,0,159,161,3,22,11,0,160,157,1,0,0,0,160,158,1,0,0,0,161,23,1,0,0,0,
+  	162,182,5,30,0,0,163,182,5,31,0,0,164,165,5,26,0,0,165,166,3,10,5,0,166,
+  	167,5,27,0,0,167,182,1,0,0,0,168,169,5,30,0,0,169,178,5,26,0,0,170,175,
+  	3,10,5,0,171,172,5,25,0,0,172,174,3,10,5,0,173,171,1,0,0,0,174,177,1,
+  	0,0,0,175,173,1,0,0,0,175,176,1,0,0,0,176,179,1,0,0,0,177,175,1,0,0,0,
+  	178,170,1,0,0,0,178,179,1,0,0,0,179,180,1,0,0,0,180,182,5,27,0,0,181,
+  	162,1,0,0,0,181,163,1,0,0,0,181,164,1,0,0,0,181,168,1,0,0,0,182,25,1,
+  	0,0,0,15,29,39,42,73,89,95,110,121,132,143,154,160,175,178,181
   };
   staticData->serializedATN = antlr4::atn::SerializedATNView(serializedATNSegment, sizeof(serializedATNSegment) / sizeof(serializedATNSegment[0]));
 
@@ -403,81 +408,6 @@ ToyCParser::ParamContext* ToyCParser::param() {
   return _localctx;
 }
 
-//----------------- BlockContext ------------------------------------------------------------------
-
-ToyCParser::BlockContext::BlockContext(ParserRuleContext *parent, size_t invokingState)
-  : ParserRuleContext(parent, invokingState) {
-}
-
-tree::TerminalNode* ToyCParser::BlockContext::LBRACE() {
-  return getToken(ToyCParser::LBRACE, 0);
-}
-
-tree::TerminalNode* ToyCParser::BlockContext::RBRACE() {
-  return getToken(ToyCParser::RBRACE, 0);
-}
-
-std::vector<ToyCParser::StmtContext *> ToyCParser::BlockContext::stmt() {
-  return getRuleContexts<ToyCParser::StmtContext>();
-}
-
-ToyCParser::StmtContext* ToyCParser::BlockContext::stmt(size_t i) {
-  return getRuleContext<ToyCParser::StmtContext>(i);
-}
-
-
-size_t ToyCParser::BlockContext::getRuleIndex() const {
-  return ToyCParser::RuleBlock;
-}
-
-
-std::any ToyCParser::BlockContext::accept(tree::ParseTreeVisitor *visitor) {
-  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitBlock(this);
-  else
-    return visitor->visitChildren(this);
-}
-
-ToyCParser::BlockContext* ToyCParser::block() {
-  BlockContext *_localctx = _tracker.createInstance<BlockContext>(_ctx, getState());
-  enterRule(_localctx, 6, ToyCParser::RuleBlock);
-  size_t _la = 0;
-
-#if __cplusplus > 201703L
-  auto onExit = finally([=, this] {
-#else
-  auto onExit = finally([=] {
-#endif
-    exitRule();
-  });
-  try {
-    enterOuterAlt(_localctx, 1);
-    setState(50);
-    match(ToyCParser::LBRACE);
-    setState(54);
-    _errHandler->sync(this);
-    _la = _input->LA(1);
-    while ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & 2483101674) != 0)) {
-      setState(51);
-      stmt();
-      setState(56);
-      _errHandler->sync(this);
-      _la = _input->LA(1);
-    }
-    setState(57);
-    match(ToyCParser::RBRACE);
-   
-  }
-  catch (RecognitionException &e) {
-    _errHandler->reportError(this, e);
-    _localctx->exception = std::current_exception();
-    _errHandler->recover(this, _localctx->exception);
-  }
-
-  return _localctx;
-}
-
 //----------------- StmtContext ------------------------------------------------------------------
 
 ToyCParser::StmtContext::StmtContext(ParserRuleContext *parent, size_t invokingState)
@@ -493,6 +423,64 @@ void ToyCParser::StmtContext::copyFrom(StmtContext *ctx) {
   ParserRuleContext::copyFrom(ctx);
 }
 
+//----------------- ContinueStmtContext ------------------------------------------------------------------
+
+tree::TerminalNode* ToyCParser::ContinueStmtContext::CONTINUE() {
+  return getToken(ToyCParser::CONTINUE, 0);
+}
+
+tree::TerminalNode* ToyCParser::ContinueStmtContext::SEMI() {
+  return getToken(ToyCParser::SEMI, 0);
+}
+
+ToyCParser::ContinueStmtContext::ContinueStmtContext(StmtContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::ContinueStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitContinueStmt(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- IfStmtContext ------------------------------------------------------------------
+
+tree::TerminalNode* ToyCParser::IfStmtContext::IF() {
+  return getToken(ToyCParser::IF, 0);
+}
+
+tree::TerminalNode* ToyCParser::IfStmtContext::LPAREN() {
+  return getToken(ToyCParser::LPAREN, 0);
+}
+
+ToyCParser::ExprContext* ToyCParser::IfStmtContext::expr() {
+  return getRuleContext<ToyCParser::ExprContext>(0);
+}
+
+tree::TerminalNode* ToyCParser::IfStmtContext::RPAREN() {
+  return getToken(ToyCParser::RPAREN, 0);
+}
+
+std::vector<ToyCParser::StmtContext *> ToyCParser::IfStmtContext::stmt() {
+  return getRuleContexts<ToyCParser::StmtContext>();
+}
+
+ToyCParser::StmtContext* ToyCParser::IfStmtContext::stmt(size_t i) {
+  return getRuleContext<ToyCParser::StmtContext>(i);
+}
+
+tree::TerminalNode* ToyCParser::IfStmtContext::ELSE() {
+  return getToken(ToyCParser::ELSE, 0);
+}
+
+ToyCParser::IfStmtContext::IfStmtContext(StmtContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::IfStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitIfStmt(this);
+  else
+    return visitor->visitChildren(this);
+}
 //----------------- ExprStmtContext ------------------------------------------------------------------
 
 ToyCParser::ExprContext* ToyCParser::ExprStmtContext::expr() {
@@ -543,91 +531,6 @@ std::any ToyCParser::WhileStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   else
     return visitor->visitChildren(this);
 }
-//----------------- IfStmtContext ------------------------------------------------------------------
-
-tree::TerminalNode* ToyCParser::IfStmtContext::IF() {
-  return getToken(ToyCParser::IF, 0);
-}
-
-tree::TerminalNode* ToyCParser::IfStmtContext::LPAREN() {
-  return getToken(ToyCParser::LPAREN, 0);
-}
-
-ToyCParser::ExprContext* ToyCParser::IfStmtContext::expr() {
-  return getRuleContext<ToyCParser::ExprContext>(0);
-}
-
-tree::TerminalNode* ToyCParser::IfStmtContext::RPAREN() {
-  return getToken(ToyCParser::RPAREN, 0);
-}
-
-std::vector<ToyCParser::StmtContext *> ToyCParser::IfStmtContext::stmt() {
-  return getRuleContexts<ToyCParser::StmtContext>();
-}
-
-ToyCParser::StmtContext* ToyCParser::IfStmtContext::stmt(size_t i) {
-  return getRuleContext<ToyCParser::StmtContext>(i);
-}
-
-tree::TerminalNode* ToyCParser::IfStmtContext::ELSE() {
-  return getToken(ToyCParser::ELSE, 0);
-}
-
-ToyCParser::IfStmtContext::IfStmtContext(StmtContext *ctx) { copyFrom(ctx); }
-
-
-std::any ToyCParser::IfStmtContext::accept(tree::ParseTreeVisitor *visitor) {
-  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitIfStmt(this);
-  else
-    return visitor->visitChildren(this);
-}
-//----------------- BlockStmtContext ------------------------------------------------------------------
-
-ToyCParser::BlockContext* ToyCParser::BlockStmtContext::block() {
-  return getRuleContext<ToyCParser::BlockContext>(0);
-}
-
-ToyCParser::BlockStmtContext::BlockStmtContext(StmtContext *ctx) { copyFrom(ctx); }
-
-
-std::any ToyCParser::BlockStmtContext::accept(tree::ParseTreeVisitor *visitor) {
-  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitBlockStmt(this);
-  else
-    return visitor->visitChildren(this);
-}
-//----------------- DeclStmtContext ------------------------------------------------------------------
-
-tree::TerminalNode* ToyCParser::DeclStmtContext::INT() {
-  return getToken(ToyCParser::INT, 0);
-}
-
-tree::TerminalNode* ToyCParser::DeclStmtContext::ID() {
-  return getToken(ToyCParser::ID, 0);
-}
-
-tree::TerminalNode* ToyCParser::DeclStmtContext::ASSIGN() {
-  return getToken(ToyCParser::ASSIGN, 0);
-}
-
-ToyCParser::ExprContext* ToyCParser::DeclStmtContext::expr() {
-  return getRuleContext<ToyCParser::ExprContext>(0);
-}
-
-tree::TerminalNode* ToyCParser::DeclStmtContext::SEMI() {
-  return getToken(ToyCParser::SEMI, 0);
-}
-
-ToyCParser::DeclStmtContext::DeclStmtContext(StmtContext *ctx) { copyFrom(ctx); }
-
-
-std::any ToyCParser::DeclStmtContext::accept(tree::ParseTreeVisitor *visitor) {
-  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitDeclStmt(this);
-  else
-    return visitor->visitChildren(this);
-}
 //----------------- AssignStmtContext ------------------------------------------------------------------
 
 tree::TerminalNode* ToyCParser::AssignStmtContext::ID() {
@@ -674,6 +577,21 @@ std::any ToyCParser::BreakStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   else
     return visitor->visitChildren(this);
 }
+//----------------- BlockStmtContext ------------------------------------------------------------------
+
+ToyCParser::BlockContext* ToyCParser::BlockStmtContext::block() {
+  return getRuleContext<ToyCParser::BlockContext>(0);
+}
+
+ToyCParser::BlockStmtContext::BlockStmtContext(StmtContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::BlockStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitBlockStmt(this);
+  else
+    return visitor->visitChildren(this);
+}
 //----------------- EmptyStmtContext ------------------------------------------------------------------
 
 tree::TerminalNode* ToyCParser::EmptyStmtContext::SEMI() {
@@ -686,6 +604,37 @@ ToyCParser::EmptyStmtContext::EmptyStmtContext(StmtContext *ctx) { copyFrom(ctx)
 std::any ToyCParser::EmptyStmtContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
     return parserVisitor->visitEmptyStmt(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- DeclStmtContext ------------------------------------------------------------------
+
+tree::TerminalNode* ToyCParser::DeclStmtContext::INT() {
+  return getToken(ToyCParser::INT, 0);
+}
+
+tree::TerminalNode* ToyCParser::DeclStmtContext::ID() {
+  return getToken(ToyCParser::ID, 0);
+}
+
+tree::TerminalNode* ToyCParser::DeclStmtContext::ASSIGN() {
+  return getToken(ToyCParser::ASSIGN, 0);
+}
+
+ToyCParser::ExprContext* ToyCParser::DeclStmtContext::expr() {
+  return getRuleContext<ToyCParser::ExprContext>(0);
+}
+
+tree::TerminalNode* ToyCParser::DeclStmtContext::SEMI() {
+  return getToken(ToyCParser::SEMI, 0);
+}
+
+ToyCParser::DeclStmtContext::DeclStmtContext(StmtContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::DeclStmtContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitDeclStmt(this);
   else
     return visitor->visitChildren(this);
 }
@@ -712,28 +661,9 @@ std::any ToyCParser::ReturnStmtContext::accept(tree::ParseTreeVisitor *visitor) 
   else
     return visitor->visitChildren(this);
 }
-//----------------- ContinueStmtContext ------------------------------------------------------------------
-
-tree::TerminalNode* ToyCParser::ContinueStmtContext::CONTINUE() {
-  return getToken(ToyCParser::CONTINUE, 0);
-}
-
-tree::TerminalNode* ToyCParser::ContinueStmtContext::SEMI() {
-  return getToken(ToyCParser::SEMI, 0);
-}
-
-ToyCParser::ContinueStmtContext::ContinueStmtContext(StmtContext *ctx) { copyFrom(ctx); }
-
-
-std::any ToyCParser::ContinueStmtContext::accept(tree::ParseTreeVisitor *visitor) {
-  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitContinueStmt(this);
-  else
-    return visitor->visitChildren(this);
-}
 ToyCParser::StmtContext* ToyCParser::stmt() {
   StmtContext *_localctx = _tracker.createInstance<StmtContext>(_ctx, getState());
-  enterRule(_localctx, 8, ToyCParser::RuleStmt);
+  enterRule(_localctx, 6, ToyCParser::RuleStmt);
 
 #if __cplusplus > 201703L
   auto onExit = finally([=, this] {
@@ -743,13 +673,13 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     exitRule();
   });
   try {
-    setState(98);
+    setState(89);
     _errHandler->sync(this);
-    switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 5, _ctx)) {
+    switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 4, _ctx)) {
     case 1: {
       _localctx = _tracker.createInstance<ToyCParser::BlockStmtContext>(_localctx);
       enterOuterAlt(_localctx, 1);
-      setState(59);
+      setState(50);
       block();
       break;
     }
@@ -757,7 +687,7 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 2: {
       _localctx = _tracker.createInstance<ToyCParser::EmptyStmtContext>(_localctx);
       enterOuterAlt(_localctx, 2);
-      setState(60);
+      setState(51);
       match(ToyCParser::SEMI);
       break;
     }
@@ -765,9 +695,9 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 3: {
       _localctx = _tracker.createInstance<ToyCParser::ExprStmtContext>(_localctx);
       enterOuterAlt(_localctx, 3);
-      setState(61);
+      setState(52);
       expr();
-      setState(62);
+      setState(53);
       match(ToyCParser::SEMI);
       break;
     }
@@ -775,13 +705,13 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 4: {
       _localctx = _tracker.createInstance<ToyCParser::AssignStmtContext>(_localctx);
       enterOuterAlt(_localctx, 4);
-      setState(64);
+      setState(55);
       match(ToyCParser::ID);
-      setState(65);
+      setState(56);
       match(ToyCParser::ASSIGN);
-      setState(66);
+      setState(57);
       expr();
-      setState(67);
+      setState(58);
       match(ToyCParser::SEMI);
       break;
     }
@@ -789,15 +719,15 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 5: {
       _localctx = _tracker.createInstance<ToyCParser::DeclStmtContext>(_localctx);
       enterOuterAlt(_localctx, 5);
-      setState(69);
+      setState(60);
       match(ToyCParser::INT);
-      setState(70);
+      setState(61);
       match(ToyCParser::ID);
-      setState(71);
+      setState(62);
       match(ToyCParser::ASSIGN);
-      setState(72);
+      setState(63);
       expr();
-      setState(73);
+      setState(64);
       match(ToyCParser::SEMI);
       break;
     }
@@ -805,24 +735,24 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 6: {
       _localctx = _tracker.createInstance<ToyCParser::IfStmtContext>(_localctx);
       enterOuterAlt(_localctx, 6);
-      setState(75);
+      setState(66);
       match(ToyCParser::IF);
-      setState(76);
+      setState(67);
       match(ToyCParser::LPAREN);
-      setState(77);
+      setState(68);
       expr();
-      setState(78);
+      setState(69);
       match(ToyCParser::RPAREN);
-      setState(79);
+      setState(70);
       stmt();
-      setState(82);
+      setState(73);
       _errHandler->sync(this);
 
-      switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 4, _ctx)) {
+      switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 3, _ctx)) {
       case 1: {
-        setState(80);
+        setState(71);
         match(ToyCParser::ELSE);
-        setState(81);
+        setState(72);
         stmt();
         break;
       }
@@ -836,15 +766,15 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 7: {
       _localctx = _tracker.createInstance<ToyCParser::WhileStmtContext>(_localctx);
       enterOuterAlt(_localctx, 7);
-      setState(84);
+      setState(75);
       match(ToyCParser::WHILE);
-      setState(85);
+      setState(76);
       match(ToyCParser::LPAREN);
-      setState(86);
+      setState(77);
       expr();
-      setState(87);
+      setState(78);
       match(ToyCParser::RPAREN);
-      setState(88);
+      setState(79);
       stmt();
       break;
     }
@@ -852,9 +782,9 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 8: {
       _localctx = _tracker.createInstance<ToyCParser::BreakStmtContext>(_localctx);
       enterOuterAlt(_localctx, 8);
-      setState(90);
+      setState(81);
       match(ToyCParser::BREAK);
-      setState(91);
+      setState(82);
       match(ToyCParser::SEMI);
       break;
     }
@@ -862,9 +792,9 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 9: {
       _localctx = _tracker.createInstance<ToyCParser::ContinueStmtContext>(_localctx);
       enterOuterAlt(_localctx, 9);
-      setState(92);
+      setState(83);
       match(ToyCParser::CONTINUE);
-      setState(93);
+      setState(84);
       match(ToyCParser::SEMI);
       break;
     }
@@ -872,11 +802,11 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     case 10: {
       _localctx = _tracker.createInstance<ToyCParser::ReturnStmtContext>(_localctx);
       enterOuterAlt(_localctx, 10);
-      setState(94);
+      setState(85);
       match(ToyCParser::RETURN);
-      setState(95);
+      setState(86);
       expr();
-      setState(96);
+      setState(87);
       match(ToyCParser::SEMI);
       break;
     }
@@ -884,6 +814,81 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     default:
       break;
     }
+   
+  }
+  catch (RecognitionException &e) {
+    _errHandler->reportError(this, e);
+    _localctx->exception = std::current_exception();
+    _errHandler->recover(this, _localctx->exception);
+  }
+
+  return _localctx;
+}
+
+//----------------- BlockContext ------------------------------------------------------------------
+
+ToyCParser::BlockContext::BlockContext(ParserRuleContext *parent, size_t invokingState)
+  : ParserRuleContext(parent, invokingState) {
+}
+
+tree::TerminalNode* ToyCParser::BlockContext::LBRACE() {
+  return getToken(ToyCParser::LBRACE, 0);
+}
+
+tree::TerminalNode* ToyCParser::BlockContext::RBRACE() {
+  return getToken(ToyCParser::RBRACE, 0);
+}
+
+std::vector<ToyCParser::StmtContext *> ToyCParser::BlockContext::stmt() {
+  return getRuleContexts<ToyCParser::StmtContext>();
+}
+
+ToyCParser::StmtContext* ToyCParser::BlockContext::stmt(size_t i) {
+  return getRuleContext<ToyCParser::StmtContext>(i);
+}
+
+
+size_t ToyCParser::BlockContext::getRuleIndex() const {
+  return ToyCParser::RuleBlock;
+}
+
+
+std::any ToyCParser::BlockContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitBlock(this);
+  else
+    return visitor->visitChildren(this);
+}
+
+ToyCParser::BlockContext* ToyCParser::block() {
+  BlockContext *_localctx = _tracker.createInstance<BlockContext>(_ctx, getState());
+  enterRule(_localctx, 8, ToyCParser::RuleBlock);
+  size_t _la = 0;
+
+#if __cplusplus > 201703L
+  auto onExit = finally([=, this] {
+#else
+  auto onExit = finally([=] {
+#endif
+    exitRule();
+  });
+  try {
+    enterOuterAlt(_localctx, 1);
+    setState(91);
+    match(ToyCParser::LBRACE);
+    setState(95);
+    _errHandler->sync(this);
+    _la = _input->LA(1);
+    while ((((_la & ~ 0x3fULL) == 0) &&
+      ((1ULL << _la) & 3578135018) != 0)) {
+      setState(92);
+      stmt();
+      setState(97);
+      _errHandler->sync(this);
+      _la = _input->LA(1);
+    }
+    setState(98);
+    match(ToyCParser::RBRACE);
    
   }
   catch (RecognitionException &e) {
@@ -932,7 +937,7 @@ ToyCParser::ExprContext* ToyCParser::expr() {
   try {
     enterOuterAlt(_localctx, 1);
     setState(100);
-    lOrExpr();
+    lOrExpr(0);
    
   }
   catch (RecognitionException &e) {
@@ -950,71 +955,115 @@ ToyCParser::LOrExprContext::LOrExprContext(ParserRuleContext *parent, size_t inv
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<ToyCParser::LAndExprContext *> ToyCParser::LOrExprContext::lAndExpr() {
-  return getRuleContexts<ToyCParser::LAndExprContext>();
-}
-
-ToyCParser::LAndExprContext* ToyCParser::LOrExprContext::lAndExpr(size_t i) {
-  return getRuleContext<ToyCParser::LAndExprContext>(i);
-}
-
-std::vector<tree::TerminalNode *> ToyCParser::LOrExprContext::OR() {
-  return getTokens(ToyCParser::OR);
-}
-
-tree::TerminalNode* ToyCParser::LOrExprContext::OR(size_t i) {
-  return getToken(ToyCParser::OR, i);
-}
-
 
 size_t ToyCParser::LOrExprContext::getRuleIndex() const {
   return ToyCParser::RuleLOrExpr;
 }
 
+void ToyCParser::LOrExprContext::copyFrom(LOrExprContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-std::any ToyCParser::LOrExprContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- MulLOrExprContext ------------------------------------------------------------------
+
+ToyCParser::LOrExprContext* ToyCParser::MulLOrExprContext::lOrExpr() {
+  return getRuleContext<ToyCParser::LOrExprContext>(0);
+}
+
+tree::TerminalNode* ToyCParser::MulLOrExprContext::OR() {
+  return getToken(ToyCParser::OR, 0);
+}
+
+ToyCParser::LAndExprContext* ToyCParser::MulLOrExprContext::lAndExpr() {
+  return getRuleContext<ToyCParser::LAndExprContext>(0);
+}
+
+ToyCParser::MulLOrExprContext::MulLOrExprContext(LOrExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::MulLOrExprContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitLOrExpr(this);
+    return parserVisitor->visitMulLOrExpr(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- SingleLOrContext ------------------------------------------------------------------
+
+ToyCParser::LAndExprContext* ToyCParser::SingleLOrContext::lAndExpr() {
+  return getRuleContext<ToyCParser::LAndExprContext>(0);
+}
+
+ToyCParser::SingleLOrContext::SingleLOrContext(LOrExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::SingleLOrContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitSingleLOr(this);
   else
     return visitor->visitChildren(this);
 }
 
 ToyCParser::LOrExprContext* ToyCParser::lOrExpr() {
-  LOrExprContext *_localctx = _tracker.createInstance<LOrExprContext>(_ctx, getState());
-  enterRule(_localctx, 12, ToyCParser::RuleLOrExpr);
-  size_t _la = 0;
+   return lOrExpr(0);
+}
+
+ToyCParser::LOrExprContext* ToyCParser::lOrExpr(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  ToyCParser::LOrExprContext *_localctx = _tracker.createInstance<LOrExprContext>(_ctx, parentState);
+  ToyCParser::LOrExprContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 12;
+  enterRecursionRule(_localctx, 12, ToyCParser::RuleLOrExpr, precedence);
+
+    
 
 #if __cplusplus > 201703L
   auto onExit = finally([=, this] {
 #else
   auto onExit = finally([=] {
 #endif
-    exitRule();
+    unrollRecursionContexts(parentContext);
   });
   try {
+    size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(102);
-    lAndExpr();
-    setState(107);
+    _localctx = _tracker.createInstance<SingleLOrContext>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
+    setState(103);
+    lAndExpr(0);
+    _ctx->stop = _input->LT(-1);
+    setState(110);
     _errHandler->sync(this);
-    _la = _input->LA(1);
-    while (_la == ToyCParser::OR) {
-      setState(103);
-      match(ToyCParser::OR);
-      setState(104);
-      lAndExpr();
-      setState(109);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 6, _ctx);
+    while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
+      if (alt == 1) {
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<MulLOrExprContext>(_tracker.createInstance<LOrExprContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleLOrExpr);
+        setState(105);
+
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(106);
+        match(ToyCParser::OR);
+        setState(107);
+        lAndExpr(0); 
+      }
+      setState(112);
       _errHandler->sync(this);
-      _la = _input->LA(1);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 6, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -1024,71 +1073,115 @@ ToyCParser::LAndExprContext::LAndExprContext(ParserRuleContext *parent, size_t i
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<ToyCParser::RelExprContext *> ToyCParser::LAndExprContext::relExpr() {
-  return getRuleContexts<ToyCParser::RelExprContext>();
-}
-
-ToyCParser::RelExprContext* ToyCParser::LAndExprContext::relExpr(size_t i) {
-  return getRuleContext<ToyCParser::RelExprContext>(i);
-}
-
-std::vector<tree::TerminalNode *> ToyCParser::LAndExprContext::AND() {
-  return getTokens(ToyCParser::AND);
-}
-
-tree::TerminalNode* ToyCParser::LAndExprContext::AND(size_t i) {
-  return getToken(ToyCParser::AND, i);
-}
-
 
 size_t ToyCParser::LAndExprContext::getRuleIndex() const {
   return ToyCParser::RuleLAndExpr;
 }
 
+void ToyCParser::LAndExprContext::copyFrom(LAndExprContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-std::any ToyCParser::LAndExprContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- SingleLAndContext ------------------------------------------------------------------
+
+ToyCParser::RelExprContext* ToyCParser::SingleLAndContext::relExpr() {
+  return getRuleContext<ToyCParser::RelExprContext>(0);
+}
+
+ToyCParser::SingleLAndContext::SingleLAndContext(LAndExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::SingleLAndContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitLAndExpr(this);
+    return parserVisitor->visitSingleLAnd(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- MulLAndExprContext ------------------------------------------------------------------
+
+ToyCParser::LAndExprContext* ToyCParser::MulLAndExprContext::lAndExpr() {
+  return getRuleContext<ToyCParser::LAndExprContext>(0);
+}
+
+tree::TerminalNode* ToyCParser::MulLAndExprContext::AND() {
+  return getToken(ToyCParser::AND, 0);
+}
+
+ToyCParser::RelExprContext* ToyCParser::MulLAndExprContext::relExpr() {
+  return getRuleContext<ToyCParser::RelExprContext>(0);
+}
+
+ToyCParser::MulLAndExprContext::MulLAndExprContext(LAndExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::MulLAndExprContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitMulLAndExpr(this);
   else
     return visitor->visitChildren(this);
 }
 
 ToyCParser::LAndExprContext* ToyCParser::lAndExpr() {
-  LAndExprContext *_localctx = _tracker.createInstance<LAndExprContext>(_ctx, getState());
-  enterRule(_localctx, 14, ToyCParser::RuleLAndExpr);
-  size_t _la = 0;
+   return lAndExpr(0);
+}
+
+ToyCParser::LAndExprContext* ToyCParser::lAndExpr(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  ToyCParser::LAndExprContext *_localctx = _tracker.createInstance<LAndExprContext>(_ctx, parentState);
+  ToyCParser::LAndExprContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 14;
+  enterRecursionRule(_localctx, 14, ToyCParser::RuleLAndExpr, precedence);
+
+    
 
 #if __cplusplus > 201703L
   auto onExit = finally([=, this] {
 #else
   auto onExit = finally([=] {
 #endif
-    exitRule();
+    unrollRecursionContexts(parentContext);
   });
   try {
+    size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(110);
-    relExpr();
-    setState(115);
+    _localctx = _tracker.createInstance<SingleLAndContext>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
+    setState(114);
+    relExpr(0);
+    _ctx->stop = _input->LT(-1);
+    setState(121);
     _errHandler->sync(this);
-    _la = _input->LA(1);
-    while (_la == ToyCParser::AND) {
-      setState(111);
-      match(ToyCParser::AND);
-      setState(112);
-      relExpr();
-      setState(117);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 7, _ctx);
+    while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
+      if (alt == 1) {
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<MulLAndExprContext>(_tracker.createInstance<LAndExprContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleLAndExpr);
+        setState(116);
+
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(117);
+        match(ToyCParser::AND);
+        setState(118);
+        relExpr(0); 
+      }
+      setState(123);
       _errHandler->sync(this);
-      _la = _input->LA(1);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 7, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -1098,94 +1191,143 @@ ToyCParser::RelExprContext::RelExprContext(ParserRuleContext *parent, size_t inv
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<ToyCParser::AddExprContext *> ToyCParser::RelExprContext::addExpr() {
-  return getRuleContexts<ToyCParser::AddExprContext>();
-}
-
-ToyCParser::AddExprContext* ToyCParser::RelExprContext::addExpr(size_t i) {
-  return getRuleContext<ToyCParser::AddExprContext>(i);
-}
-
-tree::TerminalNode* ToyCParser::RelExprContext::LT() {
-  return getToken(ToyCParser::LT, 0);
-}
-
-tree::TerminalNode* ToyCParser::RelExprContext::GT() {
-  return getToken(ToyCParser::GT, 0);
-}
-
-tree::TerminalNode* ToyCParser::RelExprContext::LE() {
-  return getToken(ToyCParser::LE, 0);
-}
-
-tree::TerminalNode* ToyCParser::RelExprContext::GE() {
-  return getToken(ToyCParser::GE, 0);
-}
-
-tree::TerminalNode* ToyCParser::RelExprContext::EQ() {
-  return getToken(ToyCParser::EQ, 0);
-}
-
-tree::TerminalNode* ToyCParser::RelExprContext::NE() {
-  return getToken(ToyCParser::NE, 0);
-}
-
 
 size_t ToyCParser::RelExprContext::getRuleIndex() const {
   return ToyCParser::RuleRelExpr;
 }
 
+void ToyCParser::RelExprContext::copyFrom(RelExprContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-std::any ToyCParser::RelExprContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- SingleRelContext ------------------------------------------------------------------
+
+ToyCParser::AddExprContext* ToyCParser::SingleRelContext::addExpr() {
+  return getRuleContext<ToyCParser::AddExprContext>(0);
+}
+
+ToyCParser::SingleRelContext::SingleRelContext(RelExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::SingleRelContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitRelExpr(this);
+    return parserVisitor->visitSingleRel(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- MulRelExprContext ------------------------------------------------------------------
+
+ToyCParser::RelExprContext* ToyCParser::MulRelExprContext::relExpr() {
+  return getRuleContext<ToyCParser::RelExprContext>(0);
+}
+
+ToyCParser::AddExprContext* ToyCParser::MulRelExprContext::addExpr() {
+  return getRuleContext<ToyCParser::AddExprContext>(0);
+}
+
+tree::TerminalNode* ToyCParser::MulRelExprContext::LT() {
+  return getToken(ToyCParser::LT, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulRelExprContext::GT() {
+  return getToken(ToyCParser::GT, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulRelExprContext::LE() {
+  return getToken(ToyCParser::LE, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulRelExprContext::GE() {
+  return getToken(ToyCParser::GE, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulRelExprContext::EQ() {
+  return getToken(ToyCParser::EQ, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulRelExprContext::NE() {
+  return getToken(ToyCParser::NE, 0);
+}
+
+ToyCParser::MulRelExprContext::MulRelExprContext(RelExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::MulRelExprContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitMulRelExpr(this);
   else
     return visitor->visitChildren(this);
 }
 
 ToyCParser::RelExprContext* ToyCParser::relExpr() {
-  RelExprContext *_localctx = _tracker.createInstance<RelExprContext>(_ctx, getState());
-  enterRule(_localctx, 16, ToyCParser::RuleRelExpr);
-  size_t _la = 0;
+   return relExpr(0);
+}
+
+ToyCParser::RelExprContext* ToyCParser::relExpr(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  ToyCParser::RelExprContext *_localctx = _tracker.createInstance<RelExprContext>(_ctx, parentState);
+  ToyCParser::RelExprContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 16;
+  enterRecursionRule(_localctx, 16, ToyCParser::RuleRelExpr, precedence);
+
+    size_t _la = 0;
 
 #if __cplusplus > 201703L
   auto onExit = finally([=, this] {
 #else
   auto onExit = finally([=] {
 #endif
-    exitRule();
+    unrollRecursionContexts(parentContext);
   });
   try {
+    size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(118);
-    addExpr();
-    setState(121);
-    _errHandler->sync(this);
+    _localctx = _tracker.createInstance<SingleRelContext>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
 
-    _la = _input->LA(1);
-    if ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & 16515072) != 0)) {
-      setState(119);
-      _la = _input->LA(1);
-      if (!((((_la & ~ 0x3fULL) == 0) &&
-        ((1ULL << _la) & 16515072) != 0))) {
-      _errHandler->recoverInline(this);
+    setState(125);
+    addExpr(0);
+    _ctx->stop = _input->LT(-1);
+    setState(132);
+    _errHandler->sync(this);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 8, _ctx);
+    while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
+      if (alt == 1) {
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<MulRelExprContext>(_tracker.createInstance<RelExprContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleRelExpr);
+        setState(127);
+
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(128);
+        _la = _input->LA(1);
+        if (!((((_la & ~ 0x3fULL) == 0) &&
+          ((1ULL << _la) & 129024) != 0))) {
+        _errHandler->recoverInline(this);
+        }
+        else {
+          _errHandler->reportMatch(this);
+          consume();
+        }
+        setState(129);
+        addExpr(0); 
       }
-      else {
-        _errHandler->reportMatch(this);
-        consume();
-      }
-      setState(120);
-      addExpr();
+      setState(134);
+      _errHandler->sync(this);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 8, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -1195,90 +1337,128 @@ ToyCParser::AddExprContext::AddExprContext(ParserRuleContext *parent, size_t inv
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<ToyCParser::MulExprContext *> ToyCParser::AddExprContext::mulExpr() {
-  return getRuleContexts<ToyCParser::MulExprContext>();
-}
-
-ToyCParser::MulExprContext* ToyCParser::AddExprContext::mulExpr(size_t i) {
-  return getRuleContext<ToyCParser::MulExprContext>(i);
-}
-
-std::vector<tree::TerminalNode *> ToyCParser::AddExprContext::PLUS() {
-  return getTokens(ToyCParser::PLUS);
-}
-
-tree::TerminalNode* ToyCParser::AddExprContext::PLUS(size_t i) {
-  return getToken(ToyCParser::PLUS, i);
-}
-
-std::vector<tree::TerminalNode *> ToyCParser::AddExprContext::MINUS() {
-  return getTokens(ToyCParser::MINUS);
-}
-
-tree::TerminalNode* ToyCParser::AddExprContext::MINUS(size_t i) {
-  return getToken(ToyCParser::MINUS, i);
-}
-
 
 size_t ToyCParser::AddExprContext::getRuleIndex() const {
   return ToyCParser::RuleAddExpr;
 }
 
+void ToyCParser::AddExprContext::copyFrom(AddExprContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-std::any ToyCParser::AddExprContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- MulAddExprContext ------------------------------------------------------------------
+
+ToyCParser::AddExprContext* ToyCParser::MulAddExprContext::addExpr() {
+  return getRuleContext<ToyCParser::AddExprContext>(0);
+}
+
+ToyCParser::MulExprContext* ToyCParser::MulAddExprContext::mulExpr() {
+  return getRuleContext<ToyCParser::MulExprContext>(0);
+}
+
+tree::TerminalNode* ToyCParser::MulAddExprContext::ADD() {
+  return getToken(ToyCParser::ADD, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulAddExprContext::SUB() {
+  return getToken(ToyCParser::SUB, 0);
+}
+
+ToyCParser::MulAddExprContext::MulAddExprContext(AddExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::MulAddExprContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitAddExpr(this);
+    return parserVisitor->visitMulAddExpr(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- SingleAddContext ------------------------------------------------------------------
+
+ToyCParser::MulExprContext* ToyCParser::SingleAddContext::mulExpr() {
+  return getRuleContext<ToyCParser::MulExprContext>(0);
+}
+
+ToyCParser::SingleAddContext::SingleAddContext(AddExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::SingleAddContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitSingleAdd(this);
   else
     return visitor->visitChildren(this);
 }
 
 ToyCParser::AddExprContext* ToyCParser::addExpr() {
-  AddExprContext *_localctx = _tracker.createInstance<AddExprContext>(_ctx, getState());
-  enterRule(_localctx, 18, ToyCParser::RuleAddExpr);
-  size_t _la = 0;
+   return addExpr(0);
+}
+
+ToyCParser::AddExprContext* ToyCParser::addExpr(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  ToyCParser::AddExprContext *_localctx = _tracker.createInstance<AddExprContext>(_ctx, parentState);
+  ToyCParser::AddExprContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 18;
+  enterRecursionRule(_localctx, 18, ToyCParser::RuleAddExpr, precedence);
+
+    size_t _la = 0;
 
 #if __cplusplus > 201703L
   auto onExit = finally([=, this] {
 #else
   auto onExit = finally([=] {
 #endif
-    exitRule();
+    unrollRecursionContexts(parentContext);
   });
   try {
+    size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(123);
-    mulExpr();
-    setState(128);
+    _localctx = _tracker.createInstance<SingleAddContext>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
+    setState(136);
+    mulExpr(0);
+    _ctx->stop = _input->LT(-1);
+    setState(143);
     _errHandler->sync(this);
-    _la = _input->LA(1);
-    while (_la == ToyCParser::PLUS
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 9, _ctx);
+    while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
+      if (alt == 1) {
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<MulAddExprContext>(_tracker.createInstance<AddExprContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleAddExpr);
+        setState(138);
 
-    || _la == ToyCParser::MINUS) {
-      setState(124);
-      _la = _input->LA(1);
-      if (!(_la == ToyCParser::PLUS
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(139);
+        _la = _input->LA(1);
+        if (!(_la == ToyCParser::ADD
 
-      || _la == ToyCParser::MINUS)) {
-      _errHandler->recoverInline(this);
+        || _la == ToyCParser::SUB)) {
+        _errHandler->recoverInline(this);
+        }
+        else {
+          _errHandler->reportMatch(this);
+          consume();
+        }
+        setState(140);
+        mulExpr(0); 
       }
-      else {
-        _errHandler->reportMatch(this);
-        consume();
-      }
-      setState(125);
-      mulExpr();
-      setState(130);
+      setState(145);
       _errHandler->sync(this);
-      _la = _input->LA(1);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 9, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -1288,96 +1468,131 @@ ToyCParser::MulExprContext::MulExprContext(ParserRuleContext *parent, size_t inv
   : ParserRuleContext(parent, invokingState) {
 }
 
-std::vector<ToyCParser::UnaryExprContext *> ToyCParser::MulExprContext::unaryExpr() {
-  return getRuleContexts<ToyCParser::UnaryExprContext>();
-}
-
-ToyCParser::UnaryExprContext* ToyCParser::MulExprContext::unaryExpr(size_t i) {
-  return getRuleContext<ToyCParser::UnaryExprContext>(i);
-}
-
-std::vector<tree::TerminalNode *> ToyCParser::MulExprContext::MUL() {
-  return getTokens(ToyCParser::MUL);
-}
-
-tree::TerminalNode* ToyCParser::MulExprContext::MUL(size_t i) {
-  return getToken(ToyCParser::MUL, i);
-}
-
-std::vector<tree::TerminalNode *> ToyCParser::MulExprContext::DIV() {
-  return getTokens(ToyCParser::DIV);
-}
-
-tree::TerminalNode* ToyCParser::MulExprContext::DIV(size_t i) {
-  return getToken(ToyCParser::DIV, i);
-}
-
-std::vector<tree::TerminalNode *> ToyCParser::MulExprContext::MOD() {
-  return getTokens(ToyCParser::MOD);
-}
-
-tree::TerminalNode* ToyCParser::MulExprContext::MOD(size_t i) {
-  return getToken(ToyCParser::MOD, i);
-}
-
 
 size_t ToyCParser::MulExprContext::getRuleIndex() const {
   return ToyCParser::RuleMulExpr;
 }
 
+void ToyCParser::MulExprContext::copyFrom(MulExprContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-std::any ToyCParser::MulExprContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- SingleMulContext ------------------------------------------------------------------
+
+ToyCParser::UnaryExprContext* ToyCParser::SingleMulContext::unaryExpr() {
+  return getRuleContext<ToyCParser::UnaryExprContext>(0);
+}
+
+ToyCParser::SingleMulContext::SingleMulContext(MulExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::SingleMulContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitMulExpr(this);
+    return parserVisitor->visitSingleMul(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- MulMulExprContext ------------------------------------------------------------------
+
+ToyCParser::MulExprContext* ToyCParser::MulMulExprContext::mulExpr() {
+  return getRuleContext<ToyCParser::MulExprContext>(0);
+}
+
+ToyCParser::UnaryExprContext* ToyCParser::MulMulExprContext::unaryExpr() {
+  return getRuleContext<ToyCParser::UnaryExprContext>(0);
+}
+
+tree::TerminalNode* ToyCParser::MulMulExprContext::MUL() {
+  return getToken(ToyCParser::MUL, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulMulExprContext::DIV() {
+  return getToken(ToyCParser::DIV, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulMulExprContext::MOD() {
+  return getToken(ToyCParser::MOD, 0);
+}
+
+ToyCParser::MulMulExprContext::MulMulExprContext(MulExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::MulMulExprContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitMulMulExpr(this);
   else
     return visitor->visitChildren(this);
 }
 
 ToyCParser::MulExprContext* ToyCParser::mulExpr() {
-  MulExprContext *_localctx = _tracker.createInstance<MulExprContext>(_ctx, getState());
-  enterRule(_localctx, 20, ToyCParser::RuleMulExpr);
-  size_t _la = 0;
+   return mulExpr(0);
+}
+
+ToyCParser::MulExprContext* ToyCParser::mulExpr(int precedence) {
+  ParserRuleContext *parentContext = _ctx;
+  size_t parentState = getState();
+  ToyCParser::MulExprContext *_localctx = _tracker.createInstance<MulExprContext>(_ctx, parentState);
+  ToyCParser::MulExprContext *previousContext = _localctx;
+  (void)previousContext; // Silence compiler, in case the context is not used by generated code.
+  size_t startState = 20;
+  enterRecursionRule(_localctx, 20, ToyCParser::RuleMulExpr, precedence);
+
+    size_t _la = 0;
 
 #if __cplusplus > 201703L
   auto onExit = finally([=, this] {
 #else
   auto onExit = finally([=] {
 #endif
-    exitRule();
+    unrollRecursionContexts(parentContext);
   });
   try {
+    size_t alt;
     enterOuterAlt(_localctx, 1);
-    setState(131);
+    _localctx = _tracker.createInstance<SingleMulContext>(_localctx);
+    _ctx = _localctx;
+    previousContext = _localctx;
+
+    setState(147);
     unaryExpr();
-    setState(136);
+    _ctx->stop = _input->LT(-1);
+    setState(154);
     _errHandler->sync(this);
-    _la = _input->LA(1);
-    while ((((_la & ~ 0x3fULL) == 0) &&
-      ((1ULL << _la) & 57344) != 0)) {
-      setState(132);
-      _la = _input->LA(1);
-      if (!((((_la & ~ 0x3fULL) == 0) &&
-        ((1ULL << _la) & 57344) != 0))) {
-      _errHandler->recoverInline(this);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 10, _ctx);
+    while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
+      if (alt == 1) {
+        if (!_parseListeners.empty())
+          triggerExitRuleEvent();
+        previousContext = _localctx;
+        auto newContext = _tracker.createInstance<MulMulExprContext>(_tracker.createInstance<MulExprContext>(parentContext, parentState));
+        _localctx = newContext;
+        pushNewRecursionContext(newContext, startState, RuleMulExpr);
+        setState(149);
+
+        if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
+        setState(150);
+        _la = _input->LA(1);
+        if (!((((_la & ~ 0x3fULL) == 0) &&
+          ((1ULL << _la) & 3670016) != 0))) {
+        _errHandler->recoverInline(this);
+        }
+        else {
+          _errHandler->reportMatch(this);
+          consume();
+        }
+        setState(151);
+        unaryExpr(); 
       }
-      else {
-        _errHandler->reportMatch(this);
-        consume();
-      }
-      setState(133);
-      unaryExpr();
-      setState(138);
+      setState(156);
       _errHandler->sync(this);
-      _la = _input->LA(1);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 10, _ctx);
     }
-   
   }
   catch (RecognitionException &e) {
     _errHandler->reportError(this, e);
     _localctx->exception = std::current_exception();
     _errHandler->recover(this, _localctx->exception);
   }
-
   return _localctx;
 }
 
@@ -1387,39 +1602,57 @@ ToyCParser::UnaryExprContext::UnaryExprContext(ParserRuleContext *parent, size_t
   : ParserRuleContext(parent, invokingState) {
 }
 
-ToyCParser::UnaryExprContext* ToyCParser::UnaryExprContext::unaryExpr() {
-  return getRuleContext<ToyCParser::UnaryExprContext>(0);
-}
-
-tree::TerminalNode* ToyCParser::UnaryExprContext::PLUS() {
-  return getToken(ToyCParser::PLUS, 0);
-}
-
-tree::TerminalNode* ToyCParser::UnaryExprContext::MINUS() {
-  return getToken(ToyCParser::MINUS, 0);
-}
-
-tree::TerminalNode* ToyCParser::UnaryExprContext::NOT() {
-  return getToken(ToyCParser::NOT, 0);
-}
-
-ToyCParser::PrimaryExprContext* ToyCParser::UnaryExprContext::primaryExpr() {
-  return getRuleContext<ToyCParser::PrimaryExprContext>(0);
-}
-
 
 size_t ToyCParser::UnaryExprContext::getRuleIndex() const {
   return ToyCParser::RuleUnaryExpr;
 }
 
+void ToyCParser::UnaryExprContext::copyFrom(UnaryExprContext *ctx) {
+  ParserRuleContext::copyFrom(ctx);
+}
 
-std::any ToyCParser::UnaryExprContext::accept(tree::ParseTreeVisitor *visitor) {
+//----------------- MulUnaryOpContext ------------------------------------------------------------------
+
+ToyCParser::UnaryExprContext* ToyCParser::MulUnaryOpContext::unaryExpr() {
+  return getRuleContext<ToyCParser::UnaryExprContext>(0);
+}
+
+tree::TerminalNode* ToyCParser::MulUnaryOpContext::ADD() {
+  return getToken(ToyCParser::ADD, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulUnaryOpContext::SUB() {
+  return getToken(ToyCParser::SUB, 0);
+}
+
+tree::TerminalNode* ToyCParser::MulUnaryOpContext::NOT() {
+  return getToken(ToyCParser::NOT, 0);
+}
+
+ToyCParser::MulUnaryOpContext::MulUnaryOpContext(UnaryExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::MulUnaryOpContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitUnaryExpr(this);
+    return parserVisitor->visitMulUnaryOp(this);
   else
     return visitor->visitChildren(this);
 }
+//----------------- SingleUnaryContext ------------------------------------------------------------------
 
+ToyCParser::PrimaryExprContext* ToyCParser::SingleUnaryContext::primaryExpr() {
+  return getRuleContext<ToyCParser::PrimaryExprContext>(0);
+}
+
+ToyCParser::SingleUnaryContext::SingleUnaryContext(UnaryExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::SingleUnaryContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitSingleUnary(this);
+  else
+    return visitor->visitChildren(this);
+}
 ToyCParser::UnaryExprContext* ToyCParser::unaryExpr() {
   UnaryExprContext *_localctx = _tracker.createInstance<UnaryExprContext>(_ctx, getState());
   enterRule(_localctx, 22, ToyCParser::RuleUnaryExpr);
@@ -1433,34 +1666,36 @@ ToyCParser::UnaryExprContext* ToyCParser::unaryExpr() {
     exitRule();
   });
   try {
-    setState(142);
+    setState(160);
     _errHandler->sync(this);
     switch (_input->LA(1)) {
-      case ToyCParser::PLUS:
-      case ToyCParser::MINUS:
-      case ToyCParser::NOT: {
+      case ToyCParser::LPAREN:
+      case ToyCParser::ID:
+      case ToyCParser::NUMBER: {
+        _localctx = _tracker.createInstance<ToyCParser::SingleUnaryContext>(_localctx);
         enterOuterAlt(_localctx, 1);
-        setState(139);
+        setState(157);
+        primaryExpr();
+        break;
+      }
+
+      case ToyCParser::ADD:
+      case ToyCParser::SUB:
+      case ToyCParser::NOT: {
+        _localctx = _tracker.createInstance<ToyCParser::MulUnaryOpContext>(_localctx);
+        enterOuterAlt(_localctx, 2);
+        setState(158);
         _la = _input->LA(1);
         if (!((((_la & ~ 0x3fULL) == 0) &&
-          ((1ULL << _la) & 71680) != 0))) {
+          ((1ULL << _la) & 4587520) != 0))) {
         _errHandler->recoverInline(this);
         }
         else {
           _errHandler->reportMatch(this);
           consume();
         }
-        setState(140);
+        setState(159);
         unaryExpr();
-        break;
-      }
-
-      case ToyCParser::ID:
-      case ToyCParser::NUMBER:
-      case ToyCParser::LPAREN: {
-        enterOuterAlt(_localctx, 2);
-        setState(141);
-        primaryExpr();
         break;
       }
 
@@ -1493,95 +1728,95 @@ void ToyCParser::PrimaryExprContext::copyFrom(PrimaryExprContext *ctx) {
   ParserRuleContext::copyFrom(ctx);
 }
 
-//----------------- CallExprContext ------------------------------------------------------------------
+//----------------- IdentifierContext ------------------------------------------------------------------
 
-tree::TerminalNode* ToyCParser::CallExprContext::ID() {
+tree::TerminalNode* ToyCParser::IdentifierContext::ID() {
   return getToken(ToyCParser::ID, 0);
 }
 
-tree::TerminalNode* ToyCParser::CallExprContext::LPAREN() {
-  return getToken(ToyCParser::LPAREN, 0);
-}
-
-tree::TerminalNode* ToyCParser::CallExprContext::RPAREN() {
-  return getToken(ToyCParser::RPAREN, 0);
-}
-
-std::vector<ToyCParser::ExprContext *> ToyCParser::CallExprContext::expr() {
-  return getRuleContexts<ToyCParser::ExprContext>();
-}
-
-ToyCParser::ExprContext* ToyCParser::CallExprContext::expr(size_t i) {
-  return getRuleContext<ToyCParser::ExprContext>(i);
-}
-
-std::vector<tree::TerminalNode *> ToyCParser::CallExprContext::COMMA() {
-  return getTokens(ToyCParser::COMMA);
-}
-
-tree::TerminalNode* ToyCParser::CallExprContext::COMMA(size_t i) {
-  return getToken(ToyCParser::COMMA, i);
-}
-
-ToyCParser::CallExprContext::CallExprContext(PrimaryExprContext *ctx) { copyFrom(ctx); }
+ToyCParser::IdentifierContext::IdentifierContext(PrimaryExprContext *ctx) { copyFrom(ctx); }
 
 
-std::any ToyCParser::CallExprContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any ToyCParser::IdentifierContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitCallExpr(this);
+    return parserVisitor->visitIdentifier(this);
   else
     return visitor->visitChildren(this);
 }
-//----------------- NumExprContext ------------------------------------------------------------------
+//----------------- ParenthesizedExprContext ------------------------------------------------------------------
 
-tree::TerminalNode* ToyCParser::NumExprContext::NUMBER() {
-  return getToken(ToyCParser::NUMBER, 0);
-}
-
-ToyCParser::NumExprContext::NumExprContext(PrimaryExprContext *ctx) { copyFrom(ctx); }
-
-
-std::any ToyCParser::NumExprContext::accept(tree::ParseTreeVisitor *visitor) {
-  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitNumExpr(this);
-  else
-    return visitor->visitChildren(this);
-}
-//----------------- ParenExprContext ------------------------------------------------------------------
-
-tree::TerminalNode* ToyCParser::ParenExprContext::LPAREN() {
+tree::TerminalNode* ToyCParser::ParenthesizedExprContext::LPAREN() {
   return getToken(ToyCParser::LPAREN, 0);
 }
 
-ToyCParser::ExprContext* ToyCParser::ParenExprContext::expr() {
+ToyCParser::ExprContext* ToyCParser::ParenthesizedExprContext::expr() {
   return getRuleContext<ToyCParser::ExprContext>(0);
 }
 
-tree::TerminalNode* ToyCParser::ParenExprContext::RPAREN() {
+tree::TerminalNode* ToyCParser::ParenthesizedExprContext::RPAREN() {
   return getToken(ToyCParser::RPAREN, 0);
 }
 
-ToyCParser::ParenExprContext::ParenExprContext(PrimaryExprContext *ctx) { copyFrom(ctx); }
+ToyCParser::ParenthesizedExprContext::ParenthesizedExprContext(PrimaryExprContext *ctx) { copyFrom(ctx); }
 
 
-std::any ToyCParser::ParenExprContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any ToyCParser::ParenthesizedExprContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitParenExpr(this);
+    return parserVisitor->visitParenthesizedExpr(this);
   else
     return visitor->visitChildren(this);
 }
-//----------------- IdExprContext ------------------------------------------------------------------
+//----------------- FunctionCallContext ------------------------------------------------------------------
 
-tree::TerminalNode* ToyCParser::IdExprContext::ID() {
+tree::TerminalNode* ToyCParser::FunctionCallContext::ID() {
   return getToken(ToyCParser::ID, 0);
 }
 
-ToyCParser::IdExprContext::IdExprContext(PrimaryExprContext *ctx) { copyFrom(ctx); }
+tree::TerminalNode* ToyCParser::FunctionCallContext::LPAREN() {
+  return getToken(ToyCParser::LPAREN, 0);
+}
+
+tree::TerminalNode* ToyCParser::FunctionCallContext::RPAREN() {
+  return getToken(ToyCParser::RPAREN, 0);
+}
+
+std::vector<ToyCParser::ExprContext *> ToyCParser::FunctionCallContext::expr() {
+  return getRuleContexts<ToyCParser::ExprContext>();
+}
+
+ToyCParser::ExprContext* ToyCParser::FunctionCallContext::expr(size_t i) {
+  return getRuleContext<ToyCParser::ExprContext>(i);
+}
+
+std::vector<tree::TerminalNode *> ToyCParser::FunctionCallContext::COMMA() {
+  return getTokens(ToyCParser::COMMA);
+}
+
+tree::TerminalNode* ToyCParser::FunctionCallContext::COMMA(size_t i) {
+  return getToken(ToyCParser::COMMA, i);
+}
+
+ToyCParser::FunctionCallContext::FunctionCallContext(PrimaryExprContext *ctx) { copyFrom(ctx); }
 
 
-std::any ToyCParser::IdExprContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any ToyCParser::FunctionCallContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
-    return parserVisitor->visitIdExpr(this);
+    return parserVisitor->visitFunctionCall(this);
+  else
+    return visitor->visitChildren(this);
+}
+//----------------- NumberLiteralContext ------------------------------------------------------------------
+
+tree::TerminalNode* ToyCParser::NumberLiteralContext::NUMBER() {
+  return getToken(ToyCParser::NUMBER, 0);
+}
+
+ToyCParser::NumberLiteralContext::NumberLiteralContext(PrimaryExprContext *ctx) { copyFrom(ctx); }
+
+
+std::any ToyCParser::NumberLiteralContext::accept(tree::ParseTreeVisitor *visitor) {
+  if (auto parserVisitor = dynamic_cast<ToyCVisitor*>(visitor))
+    return parserVisitor->visitNumberLiteral(this);
   else
     return visitor->visitChildren(this);
 }
@@ -1598,66 +1833,66 @@ ToyCParser::PrimaryExprContext* ToyCParser::primaryExpr() {
     exitRule();
   });
   try {
-    setState(163);
+    setState(181);
     _errHandler->sync(this);
     switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 14, _ctx)) {
     case 1: {
-      _localctx = _tracker.createInstance<ToyCParser::IdExprContext>(_localctx);
+      _localctx = _tracker.createInstance<ToyCParser::IdentifierContext>(_localctx);
       enterOuterAlt(_localctx, 1);
-      setState(144);
+      setState(162);
       match(ToyCParser::ID);
       break;
     }
 
     case 2: {
-      _localctx = _tracker.createInstance<ToyCParser::NumExprContext>(_localctx);
+      _localctx = _tracker.createInstance<ToyCParser::NumberLiteralContext>(_localctx);
       enterOuterAlt(_localctx, 2);
-      setState(145);
+      setState(163);
       match(ToyCParser::NUMBER);
       break;
     }
 
     case 3: {
-      _localctx = _tracker.createInstance<ToyCParser::ParenExprContext>(_localctx);
+      _localctx = _tracker.createInstance<ToyCParser::ParenthesizedExprContext>(_localctx);
       enterOuterAlt(_localctx, 3);
-      setState(146);
+      setState(164);
       match(ToyCParser::LPAREN);
-      setState(147);
+      setState(165);
       expr();
-      setState(148);
+      setState(166);
       match(ToyCParser::RPAREN);
       break;
     }
 
     case 4: {
-      _localctx = _tracker.createInstance<ToyCParser::CallExprContext>(_localctx);
+      _localctx = _tracker.createInstance<ToyCParser::FunctionCallContext>(_localctx);
       enterOuterAlt(_localctx, 4);
-      setState(150);
+      setState(168);
       match(ToyCParser::ID);
-      setState(151);
+      setState(169);
       match(ToyCParser::LPAREN);
-      setState(160);
+      setState(178);
       _errHandler->sync(this);
 
       _la = _input->LA(1);
       if ((((_la & ~ 0x3fULL) == 0) &&
-        ((1ULL << _la) & 67182080) != 0)) {
-        setState(152);
+        ((1ULL << _la) & 3292921856) != 0)) {
+        setState(170);
         expr();
-        setState(157);
+        setState(175);
         _errHandler->sync(this);
         _la = _input->LA(1);
         while (_la == ToyCParser::COMMA) {
-          setState(153);
+          setState(171);
           match(ToyCParser::COMMA);
-          setState(154);
+          setState(172);
           expr();
-          setState(159);
+          setState(177);
           _errHandler->sync(this);
           _la = _input->LA(1);
         }
       }
-      setState(162);
+      setState(180);
       match(ToyCParser::RPAREN);
       break;
     }
@@ -1674,6 +1909,70 @@ ToyCParser::PrimaryExprContext* ToyCParser::primaryExpr() {
   }
 
   return _localctx;
+}
+
+bool ToyCParser::sempred(RuleContext *context, size_t ruleIndex, size_t predicateIndex) {
+  switch (ruleIndex) {
+    case 6: return lOrExprSempred(antlrcpp::downCast<LOrExprContext *>(context), predicateIndex);
+    case 7: return lAndExprSempred(antlrcpp::downCast<LAndExprContext *>(context), predicateIndex);
+    case 8: return relExprSempred(antlrcpp::downCast<RelExprContext *>(context), predicateIndex);
+    case 9: return addExprSempred(antlrcpp::downCast<AddExprContext *>(context), predicateIndex);
+    case 10: return mulExprSempred(antlrcpp::downCast<MulExprContext *>(context), predicateIndex);
+
+  default:
+    break;
+  }
+  return true;
+}
+
+bool ToyCParser::lOrExprSempred(LOrExprContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 0: return precpred(_ctx, 1);
+
+  default:
+    break;
+  }
+  return true;
+}
+
+bool ToyCParser::lAndExprSempred(LAndExprContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 1: return precpred(_ctx, 1);
+
+  default:
+    break;
+  }
+  return true;
+}
+
+bool ToyCParser::relExprSempred(RelExprContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 2: return precpred(_ctx, 1);
+
+  default:
+    break;
+  }
+  return true;
+}
+
+bool ToyCParser::addExprSempred(AddExprContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 3: return precpred(_ctx, 1);
+
+  default:
+    break;
+  }
+  return true;
+}
+
+bool ToyCParser::mulExprSempred(MulExprContext *_localctx, size_t predicateIndex) {
+  switch (predicateIndex) {
+    case 4: return precpred(_ctx, 1);
+
+  default:
+    break;
+  }
+  return true;
 }
 
 void ToyCParser::initialize() {

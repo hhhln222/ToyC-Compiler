@@ -13,10 +13,11 @@ class  ToyCLexer : public antlr4::Lexer {
 public:
   enum {
     INT = 1, VOID = 2, IF = 3, ELSE = 4, WHILE = 5, BREAK = 6, CONTINUE = 7, 
-    RETURN = 8, ID = 9, NUMBER = 10, PLUS = 11, MINUS = 12, MUL = 13, DIV = 14, 
-    MOD = 15, NOT = 16, ASSIGN = 17, LT = 18, GT = 19, LE = 20, GE = 21, 
-    EQ = 22, NE = 23, AND = 24, OR = 25, LPAREN = 26, RPAREN = 27, LBRACE = 28, 
-    RBRACE = 29, COMMA = 30, SEMI = 31, WS = 32
+    RETURN = 8, OR = 9, AND = 10, LT = 11, GT = 12, LE = 13, GE = 14, EQ = 15, 
+    NE = 16, ADD = 17, SUB = 18, MUL = 19, DIV = 20, MOD = 21, NOT = 22, 
+    ASSIGN = 23, SEMI = 24, COMMA = 25, LPAREN = 26, RPAREN = 27, LBRACE = 28, 
+    RBRACE = 29, ID = 30, NUMBER = 31, LINE_COMMENT = 32, COMMENT = 33, 
+    WS = 34
   };
 
   explicit ToyCLexer(antlr4::CharStream *input);

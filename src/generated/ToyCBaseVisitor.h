@@ -27,10 +27,6 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitBlock(ToyCParser::BlockContext *ctx) override {
-    return visitChildren(ctx);
-  }
-
   virtual std::any visitBlockStmt(ToyCParser::BlockStmtContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -71,47 +67,75 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitBlock(ToyCParser::BlockContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitExpr(ToyCParser::ExprContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitLOrExpr(ToyCParser::LOrExprContext *ctx) override {
+  virtual std::any visitMulLOrExpr(ToyCParser::MulLOrExprContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitLAndExpr(ToyCParser::LAndExprContext *ctx) override {
+  virtual std::any visitSingleLOr(ToyCParser::SingleLOrContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitRelExpr(ToyCParser::RelExprContext *ctx) override {
+  virtual std::any visitSingleLAnd(ToyCParser::SingleLAndContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitAddExpr(ToyCParser::AddExprContext *ctx) override {
+  virtual std::any visitMulLAndExpr(ToyCParser::MulLAndExprContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitMulExpr(ToyCParser::MulExprContext *ctx) override {
+  virtual std::any visitSingleRel(ToyCParser::SingleRelContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitUnaryExpr(ToyCParser::UnaryExprContext *ctx) override {
+  virtual std::any visitMulRelExpr(ToyCParser::MulRelExprContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitIdExpr(ToyCParser::IdExprContext *ctx) override {
+  virtual std::any visitMulAddExpr(ToyCParser::MulAddExprContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitNumExpr(ToyCParser::NumExprContext *ctx) override {
+  virtual std::any visitSingleAdd(ToyCParser::SingleAddContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitParenExpr(ToyCParser::ParenExprContext *ctx) override {
+  virtual std::any visitSingleMul(ToyCParser::SingleMulContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual std::any visitCallExpr(ToyCParser::CallExprContext *ctx) override {
+  virtual std::any visitMulMulExpr(ToyCParser::MulMulExprContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitSingleUnary(ToyCParser::SingleUnaryContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitMulUnaryOp(ToyCParser::MulUnaryOpContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitIdentifier(ToyCParser::IdentifierContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitNumberLiteral(ToyCParser::NumberLiteralContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitParenthesizedExpr(ToyCParser::ParenthesizedExprContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitFunctionCall(ToyCParser::FunctionCallContext *ctx) override {
     return visitChildren(ctx);
   }
 
