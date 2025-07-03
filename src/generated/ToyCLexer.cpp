@@ -1,5 +1,5 @@
 
-// Generated from ToyC.g4 by ANTLR 4.12.0
+// Generated from ToyC.g4 by ANTLR 4.13.1
 
 
 #include "ToyCLexer.h"
@@ -42,10 +42,19 @@ struct ToyCLexerStaticData final {
 };
 
 ::antlr4::internal::OnceFlag toyclexerLexerOnceFlag;
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+static thread_local
+#endif
 ToyCLexerStaticData *toyclexerLexerStaticData = nullptr;
 
 void toyclexerLexerInitialize() {
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+  if (toyclexerLexerStaticData != nullptr) {
+    return;
+  }
+#else
   assert(toyclexerLexerStaticData == nullptr);
+#endif
   auto staticData = std::make_unique<ToyCLexerStaticData>(
     std::vector<std::string>{
       "INT", "VOID", "IF", "ELSE", "WHILE", "BREAK", "CONTINUE", "RETURN", 
@@ -199,5 +208,9 @@ const atn::ATN& ToyCLexer::getATN() const {
 
 
 void ToyCLexer::initialize() {
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+  toyclexerLexerInitialize();
+#else
   ::antlr4::internal::call_once(toyclexerLexerOnceFlag, toyclexerLexerInitialize);
+#endif
 }

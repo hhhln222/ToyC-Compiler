@@ -4,25 +4,27 @@
 //安装jdk
 sudo apt-get install openjdk-17-jre-headless
 
+//删除旧版本（可选）
+sudo rm /usr/local/lib/antlr-4.12.0-complete.jar
+
 //安装antlr4
 cd /usr/local/lib
-sudo curl -O https://www.antlr.org/download/antlr-4.12.0-complete.jar
-`wget https://www.antlr.org/download/antlr-4.12.0-complete.jar`
-export CLASSPATH=".:/usr/local/lib/antlr-4.12.0-complete.jar:$CLASSPATH"
+sudo curl -O https://www.antlr.org/download/antlr-4.13.1-complete.jar
 
+export CLASSPATH=".:/usr/local/lib/antlr-4.13.1-complete.jar:$CLASSPATH"
 //配置别名
-alias antlr4='java -jar /usr/local/lib/antlr-4.12.0-complete.jar'
+alias antlr4='java -jar /usr/local/lib/antlr-4.13.1-complete.jar'
 alias grun='java org.antlr.v4.gui.TestRig'
 
 //使 bashrc 生效
 source ./bashrc
 
 //antlr4 4.12.0 C++ 运行时 安装运行时库
-wget https://www.antlr.org/download/antlr4-cpp-runtime-4.12.0-source.zip
-unzip antlr4-cpp-runtime-4.12.0-source.zip -d antlr4-cpp-runtime-4.12.0
+wget https://www.antlr.org/download/antlr4-cpp-runtime-4.13.1-source.zip
+unzip antlr4-cpp-runtime-4.13.1-source.zip -d antlr4-cpp-runtime-4.13.1
 
 //开始编译
-cd antlr4-cpp-runtime-4.12.0/
+cd antlr4-cpp-runtime-4.13.1
 mkdir build && mkdir run && cd build
 cmake .. 
 make install DESTDIR=../run

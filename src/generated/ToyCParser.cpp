@@ -1,5 +1,5 @@
 
-// Generated from ToyC.g4 by ANTLR 4.12.0
+// Generated from ToyC.g4 by ANTLR 4.13.1
 
 
 #include "ToyCVisitor.h"
@@ -37,10 +37,19 @@ struct ToyCParserStaticData final {
 };
 
 ::antlr4::internal::OnceFlag toycParserOnceFlag;
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+static thread_local
+#endif
 ToyCParserStaticData *toycParserStaticData = nullptr;
 
 void toycParserInitialize() {
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+  if (toycParserStaticData != nullptr) {
+    return;
+  }
+#else
   assert(toycParserStaticData == nullptr);
+#endif
   auto staticData = std::make_unique<ToyCParserStaticData>(
     std::vector<std::string>{
       "compUnit", "funcDef", "param", "stmt", "block", "expr", "lOrExpr", 
@@ -1976,5 +1985,9 @@ bool ToyCParser::mulExprSempred(MulExprContext *_localctx, size_t predicateIndex
 }
 
 void ToyCParser::initialize() {
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+  toycParserInitialize();
+#else
   ::antlr4::internal::call_once(toycParserOnceFlag, toycParserInitialize);
+#endif
 }
