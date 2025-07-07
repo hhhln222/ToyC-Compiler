@@ -1,3 +1,94 @@
-int main(){
-    return 0;
+// test.tc
+
+/*
+ * 这是一个多行注释的示例
+ * 包含多个变量、函数、循环和条件语句
+ */
+
+// 全局变量是不允许的，所有变量必须在函数内声明
+// 这是一个简单的 ToyC 程序，用于测试编译器功能
+
+// 定义一个计算阶乘的函数
+int factorial(int n) {
+    if (n < 0) {
+        // 阶乘不支持负数，此处简单返回0
+        return 0;
+    }
+    if (n == 0) {
+        return 1; // 0的阶乘是1
+    }
+    int result = 1; // 局部变量声明和初始化
+    // 计算阶乘的循环
+    while (n > 0) {
+        result = result * n; // 乘法运算
+        n = n - 1;           // 减法运算和赋值
+    }
+    return result; // 返回计算结果
+}
+
+// 定义一个辅助函数，检查一个数是否为偶数
+int isEven(int num) {
+    if (num % 2 == 0) { // 模运算和相等比较
+        return 1; // 1表示真
+    } else {
+        return 0; // 0表示假
+    }
+}
+
+// 主函数，程序的入口点
+int main() {
+    int val1 = 10;
+    int val2 = 3;
+    int sum = val1 + val2; // 加法
+    int diff = val1 - val2; // 减法
+    int prod = val1 * val2; // 乘法
+    int div = val1 / val2;  // 除法
+    int rem = val1 % val2;  // 模
+
+    // 打印一些值（假设我们有打印功能，这里只是为了演示）
+    // print(sum);
+    // print(diff);
+    // print(prod);
+    // print(div);
+    // print(rem);
+
+    // 测试条件语句
+    if (sum > 15 && diff < 10) { // 逻辑与运算
+        int temp = 20;
+        if (temp != prod || isEven(temp) == 1) { // 逻辑或运算，函数调用，不等于比较
+            // 嵌套条件
+            temp = temp + 5;
+        }
+        // print(temp);
+    } else {
+        // print("Condition not met");
+    }
+
+    // 测试循环和break/continue
+    int count = 0;
+    while (count < 50) { // while 循环
+        count = count + 1;
+        if (isEven(count) == 1) {
+            continue; // 如果是偶数，跳过本次循环
+        }
+        if (count == 49) {
+            break; // 如果是49，退出循环
+        }
+        // print(count); // 应该只打印奇数
+    }
+
+    // 调用阶乘函数
+    int fact_5 = factorial(5); // 函数调用
+    int fact_0 = factorial(0);
+    int fact_neg = factorial(-1); // 测试负数输入
+
+    // 另一个表达式
+    int finalResult = (fact_5 + fact_0) / 2 + isEven(fact_neg); // 混合运算和函数调用
+
+    return finalResult; // 主函数返回最终结果
+}
+
+// 这是一个不被调用的函数
+void unusedFunction() {
+    // 这是一个空函数体
 }

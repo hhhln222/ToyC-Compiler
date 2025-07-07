@@ -1,0 +1,30 @@
+// Semantic Error: Function redefinition
+int main() {
+    int x; // Declare x
+    x = 10;
+    return x;
+}
+
+// Semantic Error: Redeclaration of 'main'
+void main() {
+    int y = x; // Semantic Error: Use of undeclared variable 'x' in this scope (or type mismatch if 'x' was global int)
+    int z;
+    z = 20;
+    print(z); // Assuming a 'print' function exists, otherwise it's an undeclared function error
+    another_func(1, 2, 3); // Semantic Error: Too many arguments for 'another_func' (if another_func takes fewer args)
+                           // Or undeclared function if another_func doesn't exist
+}
+
+int another_func(int a, int b) {
+    return a + b;
+}
+
+void test_func() {
+    if (true) {
+        break; // Semantic Error: break statement not within loop
+    }
+}
+
+int my_func() {
+    return; // Semantic Error: non-void function 'my_func' should return a value
+}
