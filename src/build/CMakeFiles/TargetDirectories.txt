@@ -1,0 +1,3 @@
+/home/wink328/toyc/src/build/CMakeFiles/parser_with_ir.dir
+/home/wink328/toyc/src/build/CMakeFiles/edit_cache.dir
+/home/wink328/toyc/src/build/CMakeFiles/rebuild_cache.dir

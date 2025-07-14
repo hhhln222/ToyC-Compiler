@@ -1,477 +1,280 @@
 #include "SemanticAnalyzer.h"
 
-// 报告语义错误
-void SemanticAnalyzer::reportError(const std::string& message, int line) {
-    std::cerr << "Semantic Error (Line " << line << "): " << message << std::endl;
-    errorCount++;
-}
-
-// 在符号表中查找标识符
-SymbolInfo* SemanticAnalyzer::lookupSymbol(const std::string& name) {
-    // 从当前作用域开始，向外层作用域查找
-    for (int i = scopes.size() - 1; i >= 0; --i) {
-        if (scopes[i].count(name)) {
-            return &scopes[i][name];
-        }
-    }
-    return nullptr; // 未找到
+SemanticAnalyzer::SemanticAnalyzer()
+    : errorCount(0), loopDepth(0), currentFunctionReturnType(""),
+      inFunction(false), hasReturnOnAllPaths(false), isMainChecked(false), mainCount(0) {
+    scopes.push_back({});
 }
 
 // 访问编译单元的入口
 std::any SemanticAnalyzer::visitCompUnit(ToyCParser::CompUnitContext *ctx) {
-    // 首先访问所有函数定义，将函数签名添加到全局符号表
+    mainCount = 0;
+    functionTable.clear();
+    functionDefined.clear();
+    isMainChecked = false;
+    // 检查所有函数定义
     for (auto funcDefCtx : ctx->funcDef()) {
         std::string funcName = funcDefCtx->ID()->getText();
-        
-        // 获取函数返回类型：INT 或 VOID
-        std::string returnType = "";
-        if (funcDefCtx->INT() != nullptr) {
-            returnType = funcDefCtx->INT()->getText();
-        } else if (funcDefCtx->VOID() != nullptr) {
-            returnType = funcDefCtx->VOID()->getText();
-        } else {
-            // 如果 grammar 设计良好，这个情况通常不会发生
-            reportError("未知函数返回类型 '" + funcName + "'", funcDefCtx->start->getLine());
-            returnType = "unknown"; 
-        }
-
-        if (scopes[0].count(funcName)) {
-            reportError("函数 '" + funcName + "' 的重定义", funcDefCtx->start->getLine());
+        // 检查函数重名
+        if (functionTable.count(funcName)) {
+            reportError("函数 '" + funcName + "' 重复定义", funcDefCtx->start->getLine());
         } else {
             SymbolInfo funcInfo;
             funcInfo.type = SymbolInfo::FUNCTION;
-            funcInfo.returnType = returnType;
-            // 收集参数类型
+            funcInfo.returnType = funcDefCtx->INT() ? "int" : "void";
             for (auto paramCtx : funcDefCtx->param()) {
-                std::string paramType = "";
-                // 修正：根据编译错误，ParamContext 只有 INT()，没有 VOID()
-                if (paramCtx->INT() != nullptr) {
-                    paramType = paramCtx->INT()->getText();
-                } else {
-                    // 如果不是 INT，则报告错误，因为 VOID() 不存在
-                    reportError("参数类型非预期的类型 for function '" + funcName + "'. 期待 'int'.", paramCtx->start->getLine());
-                    paramType = "unknown"; // 使用一个默认值，防止后续错误
-                }
-                funcInfo.paramTypes.push_back(paramType);
+                funcInfo.paramTypes.push_back("int");
             }
-            scopes[0][funcName] = funcInfo;
+            functionTable[funcName] = funcInfo;
+            functionDefined[funcName] = false;
+        }
+        // 检查main
+        if (funcName == "main") {
+            mainCount++;
+            if (!funcDefCtx->INT() || !funcDefCtx->param().empty()) {
+                reportError("main函数必须为int main()且无参数", funcDefCtx->start->getLine());
+            }
         }
     }
-
-    // 检查 main 函数是否存在及签名
-    if (!scopes[0].count("main")) {
-        reportError("未找到 'main' 函数", ctx->stop->getLine()); 
-    } else {
-        SymbolInfo* mainInfo = &scopes[0]["main"];
-        // 假设 'main' 必须是 'int main()'，没有参数
-        if (mainInfo->type != SymbolInfo::FUNCTION || mainInfo->returnType != "int" || !mainInfo->paramTypes.empty()) {
-            reportError("'main' 函数必须具有签名 'int main()'", ctx->stop->getLine());
-        }
+    if (mainCount != 1) {
+        reportError("必须有且只有一个int main()", ctx->start->getLine());
     }
-
-    // 继续访问所有子节点，包括函数体内的语句
-    return visitChildren(ctx);
+    // 访问所有函数体
+    for (auto funcDefCtx : ctx->funcDef()) {
+        visit(funcDefCtx);
+    }
+    return nullptr;
 }
-// 访问函数定义 (现在处理函数体内部的语义)
-std::any SemanticAnalyzer::visitFuncDef(ToyCParser::FuncDefContext *ctx) {
-    // 确保我们处理的是已经注册在全局符号表中的函数
-    std::string funcName = ctx->ID()->getText();
-    SymbolInfo* funcInfo = lookupSymbol(funcName); // 查找全局符号表中的函数信息
 
-    if (!funcInfo || funcInfo->type != SymbolInfo::FUNCTION) {
-        // 如果这里出现错误，说明 visitCompUnit 中可能漏掉了某些情况，
-        // 或者解析树结构不符合预期。但理论上这里应该能找到。
-        reportError("内部错误：未找到函数 '" + funcName + "' 的定义", ctx->start->getLine());
+// 访问函数定义
+std::any SemanticAnalyzer::visitFuncDef(ToyCParser::FuncDefContext *ctx) {
+    std::string funcName = ctx->ID()->getText();
+    if (inFunction) {
+        reportError("不允许在函数体内声明函数", ctx->start->getLine());
         return nullptr;
     }
-
-    // 存储当前函数的返回类型，用于检查 return 语句
-    std::string returnType = "";
-    if (ctx->INT() != nullptr) {
-        returnType = ctx->INT()->getText();
-    } else if (ctx->VOID() != nullptr) {
-        returnType = ctx->VOID()->getText();
-    }
-    currentFunctionReturnType = returnType;
-
-    // 进入新的作用域 (函数作用域)
-    scopes.push_back({}); 
-
-    // 将参数添加到当前函数作用域
-    for (size_t i = 0; i < ctx->param().size(); ++i) {
-        auto paramCtx = ctx->param(i);
+    inFunction = true;
+    currentFunctionName = funcName;
+    currentFunctionReturnType = ctx->INT() ? "int" : "void";
+    functionDefined[funcName] = true;
+    // 新建作用域
+    scopes.push_back({});
+    // 参数加入作用域
+    for (auto paramCtx : ctx->param()) {
         std::string paramName = paramCtx->ID()->getText();
-        std::string paramType = "";
-
-        if (paramCtx->INT() != nullptr) {
-            paramType = paramCtx->INT()->getText();
-        } else {
-            // 这与 visitCompUnit 中的错误报告一致
-            reportError("参数类型非预期 for parameter '" + paramName + "'. 期待 'int'.", paramCtx->start->getLine());
-            paramType = "unknown";
-        }
-
         if (scopes.back().count(paramName)) {
-            reportError("参数 '" + paramName + "' 的重定义", paramCtx->start->getLine());
+            reportError("参数 '" + paramName + "' 重复定义", paramCtx->start->getLine());
         } else {
             SymbolInfo paramInfo;
             paramInfo.type = SymbolInfo::VARIABLE;
-            paramInfo.varType = paramType;
+            paramInfo.varType = "int";
             scopes.back()[paramName] = paramInfo;
         }
     }
-
-    // 访问函数体
+    // 检查return路径
+    hasReturnOnAllPaths = false;
     visit(ctx->block());
-
-    // 退出当前作用域 (函数作用域)
+    if (currentFunctionReturnType == "int" && !hasReturnOnAllPaths) {
+        reportError("int型函数所有路径必须return int", ctx->start->getLine());
+    }
     scopes.pop_back();
-
-    currentFunctionReturnType = ""; // 重置，防止影响下一个函数
-
-    return nullptr; // 函数定义本身不返回一个值
+    inFunction = false;
+    currentFunctionName = "";
+    currentFunctionReturnType = "";
+    return nullptr;
 }
 
 // 访问变量声明语句
 std::any SemanticAnalyzer::visitDeclStmt(ToyCParser::DeclStmtContext *ctx) {
     std::string varName = ctx->ID()->getText();
-    std::string varType = "";
-
-    // 获取变量类型：INT
-    if (ctx->INT() != nullptr) {
-        varType = ctx->INT()->getText();
-    } else {
-        reportError("未知变量类型 for '" + varName + "'. 期待 'int'.", ctx->start->getLine());
-        varType = "unknown";
-    }
-
-    // 检查当前作用域中是否已存在同名变量
     if (scopes.back().count(varName)) {
-        reportError("变量 '" + varName + "' 的重定义", ctx->start->getLine());
-    } else {
-        SymbolInfo varInfo;
-        varInfo.type = SymbolInfo::VARIABLE;
-        varInfo.varType = varType;
-        scopes.back()[varName] = varInfo; // 将变量添加到当前作用域
+        reportError("变量 '" + varName + "' 重复声明", ctx->start->getLine());
     }
-
-    // 如果有初始化表达式
-    if (ctx->expr() != nullptr) {
-        std::any exprType = visit(ctx->expr()); // 访问表达式获取其类型
-        if (exprType.has_value() && std::any_cast<std::string>(exprType) != varType) {
-            reportError("变量 '" + varName + "' 初始化类型不匹配. 期待 '" + varType + "'", ctx->expr()->start->getLine());
-        }
+    if (!ctx->expr()) {
+        reportError("变量声明必须初始化", ctx->start->getLine());
     }
-
-    return nullptr; // 声明语句本身不返回一个值
-}
-
-// 访问参数 (因为在 visitFuncDef 中已经处理了，这里可以简单地访问子节点)
-std::any SemanticAnalyzer::visitParam(ToyCParser::ParamContext *ctx) {
-    return visitChildren(ctx);
+    SymbolInfo varInfo;
+    varInfo.type = SymbolInfo::VARIABLE;
+    varInfo.varType = "int";
+    scopes.back()[varName] = varInfo;
+    visit(ctx->expr());
+    return nullptr;
 }
 
 // 访问赋值语句
 std::any SemanticAnalyzer::visitAssignStmt(ToyCParser::AssignStmtContext *ctx) {
     std::string varName = ctx->ID()->getText();
     SymbolInfo* symbol = lookupSymbol(varName);
-
     if (!symbol) {
-        reportError("Undeclared variable '" + varName + "'", ctx->start->getLine());
-        return {};
+        reportError("变量 '" + varName + "' 未声明", ctx->start->getLine());
     }
-    if (symbol->type != SymbolInfo::VARIABLE) {
-        reportError("Cannot assign to non-variable identifier '" + varName + "'", ctx->start->getLine());
-        return {};
+    // 检查右值类型
+    std::string exprType = getExprType(ctx->expr());
+    if (exprType == "void") {
+        reportError("不能将void型函数调用作为赋值右值", ctx->start->getLine());
     }
-
-    // 检查赋值表达式的类型
-    std::any exprResult = visit(ctx->expr());
-    if (exprResult.has_value()) {
-        std::string exprType = std::any_cast<std::string>(exprResult);
-        // 在ToyC中，假定所有变量都是int，所以赋值表达式也必须是int
-        if (exprType != symbol->varType) {
-            reportError("Type mismatch in assignment to '" + varName + "'. Expected '" + symbol->varType + "', got '" + exprType + "'", ctx->start->getLine());
-        }
-    }
-    return {};
+    return nullptr;
 }
 
-// 访问 if 语句
+// 访问if语句
 std::any SemanticAnalyzer::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
-    std::any condResult = visit(ctx->expr());
-    if (condResult.has_value()) {
-        std::string condType = std::any_cast<std::string>(condResult);
-        if (condType != "int") { // 条件表达式必须是int类型
-            reportError("Condition in 'if' statement must be an integer expression, got '" + condType + "'", ctx->start->getLine());
-        }
+    std::string condType = getExprType(ctx->expr());
+    if (condType == "void") {
+        reportError("if条件不能为void型函数调用", ctx->start->getLine());
     }
-    return visitChildren(ctx);
+    visit(ctx->stmt(0));
+    if (ctx->stmt().size() > 1) {
+        visit(ctx->stmt(1));
+    }
+    return nullptr;
 }
 
-// 访问 while 循环语句
+// 访问while语句
 std::any SemanticAnalyzer::visitWhileStmt(ToyCParser::WhileStmtContext *ctx) {
-    std::any condResult = visit(ctx->expr());
-    if (condResult.has_value()) {
-        std::string condType = std::any_cast<std::string>(condResult);
-        if (condType != "int") { // 循环条件必须是int类型
-            reportError("Condition in 'while' statement must be an integer expression, got '" + condType + "'", ctx->start->getLine());
-        }
+    std::string condType = getExprType(ctx->expr());
+    if (condType == "void") {
+        reportError("while条件不能为void型函数调用", ctx->start->getLine());
     }
-    loopDepth++; // 增加循环嵌套深度
-    std::any result = visitChildren(ctx);
-    loopDepth--; // 减少循环嵌套深度
-    return result;
+    loopDepth++;
+    visit(ctx->stmt());
+    loopDepth--;
+    return nullptr;
 }
 
-// 访问 break 语句
+// 访问break语句
 std::any SemanticAnalyzer::visitBreakStmt(ToyCParser::BreakStmtContext *ctx) {
     if (loopDepth == 0) {
-        reportError("'break' statement used outside of a loop", ctx->start->getLine());
+        reportError("break只能出现在循环中", ctx->start->getLine());
     }
-    return visitChildren(ctx);
+    return nullptr;
 }
 
-// 访问 continue 语句
+// 访问continue语句
 std::any SemanticAnalyzer::visitContinueStmt(ToyCParser::ContinueStmtContext *ctx) {
     if (loopDepth == 0) {
-        reportError("'continue' statement used outside of a loop", ctx->start->getLine());
+        reportError("continue只能出现在循环中", ctx->start->getLine());
     }
-    return visitChildren(ctx);
+    return nullptr;
 }
 
-// 访问 return 语句
+// 访问return语句
 std::any SemanticAnalyzer::visitReturnStmt(ToyCParser::ReturnStmtContext *ctx) {
-    if (ctx->expr() != nullptr) { // 有返回表达式
-        std::any exprResult = visit(ctx->expr());
-        if (exprResult.has_value()) {
-            std::string actualReturnType = std::any_cast<std::string>(exprResult);
-            if (currentFunctionReturnType == "void") {
-                reportError("Void function returns a value", ctx->start->getLine());
-            } else if (actualReturnType != currentFunctionReturnType) {
-                reportError("Return type mismatch. Expected '" + currentFunctionReturnType + "', got '" + actualReturnType + "'", ctx->start->getLine());
+    if (currentFunctionReturnType == "int") {
+        if (!ctx->expr()) {
+            reportError("int型函数return必须有返回值", ctx->start->getLine());
+        } else {
+            std::string retType = getExprType(ctx->expr());
+            if (retType != "int") {
+                reportError("int型函数return必须返回int", ctx->start->getLine());
             }
         }
-    } else { // 没有返回表达式 (return;)
-        if (currentFunctionReturnType != "void") {
-            reportError("Non-void function missing return value", ctx->start->getLine());
+        hasReturnOnAllPaths = true;
+    } else if (currentFunctionReturnType == "void") {
+        if (ctx->expr()) {
+            reportError("void型函数return不能有返回值", ctx->start->getLine());
         }
     }
+    return nullptr;
+}
+
+// 访问表达式
+std::any SemanticAnalyzer::visitExpr(ToyCParser::ExprContext *ctx) {
     return visitChildren(ctx);
 }
 
-// 访问表达式 (ExprContext是所有表达式的父规则，需要向下转型到具体类型)
-std::any SemanticAnalyzer::visitExpr(ToyCParser::ExprContext *ctx) {
-    // 对于ToyC，所有的表达式结果类型都认为是int
-    // 实际的类型检查发生在具体的算术/逻辑/关系表达式的visit方法中
-    // 这里简单地递归访问子表达式
-    if (ctx->lOrExpr() != nullptr) {
-        return visit(ctx->lOrExpr());
-    }
-    return std::any(std::string("int")); // 默认所有表达式都是int类型
-}
-
-// 访问标识符（例如变量使用）
+// 访问标识符
 std::any SemanticAnalyzer::visitIdentifier(ToyCParser::IdentifierContext *ctx) {
-    std::string name = ctx->ID()->getText();
-    SymbolInfo* symbolInfo = lookupSymbol(name);
-
-    int line = ctx->start->getLine();
-
-    ToyCParser::FunctionCallContext* funcCallCtx = dynamic_cast<ToyCParser::FunctionCallContext*>(ctx->parent);
-    if (funcCallCtx != nullptr) {
-        // 这个标识符是函数调用的一部分
-        if (!symbolInfo || symbolInfo->type != SymbolInfo::FUNCTION) {
-            reportError("Undeclared function '" + name + "' or not a function", line);
-            return std::any(std::string("unknown")); // 返回 unknown 类型
-        }
-
-        // 参数数量检查 (可以在这里进行，也可以在 visitFunctionCall 中更详细地处理)
-        // 确保funcCallCtx->expr()能够正确获取到参数表达式
-        if (funcCallCtx->expr().size() != symbolInfo->paramTypes.size()) {
-            reportError("Function '" + name + "' called with incorrect number of arguments", line);
-            // 仍然返回函数预期返回类型，以便后续分析继续
-            return std::any(symbolInfo->returnType);
-        }
-        return std::any(symbolInfo->returnType);
-    } else {
-        // 检查是否是变量使用
-        if (!symbolInfo || symbolInfo->type != SymbolInfo::VARIABLE) {
-            reportError("Undeclared variable '" + name + "' or not a variable", line);
-            return std::any(std::string("unknown")); // 返回 unknown 类型
-        }
-        // 返回变量类型
-        return std::any(symbolInfo->varType);
+    std::string varName = ctx->ID()->getText();
+    SymbolInfo* symbol = lookupSymbol(varName);
+    if (!symbol) {
+        reportError("变量 '" + varName + "' 未声明", ctx->start->getLine());
     }
+    return nullptr;
 }
+
 // 访问数字字面量
 std::any SemanticAnalyzer::visitNumberLiteral(ToyCParser::NumberLiteralContext *ctx) {
-    return std::any(std::string("int")); // 所有数字都是int
+    return nullptr;
 }
 
-// ... 你还需要实现所有其他 visit* 方法，例如：
-
-std::any SemanticAnalyzer::visitMulAddExpr(ToyCParser::MulAddExprContext *ctx) {
-    // 假设左右操作数都是int，结果也是int
-    std::any leftType = visit(ctx->addExpr());
-    std::any rightType = visit(ctx->mulExpr());
-
-    if (leftType.has_value() && rightType.has_value()) {
-        std::string lt = std::any_cast<std::string>(leftType);
-        std::string rt = std::any_cast<std::string>(rightType);
-        if (lt != "int" || rt != "int") {
-            reportError("Arithmetic operations require integer operands", ctx->start->getLine());
-            return std::any(std::string("unknown"));
-        }
-    } else {
-        return std::any(std::string("unknown")); // 子表达式有错误
-    }
-    return std::any(std::string("int")); // 返回结果类型
-}
-
-// 对于那些只包含一个子表达式的规则 (例如 single* 规则)，直接访问子节点
-std::any SemanticAnalyzer::visitSingleAdd(ToyCParser::SingleAddContext *ctx) {
-    return visit(ctx->mulExpr());
-}
-std::any SemanticAnalyzer::visitSingleMul(ToyCParser::SingleMulContext *ctx) {
-    return visit(ctx->unaryExpr());
-}
-std::any SemanticAnalyzer::visitSingleUnary(ToyCParser::SingleUnaryContext *ctx) {
-    return visit(ctx->primaryExpr());
-}
-std::any SemanticAnalyzer::visitSingleRel(ToyCParser::SingleRelContext *ctx) {
-    return visit(ctx->addExpr());
-}
-std::any SemanticAnalyzer::visitSingleLAnd(ToyCParser::SingleLAndContext *ctx) {
-    return visit(ctx->relExpr());
-}
-std::any SemanticAnalyzer::visitSingleLOr(ToyCParser::SingleLOrContext *ctx) {
-    return visit(ctx->lAndExpr());
-}
-// 对于其他复合表达式，例如 MulRelExpr, MulLAndExpr, MulLOrExpr
-std::any SemanticAnalyzer::visitMulRelExpr(ToyCParser::MulRelExprContext *ctx) {
-    // 关系运算符 (>, <, ==, !=等)
-    std::any leftType = visit(ctx->relExpr());
-    std::any rightType = visit(ctx->addExpr());
-    if (leftType.has_value() && rightType.has_value()) {
-        std::string lt = std::any_cast<std::string>(leftType);
-        std::string rt = std::any_cast<std::string>(rightType);
-        if (lt != "int" || rt != "int") {
-            reportError("Relational operations require integer operands", ctx->start->getLine());
-            return std::any(std::string("unknown"));
-        }
-    } else {
-        return std::any(std::string("unknown"));
-    }
-    return std::any(std::string("int")); // 关系操作结果在ToyC中视为int (0或1)
-}
-
-std::any SemanticAnalyzer::visitMulMulExpr(ToyCParser::MulMulExprContext *ctx) {
-    std::any leftType = visit(ctx->mulExpr());
-    std::any rightType = visit(ctx->unaryExpr());
-    if (leftType.has_value() && rightType.has_value()) {
-        std::string lt = std::any_cast<std::string>(leftType);
-        std::string rt = std::any_cast<std::string>(rightType);
-        if (lt != "int" || rt != "int") {
-            reportError("Multiplicative operations require integer operands", ctx->start->getLine());
-            return std::any(std::string("unknown"));
-        }
-    } else {
-        return std::any(std::string("unknown"));
-    }
-    return std::any(std::string("int"));
-}
-
-std::any SemanticAnalyzer::visitMulUnaryOp(ToyCParser::MulUnaryOpContext *ctx) {
-    std::any operandType = visit(ctx->unaryExpr());
-    if (operandType.has_value()) {
-        std::string ot = std::any_cast<std::string>(operandType);
-        if (ot != "int") {
-            reportError("Unary operations (+, -, !) require integer operands", ctx->start->getLine());
-            return std::any(std::string("unknown"));
-        }
-    } else {
-        return std::any(std::string("unknown"));
-    }
-    return std::any(std::string("int"));
-}
-
-
-std::any SemanticAnalyzer::visitMulLAndExpr(ToyCParser::MulLAndExprContext *ctx) {
-    std::any leftType = visit(ctx->lAndExpr());
-    std::any rightType = visit(ctx->relExpr());
-    if (leftType.has_value() && rightType.has_value()) {
-        std::string lt = std::any_cast<std::string>(leftType);
-        std::string rt = std::any_cast<std::string>(rightType);
-        if (lt != "int" || rt != "int") {
-            reportError("Logical AND operations require integer operands", ctx->start->getLine());
-            return std::any(std::string("unknown"));
-        }
-    } else {
-        return std::any(std::string("unknown"));
-    }
-    return std::any(std::string("int"));
-}
-
-std::any SemanticAnalyzer::visitMulLOrExpr(ToyCParser::MulLOrExprContext *ctx) {
-    std::any leftType = visit(ctx->lOrExpr());
-    std::any rightType = visit(ctx->lAndExpr());
-    if (leftType.has_value() && rightType.has_value()) {
-        std::string lt = std::any_cast<std::string>(leftType);
-        std::string rt = std::any_cast<std::string>(rightType);
-        if (lt != "int" || rt != "int") {
-            reportError("Logical OR operations require integer operands", ctx->start->getLine());
-            return std::any(std::string("unknown"));
-        }
-    } else {
-        return std::any(std::string("unknown"));
-    }
-    return std::any(std::string("int"));
-}
-
-// 访问 Block (块语句)
-std::any SemanticAnalyzer::visitBlock(ToyCParser::BlockContext *ctx) {
-    return visitChildren(ctx); // 简单地访问所有子语句
-}
-// 访问其他不涉及特定语义检查的语句，直接访问其子节点
 std::any SemanticAnalyzer::visitBlockStmt(ToyCParser::BlockStmtContext *ctx) {
-    return visitChildren(ctx);
+    scopes.push_back({});
+    visit(ctx->block());
+    scopes.pop_back();
+    return nullptr;
 }
-std::any SemanticAnalyzer::visitEmptyStmt(ToyCParser::EmptyStmtContext *ctx) {
-    return visitChildren(ctx);
+std::any SemanticAnalyzer::visitEmptyStmt(ToyCParser::EmptyStmtContext *ctx) { return nullptr; }
+std::any SemanticAnalyzer::visitExprStmt(ToyCParser::ExprStmtContext *ctx) { return visit(ctx->expr()); }
+std::any SemanticAnalyzer::visitParam(ToyCParser::ParamContext *ctx) { return nullptr; }
+std::any SemanticAnalyzer::visitBlock(ToyCParser::BlockContext *ctx) {
+    for (auto stmt : ctx->stmt()) visit(stmt);
+    return nullptr;
 }
-std::any SemanticAnalyzer::visitExprStmt(ToyCParser::ExprStmtContext *ctx) {
-    return visitChildren(ctx);
-}
-
-// 对于PrimaryExpr的不同上下文，例如括号内的表达式
-std::any SemanticAnalyzer::visitParenthesizedExpr(ToyCParser::ParenthesizedExprContext *ctx) {
-    return visit(ctx->expr());
-}
-// 对于FunctionCall，部分处理在visitIdentifier中，这里可以补充参数类型检查
-std::any SemanticAnalyzer::visitFunctionCall(ToyCParser::FunctionCallContext *ctx) {
+// 其他表达式类型直接visitChildren
+std::any SemanticAnalyzer::visitMulAddExpr(ToyCParser::MulAddExprContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitSingleAdd(ToyCParser::SingleAddContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitSingleMul(ToyCParser::SingleMulContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitSingleUnary(ToyCParser::SingleUnaryContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitSingleRel(ToyCParser::SingleRelContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitSingleLAnd(ToyCParser::SingleLAndContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitSingleLOr(ToyCParser::SingleLOrContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitMulRelExpr(ToyCParser::MulRelExprContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitMulMulExpr(ToyCParser::MulMulExprContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitMulUnaryOp(ToyCParser::MulUnaryOpContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitMulLAndExpr(ToyCParser::MulLAndExprContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitMulLOrExpr(ToyCParser::MulLOrExprContext *ctx) { return visitChildren(ctx); }
+std::any SemanticAnalyzer::visitParenthesizedExpr(ToyCParser::ParenthesizedExprContext *ctx) { return visit(ctx->expr()); }
+std::any SemanticAnalyzer::visitFunctionCall(ToyCParser::FunctionCallContext *ctx) { 
     std::string funcName = ctx->ID()->getText();
-    SymbolInfo* funcInfo = lookupSymbol(funcName);
-
-    if (!funcInfo || funcInfo->type != SymbolInfo::FUNCTION) {
-        // 错误已经在 visitIdentifier 中报告，这里可能不需要重复
-        return std::any(std::string("unknown"));
+    if (!functionTable.count(funcName)) {
+        reportError("函数 '" + funcName + "' 未声明", ctx->start->getLine());
+        return "int";
     }
-
-    // 检查参数数量
-    if (ctx->expr().size() != funcInfo->paramTypes.size()) {
-        // 错误已经在 visitIdentifier 中报告
+    if (!functionDefined[funcName]) {
+        reportError("函数 '" + funcName + "' 必须先声明后调用", ctx->start->getLine());
     }
+    return functionTable[funcName].returnType;
+}
 
-    // 逐个检查参数类型
-    for (size_t i = 0; i < ctx->expr().size() && i < funcInfo->paramTypes.size(); ++i) {
-        std::any actualParamType = visit(ctx->expr(i));
-        if (actualParamType.has_value()) {
-            std::string apt = std::any_cast<std::string>(actualParamType);
-            if (apt != funcInfo->paramTypes[i]) { // 假定都是int
-                reportError("Type mismatch for argument " + std::to_string(i+1) + " in call to '" + funcName + "'. Expected '" + funcInfo->paramTypes[i] + "', got '" + apt + "'", ctx->start->getLine());
-            }
+// 辅助函数：查找变量
+SymbolInfo* SemanticAnalyzer::lookupSymbol(const std::string& name) {
+    for (int i = scopes.size() - 1; i >= 0; --i) {
+        if (scopes[i].count(name)) {
+            return &scopes[i][name];
         }
     }
-    return std::any(funcInfo->returnType);
+    return nullptr;
+}
+
+// 报告语义错误
+void SemanticAnalyzer::reportError(const std::string& message, int line) {
+    std::cerr << "Semantic Error (Line " << line << "): " << message << std::endl;
+    errorCount++;
+}
+
+// 获取表达式类型
+std::string SemanticAnalyzer::getExprType(antlr4::ParserRuleContext* ctx) {
+    // 只处理函数调用和字面量、变量
+    if (auto call = dynamic_cast<ToyCParser::FunctionCallContext*>(ctx)) {
+        std::string funcName = call->ID()->getText();
+        if (functionTable.count(funcName)) {
+            return functionTable[funcName].returnType;
+        }
+        return "int";
+    }
+    if (auto id = dynamic_cast<ToyCParser::IdentifierContext*>(ctx)) {
+        return "int";
+    }
+    if (auto num = dynamic_cast<ToyCParser::NumberLiteralContext*>(ctx)) {
+        return "int";
+    }
+    // 递归处理子节点
+    for (size_t i = 0; i < ctx->children.size(); ++i) {
+        auto child = dynamic_cast<antlr4::ParserRuleContext*>(ctx->children[i]);
+        if (child) {
+            std::string t = getExprType(child);
+            if (t == "void") return "void";
+        }
+    }
+    return "int";
 }

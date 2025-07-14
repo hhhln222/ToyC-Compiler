@@ -10,8 +10,9 @@ using namespace antlr4;
 #include "ToyCLexer.h"
 #include "ToyCParser.h"
 
-// 你的语义分析器头文件
+// 语义分析器和IR生成器头文件
 #include "SemanticAnalyzer.h"
+#include "IRGenerator.h"
 
 int main(int argc, const char* argv[]) {
     if (argc < 2) {
@@ -21,11 +22,25 @@ int main(int argc, const char* argv[]) {
 
     std::string inputFile = argv[1];
 
+    // 打开输出文件并重定向cout和cerr
+    std::ofstream outFile("output.txt");
+    if (!outFile.is_open()) {
+        std::cerr << "Error: Could not open output.txt for writing." << std::endl;
+        return 1;
+    }
+    std::streambuf* coutBuf = std::cout.rdbuf();
+    std::streambuf* cerrBuf = std::cerr.rdbuf();
+    std::cout.rdbuf(outFile.rdbuf());
+    std::cerr.rdbuf(outFile.rdbuf());
+
     // 1. 创建输入流
     std::ifstream stream;
     stream.open(inputFile);
     if (!stream.is_open()) {
         std::cerr << "Error: Could not open input file " << inputFile << std::endl;
+        // 恢复输出
+        std::cout.rdbuf(coutBuf);
+        std::cerr.rdbuf(cerrBuf);
         return 1;
     }
     ANTLRInputStream input(stream);
@@ -37,24 +52,34 @@ int main(int argc, const char* argv[]) {
     // 3. 创建语法分析器 (Parser)
     ToyCParser parser(&tokens);
 
-    // 移除默认错误监听器，如果你想完全自定义错误输出
-    // parser.removeErrorListeners();
-    // lexer.removeErrorListeners();
-
     // 4. 调用起始规则获取解析树
     ToyCParser::CompUnitContext* tree = parser.compUnit();
 
     // 5. 进行语义分析
     SemanticAnalyzer analyzer;
-    analyzer.visit(tree); // 启动访问者模式，遍历解析树并进行语义检查
+    analyzer.visit(tree);
 
     // 6. 报告语义分析结果
-    if (analyzer.getErrorCount() == 0) {
-        std::cout << "Semantic analysis completed successfully with no errors." << std::endl;
-    } else {
+    if (analyzer.getErrorCount() > 0) {
         std::cout << "Semantic analysis completed with " << analyzer.getErrorCount() << " errors." << std::endl;
+        // 恢复输出
+        std::cout.rdbuf(coutBuf);
+        std::cerr.rdbuf(cerrBuf);
         return 2; // 标记有语义错误
     }
+    
+    std::cout << "Semantic analysis completed successfully with no errors." << std::endl;
 
+    // 7. 生成IR代码
+    std::cout << "\n=== Generating IR Code ===" << std::endl;
+    IRGenerator irGenerator;
+    irGenerator.visit(tree);
+
+    // 8. 打印生成的IR代码
+    irGenerator.printIR();
+
+    // 恢复输出
+    std::cout.rdbuf(coutBuf);
+    std::cerr.rdbuf(cerrBuf);
     return 0;
-}
+} 
