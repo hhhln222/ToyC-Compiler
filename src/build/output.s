@@ -1,8 +1,3 @@
-Semantic analysis completed successfully with no errors.
-
-=== Generating IR Code ===
-
-=== Generating RISC-V Assembly ===
 .global main
 factorial:
 addi sp, sp, -24
@@ -78,4 +73,3 @@ lw s0, 12(sp)
 lw ra, 16(sp)
 addi sp, sp, 20
 ret
-

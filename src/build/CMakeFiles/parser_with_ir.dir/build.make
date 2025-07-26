@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/wink328/toyc/src
+CMAKE_SOURCE_DIR = /home/zwh/toyc_compiler/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/wink328/toyc/src/build
+CMAKE_BINARY_DIR = /home/zwh/toyc_compiler/src/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/parser_with_ir.dir/depend.make
@@ -70,74 +70,102 @@ include CMakeFiles/parser_with_ir.dir/progress.make
 include CMakeFiles/parser_with_ir.dir/flags.make
 
 CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o: CMakeFiles/parser_with_ir.dir/flags.make
-CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o: /home/wink328/toyc/src/generated/main_with_ir.cpp
+CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o: /home/zwh/toyc_compiler/src/generated/main_with_ir.cpp
 CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o: CMakeFiles/parser_with_ir.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/wink328/toyc/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o -c /home/wink328/toyc/src/generated/main_with_ir.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zwh/toyc_compiler/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o -c /home/zwh/toyc_compiler/src/generated/main_with_ir.cpp
 
 CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/wink328/toyc/src/generated/main_with_ir.cpp > CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zwh/toyc_compiler/src/generated/main_with_ir.cpp > CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.i
 
 CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/wink328/toyc/src/generated/main_with_ir.cpp -o CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zwh/toyc_compiler/src/generated/main_with_ir.cpp -o CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.s
 
 CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o: CMakeFiles/parser_with_ir.dir/flags.make
-CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o: /home/wink328/toyc/src/generated/ToyCLexer.cpp
+CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o: /home/zwh/toyc_compiler/src/generated/ToyCLexer.cpp
 CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o: CMakeFiles/parser_with_ir.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/wink328/toyc/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o -c /home/wink328/toyc/src/generated/ToyCLexer.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zwh/toyc_compiler/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o -c /home/zwh/toyc_compiler/src/generated/ToyCLexer.cpp
 
 CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/wink328/toyc/src/generated/ToyCLexer.cpp > CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zwh/toyc_compiler/src/generated/ToyCLexer.cpp > CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.i
 
 CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/wink328/toyc/src/generated/ToyCLexer.cpp -o CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zwh/toyc_compiler/src/generated/ToyCLexer.cpp -o CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.s
 
 CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o: CMakeFiles/parser_with_ir.dir/flags.make
-CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o: /home/wink328/toyc/src/generated/ToyCParser.cpp
+CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o: /home/zwh/toyc_compiler/src/generated/ToyCParser.cpp
 CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o: CMakeFiles/parser_with_ir.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/wink328/toyc/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o -c /home/wink328/toyc/src/generated/ToyCParser.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zwh/toyc_compiler/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o -c /home/zwh/toyc_compiler/src/generated/ToyCParser.cpp
 
 CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/wink328/toyc/src/generated/ToyCParser.cpp > CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zwh/toyc_compiler/src/generated/ToyCParser.cpp > CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.i
 
 CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/wink328/toyc/src/generated/ToyCParser.cpp -o CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zwh/toyc_compiler/src/generated/ToyCParser.cpp -o CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.s
 
 CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o: CMakeFiles/parser_with_ir.dir/flags.make
-CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o: /home/wink328/toyc/src/generated/SemanticAnalyzer.cpp
+CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o: /home/zwh/toyc_compiler/src/generated/SemanticAnalyzer.cpp
 CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o: CMakeFiles/parser_with_ir.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/wink328/toyc/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o -c /home/wink328/toyc/src/generated/SemanticAnalyzer.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zwh/toyc_compiler/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o -c /home/zwh/toyc_compiler/src/generated/SemanticAnalyzer.cpp
 
 CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/wink328/toyc/src/generated/SemanticAnalyzer.cpp > CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zwh/toyc_compiler/src/generated/SemanticAnalyzer.cpp > CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.i
 
 CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/wink328/toyc/src/generated/SemanticAnalyzer.cpp -o CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zwh/toyc_compiler/src/generated/SemanticAnalyzer.cpp -o CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.s
 
 CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o: CMakeFiles/parser_with_ir.dir/flags.make
-CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o: /home/wink328/toyc/src/generated/IRGenerator.cpp
+CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o: /home/zwh/toyc_compiler/src/generated/IRGenerator.cpp
 CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o: CMakeFiles/parser_with_ir.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/wink328/toyc/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o -c /home/wink328/toyc/src/generated/IRGenerator.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zwh/toyc_compiler/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o -c /home/zwh/toyc_compiler/src/generated/IRGenerator.cpp
 
 CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/wink328/toyc/src/generated/IRGenerator.cpp > CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zwh/toyc_compiler/src/generated/IRGenerator.cpp > CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.i
 
 CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/wink328/toyc/src/generated/IRGenerator.cpp -o CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zwh/toyc_compiler/src/generated/IRGenerator.cpp -o CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.s
+
+CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o: CMakeFiles/parser_with_ir.dir/flags.make
+CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o: /home/zwh/toyc_compiler/src/generated/codegenerator.cpp
+CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o: CMakeFiles/parser_with_ir.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zwh/toyc_compiler/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o -c /home/zwh/toyc_compiler/src/generated/codegenerator.cpp
+
+CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zwh/toyc_compiler/src/generated/codegenerator.cpp > CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.i
+
+CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zwh/toyc_compiler/src/generated/codegenerator.cpp -o CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.s
+
+CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o: CMakeFiles/parser_with_ir.dir/flags.make
+CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o: /home/zwh/toyc_compiler/src/generated/utils.cpp
+CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o: CMakeFiles/parser_with_ir.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/zwh/toyc_compiler/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o -MF CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o.d -o CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o -c /home/zwh/toyc_compiler/src/generated/utils.cpp
+
+CMakeFiles/parser_with_ir.dir/generated/utils.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/parser_with_ir.dir/generated/utils.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/zwh/toyc_compiler/src/generated/utils.cpp > CMakeFiles/parser_with_ir.dir/generated/utils.cpp.i
+
+CMakeFiles/parser_with_ir.dir/generated/utils.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/parser_with_ir.dir/generated/utils.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/zwh/toyc_compiler/src/generated/utils.cpp -o CMakeFiles/parser_with_ir.dir/generated/utils.cpp.s
 
 # Object files for target parser_with_ir
 parser_with_ir_OBJECTS = \
@@ -145,7 +173,9 @@ parser_with_ir_OBJECTS = \
 "CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o" \
 "CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o" \
 "CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o" \
-"CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o"
+"CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o" \
+"CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o" \
+"CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o"
 
 # External object files for target parser_with_ir
 parser_with_ir_EXTERNAL_OBJECTS =
@@ -155,9 +185,11 @@ parser_with_ir: CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o
 parser_with_ir: CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o
 parser_with_ir: CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o
 parser_with_ir: CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o
+parser_with_ir: CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o
+parser_with_ir: CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o
 parser_with_ir: CMakeFiles/parser_with_ir.dir/build.make
 parser_with_ir: CMakeFiles/parser_with_ir.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/wink328/toyc/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable parser_with_ir"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/zwh/toyc_compiler/src/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking CXX executable parser_with_ir"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/parser_with_ir.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -169,6 +201,6 @@ CMakeFiles/parser_with_ir.dir/clean:
 .PHONY : CMakeFiles/parser_with_ir.dir/clean
 
 CMakeFiles/parser_with_ir.dir/depend:
-	cd /home/wink328/toyc/src/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/wink328/toyc/src /home/wink328/toyc/src /home/wink328/toyc/src/build /home/wink328/toyc/src/build /home/wink328/toyc/src/build/CMakeFiles/parser_with_ir.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/zwh/toyc_compiler/src/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/zwh/toyc_compiler/src /home/zwh/toyc_compiler/src /home/zwh/toyc_compiler/src/build /home/zwh/toyc_compiler/src/build /home/zwh/toyc_compiler/src/build/CMakeFiles/parser_with_ir.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/parser_with_ir.dir/depend
 

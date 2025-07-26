@@ -13,7 +13,7 @@ using namespace antlr4;
 // 语义分析器和IR生成器头文件
 #include "SemanticAnalyzer.h"
 #include "IRGenerator.h"
-
+#include "codegenerator.h"
 int main(int argc, const char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <input_file>" << std::endl;
@@ -76,10 +76,25 @@ int main(int argc, const char* argv[]) {
     irGenerator.visit(tree);
 
     // 8. 打印生成的IR代码
-    irGenerator.printIR();
+    // std::cout << "\n=== Generating RISC-V Assembly ===" << std::endl;
+    // 8. 生成目标代码
+ std::cout << "\n=== Generating RISC-V Assembly ===" << std::endl;
+    CodeGenerator codeGen;
+    codeGen.generate(irGenerator.getFunctions());
+    std::string assemblyCode = codeGen.getAssemblyCode();
+    std::cout << assemblyCode << std::endl;
+
+    // 8. 将汇编代码写入文件
+    std::ofstream asmFile("output.s");
+    asmFile << assemblyCode;
+    asmFile.close();
 
     // 恢复输出
     std::cout.rdbuf(coutBuf);
     std::cerr.rdbuf(cerrBuf);
+
+    // 9. 调用汇编器和模拟器
+    system("riscv32-unknown-elf-gcc -o output output.s");
+    system("spike pk output");
     return 0;
 } 

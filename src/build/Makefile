@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/wink328/toyc/src
+CMAKE_SOURCE_DIR = /home/zwh/toyc_compiler/src
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/wink328/toyc/src/build
+CMAKE_BINARY_DIR = /home/zwh/toyc_compiler/src/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/wink328/toyc/src/build/CMakeFiles /home/wink328/toyc/src/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/zwh/toyc_compiler/src/build/CMakeFiles /home/zwh/toyc_compiler/src/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/wink328/toyc/src/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/zwh/toyc_compiler/src/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -225,6 +225,30 @@ generated/ToyCParser.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/parser_with_ir.dir/build.make CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.s
 .PHONY : generated/ToyCParser.cpp.s
 
+generated/codegenerator.o: generated/codegenerator.cpp.o
+.PHONY : generated/codegenerator.o
+
+# target to build an object file
+generated/codegenerator.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/parser_with_ir.dir/build.make CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o
+.PHONY : generated/codegenerator.cpp.o
+
+generated/codegenerator.i: generated/codegenerator.cpp.i
+.PHONY : generated/codegenerator.i
+
+# target to preprocess a source file
+generated/codegenerator.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/parser_with_ir.dir/build.make CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.i
+.PHONY : generated/codegenerator.cpp.i
+
+generated/codegenerator.s: generated/codegenerator.cpp.s
+.PHONY : generated/codegenerator.s
+
+# target to generate assembly for a file
+generated/codegenerator.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/parser_with_ir.dir/build.make CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.s
+.PHONY : generated/codegenerator.cpp.s
+
 generated/main_with_ir.o: generated/main_with_ir.cpp.o
 .PHONY : generated/main_with_ir.o
 
@@ -249,6 +273,30 @@ generated/main_with_ir.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/parser_with_ir.dir/build.make CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.s
 .PHONY : generated/main_with_ir.cpp.s
 
+generated/utils.o: generated/utils.cpp.o
+.PHONY : generated/utils.o
+
+# target to build an object file
+generated/utils.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/parser_with_ir.dir/build.make CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o
+.PHONY : generated/utils.cpp.o
+
+generated/utils.i: generated/utils.cpp.i
+.PHONY : generated/utils.i
+
+# target to preprocess a source file
+generated/utils.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/parser_with_ir.dir/build.make CMakeFiles/parser_with_ir.dir/generated/utils.cpp.i
+.PHONY : generated/utils.cpp.i
+
+generated/utils.s: generated/utils.cpp.s
+.PHONY : generated/utils.s
+
+# target to generate assembly for a file
+generated/utils.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/parser_with_ir.dir/build.make CMakeFiles/parser_with_ir.dir/generated/utils.cpp.s
+.PHONY : generated/utils.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -270,9 +318,15 @@ help:
 	@echo "... generated/ToyCParser.o"
 	@echo "... generated/ToyCParser.i"
 	@echo "... generated/ToyCParser.s"
+	@echo "... generated/codegenerator.o"
+	@echo "... generated/codegenerator.i"
+	@echo "... generated/codegenerator.s"
 	@echo "... generated/main_with_ir.o"
 	@echo "... generated/main_with_ir.i"
 	@echo "... generated/main_with_ir.s"
+	@echo "... generated/utils.o"
+	@echo "... generated/utils.i"
+	@echo "... generated/utils.s"
 .PHONY : help
 
 

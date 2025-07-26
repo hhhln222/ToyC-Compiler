@@ -1,7 +1,7 @@
 CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o: \
- /home/wink328/toyc/src/generated/IRGenerator.cpp \
+ /home/zwh/toyc_compiler/src/generated/IRGenerator.cpp \
  /usr/include/stdc-predef.h \
- /home/wink328/toyc/src/generated/IRGenerator.h \
+ /home/zwh/toyc_compiler/src/generated/IRGenerator.h \
  /usr/local/include/antlr4-runtime.h /usr/local/include/antlr4-common.h \
  /usr/include/c++/13/algorithm /usr/include/c++/13/bits/stl_algobase.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -359,6 +359,6 @@ CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o: \
  /usr/local/include/tree/xpath/XPathTokenElement.h \
  /usr/local/include/tree/xpath/XPathWildcardAnywhereElement.h \
  /usr/local/include/tree/xpath/XPathWildcardElement.h \
- /home/wink328/toyc/src/generated/ToyCBaseVisitor.h \
- /home/wink328/toyc/src/generated/ToyCVisitor.h \
- /home/wink328/toyc/src/generated/ToyCParser.h
+ /home/zwh/toyc_compiler/src/generated/ToyCBaseVisitor.h \
+ /home/zwh/toyc_compiler/src/generated/ToyCVisitor.h \
+ /home/zwh/toyc_compiler/src/generated/ToyCParser.h
