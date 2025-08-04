@@ -1,3 +1,0 @@
-/home/wink328/plc_lab/ToyC-Compiler/src/build/CMakeFiles/parser_with_ir.dir
-/home/wink328/plc_lab/ToyC-Compiler/src/build/CMakeFiles/edit_cache.dir
-/home/wink328/plc_lab/ToyC-Compiler/src/build/CMakeFiles/rebuild_cache.dir
