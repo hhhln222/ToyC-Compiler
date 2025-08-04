@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 class CodeGenerator {
 public:
@@ -16,6 +17,8 @@ private:
     RegisterAllocator regAlloc;
     int stackOffset;
     std::map<std::string, int> varStackMap; // 变量栈偏移映射
+    std::set<std::string> usedLabels; // 已使用的标签集合
+    std::map<std::string, std::string> labelMap; // IR标签到汇编标签的映射
 
     // 生成函数框架
     void emitPrologue(const std::string& funcName, int frameSize);
@@ -36,4 +39,9 @@ private:
     // 辅助方法
     std::string getRegOrLoad(const std::shared_ptr<Operand>& op);
     void storeIfTemp(const std::shared_ptr<Operand>& op, const std::string& reg);
+    
+    // 标签管理
+    std::string generateValidLabel(const std::string& irLabel);
+    std::string sanitizeLabel(const std::string& label);
+    bool isValidLabel(const std::string& label);
 };
