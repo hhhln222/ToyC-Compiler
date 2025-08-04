@@ -1,6 +1,7 @@
 CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o: \
- /home/zwh/toyc_compiler/src/generated/utils.cpp \
- /usr/include/stdc-predef.h /home/zwh/toyc_compiler/src/generated/utils.h \
+ /home/wink328/plc_lab/ToyC-Compiler/src/generated/utils.cpp \
+ /usr/include/stdc-predef.h \
+ /home/wink328/plc_lab/ToyC-Compiler/src/generated/utils.h \
  /usr/include/c++/13/string /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \

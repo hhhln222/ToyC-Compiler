@@ -1,4 +1,4 @@
-# Install script for directory: /home/zwh/toyc_compiler/src
+# Install script for directory: /home/wink328/plc_lab/ToyC-Compiler/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/zwh/toyc_compiler/src/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/wink328/plc_lab/ToyC-Compiler/src/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

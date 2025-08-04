@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 
 // ANTLR 运行时头文件
 #include "antlr4-runtime.h"
@@ -14,36 +15,20 @@ using namespace antlr4;
 #include "SemanticAnalyzer.h"
 #include "IRGenerator.h"
 #include "codegenerator.h"
+
 int main(int argc, const char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <input_file>" << std::endl;
-        return 1;
+    // 从标准输入读取源代码
+    std::stringstream sourceCode;
+    std::string line;
+    
+    // 读取所有输入行
+    while (std::getline(std::cin, line)) {
+        sourceCode << line << "\n";
     }
-
-    std::string inputFile = argv[1];
-
-    // 打开输出文件并重定向cout和cerr
-    std::ofstream outFile("output.txt");
-    if (!outFile.is_open()) {
-        std::cerr << "Error: Could not open output.txt for writing." << std::endl;
-        return 1;
-    }
-    std::streambuf* coutBuf = std::cout.rdbuf();
-    std::streambuf* cerrBuf = std::cerr.rdbuf();
-    std::cout.rdbuf(outFile.rdbuf());
-    std::cerr.rdbuf(outFile.rdbuf());
-
-    // 1. 创建输入流
-    std::ifstream stream;
-    stream.open(inputFile);
-    if (!stream.is_open()) {
-        std::cerr << "Error: Could not open input file " << inputFile << std::endl;
-        // 恢复输出
-        std::cout.rdbuf(coutBuf);
-        std::cerr.rdbuf(cerrBuf);
-        return 1;
-    }
-    ANTLRInputStream input(stream);
+    
+    // 创建ANTLR输入流
+    std::string inputString = sourceCode.str();
+    ANTLRInputStream input(inputString);
 
     // 2. 创建词法分析器 (Lexer)
     ToyCLexer lexer(&input);
@@ -59,42 +44,23 @@ int main(int argc, const char* argv[]) {
     SemanticAnalyzer analyzer;
     analyzer.visit(tree);
 
-    // 6. 报告语义分析结果
+    // 6. 检查语义分析结果
     if (analyzer.getErrorCount() > 0) {
-        std::cout << "Semantic analysis completed with " << analyzer.getErrorCount() << " errors." << std::endl;
-        // 恢复输出
-        std::cout.rdbuf(coutBuf);
-        std::cerr.rdbuf(cerrBuf);
+        std::cerr << "Semantic analysis completed with " << analyzer.getErrorCount() << " errors." << std::endl;
         return 2; // 标记有语义错误
     }
-    
-    std::cout << "Semantic analysis completed successfully with no errors." << std::endl;
 
     // 7. 生成IR代码
-    std::cout << "\n=== Generating IR Code ===" << std::endl;
     IRGenerator irGenerator;
     irGenerator.visit(tree);
 
-    // 8. 打印生成的IR代码
-    // std::cout << "\n=== Generating RISC-V Assembly ===" << std::endl;
     // 8. 生成目标代码
- std::cout << "\n=== Generating RISC-V Assembly ===" << std::endl;
     CodeGenerator codeGen;
     codeGen.generate(irGenerator.getFunctions());
     std::string assemblyCode = codeGen.getAssemblyCode();
-    std::cout << assemblyCode << std::endl;
-
-    // 8. 将汇编代码写入文件
-    std::ofstream asmFile("output.s");
-    asmFile << assemblyCode;
-    asmFile.close();
-
-    // 恢复输出
-    std::cout.rdbuf(coutBuf);
-    std::cerr.rdbuf(cerrBuf);
-
-    // 9. 调用汇编器和模拟器
-    system("riscv32-unknown-elf-gcc -o output output.s");
-    system("spike pk output");
+    
+    // 9. 向标准输出写入汇编代码
+    std::cout << assemblyCode;
+    
     return 0;
 } 

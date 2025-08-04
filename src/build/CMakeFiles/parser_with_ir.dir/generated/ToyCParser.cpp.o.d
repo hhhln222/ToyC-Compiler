@@ -1,7 +1,7 @@
 CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o: \
- /home/zwh/toyc_compiler/src/generated/ToyCParser.cpp \
+ /home/wink328/plc_lab/ToyC-Compiler/src/generated/ToyCParser.cpp \
  /usr/include/stdc-predef.h \
- /home/zwh/toyc_compiler/src/generated/ToyCVisitor.h \
+ /home/wink328/plc_lab/ToyC-Compiler/src/generated/ToyCVisitor.h \
  /usr/local/include/antlr4-runtime.h /usr/local/include/antlr4-common.h \
  /usr/include/c++/13/algorithm /usr/include/c++/13/bits/stl_algobase.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -359,4 +359,4 @@ CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o: \
  /usr/local/include/tree/xpath/XPathTokenElement.h \
  /usr/local/include/tree/xpath/XPathWildcardAnywhereElement.h \
  /usr/local/include/tree/xpath/XPathWildcardElement.h \
- /home/zwh/toyc_compiler/src/generated/ToyCParser.h
+ /home/wink328/plc_lab/ToyC-Compiler/src/generated/ToyCParser.h

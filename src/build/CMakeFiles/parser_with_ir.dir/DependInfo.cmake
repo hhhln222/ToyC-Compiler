@@ -8,13 +8,13 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/zwh/toyc_compiler/src/generated/IRGenerator.cpp" "CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o.d"
-  "/home/zwh/toyc_compiler/src/generated/SemanticAnalyzer.cpp" "CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o.d"
-  "/home/zwh/toyc_compiler/src/generated/ToyCLexer.cpp" "CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o.d"
-  "/home/zwh/toyc_compiler/src/generated/ToyCParser.cpp" "CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o.d"
-  "/home/zwh/toyc_compiler/src/generated/codegenerator.cpp" "CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o.d"
-  "/home/zwh/toyc_compiler/src/generated/main_with_ir.cpp" "CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o.d"
-  "/home/zwh/toyc_compiler/src/generated/utils.cpp" "CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o.d"
+  "/home/wink328/plc_lab/ToyC-Compiler/src/generated/IRGenerator.cpp" "CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/IRGenerator.cpp.o.d"
+  "/home/wink328/plc_lab/ToyC-Compiler/src/generated/SemanticAnalyzer.cpp" "CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/SemanticAnalyzer.cpp.o.d"
+  "/home/wink328/plc_lab/ToyC-Compiler/src/generated/ToyCLexer.cpp" "CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o.d"
+  "/home/wink328/plc_lab/ToyC-Compiler/src/generated/ToyCParser.cpp" "CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/ToyCParser.cpp.o.d"
+  "/home/wink328/plc_lab/ToyC-Compiler/src/generated/codegenerator.cpp" "CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/codegenerator.cpp.o.d"
+  "/home/wink328/plc_lab/ToyC-Compiler/src/generated/main_with_ir.cpp" "CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/main_with_ir.cpp.o.d"
+  "/home/wink328/plc_lab/ToyC-Compiler/src/generated/utils.cpp" "CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o" "gcc" "CMakeFiles/parser_with_ir.dir/generated/utils.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

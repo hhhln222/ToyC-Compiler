@@ -1,7 +1,7 @@
 CMakeFiles/parser_with_ir.dir/generated/ToyCLexer.cpp.o: \
- /home/zwh/toyc_compiler/src/generated/ToyCLexer.cpp \
+ /home/wink328/plc_lab/ToyC-Compiler/src/generated/ToyCLexer.cpp \
  /usr/include/stdc-predef.h \
- /home/zwh/toyc_compiler/src/generated/ToyCLexer.h \
+ /home/wink328/plc_lab/ToyC-Compiler/src/generated/ToyCLexer.h \
  /usr/local/include/antlr4-runtime.h /usr/local/include/antlr4-common.h \
  /usr/include/c++/13/algorithm /usr/include/c++/13/bits/stl_algobase.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
