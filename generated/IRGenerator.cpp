@@ -105,6 +105,7 @@ std::any IRGenerator::visitAssignStmt(ToyCParser::AssignStmtContext *ctx) {
 
 // 访问if语句
 std::any IRGenerator::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
+    std::string thenLabel = generateLabel();
     std::string elseLabel = generateLabel();
     std::string endLabel = generateLabel();
     
@@ -113,8 +114,14 @@ std::any IRGenerator::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
         
-        // 如果条件为假，跳转到else部分
-        addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, elseLabel));
+        // 如果条件为真，跳转到then部分
+        addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, thenLabel));
+        
+        // 否则跳转到else部分
+        addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, elseLabel));
+        
+        // then部分标签
+        addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, thenLabel));
         
         // 访问then部分
         visit(ctx->stmt(0));
@@ -122,7 +129,7 @@ std::any IRGenerator::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
         // 跳转到结束
         addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
         
-        // else标签
+        // else部分标签
         addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, elseLabel));
         
         // 如果有else部分
@@ -140,6 +147,7 @@ std::any IRGenerator::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
 // 访问while语句
 std::any IRGenerator::visitWhileStmt(ToyCParser::WhileStmtContext *ctx) {
     std::string loopLabel = generateLabel();
+    std::string bodyLabel = generateLabel();
     std::string endLabel = generateLabel();
     
     // 循环开始标签
@@ -150,8 +158,14 @@ std::any IRGenerator::visitWhileStmt(ToyCParser::WhileStmtContext *ctx) {
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
         
-        // 如果条件为假，跳转到结束
-        addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, endLabel));
+        // 如果条件为真，跳转到循环体
+        addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, bodyLabel));
+        
+        // 否则跳转到结束
+        addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
+        
+        // 循环体标签
+        addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, bodyLabel));
         
         // 访问循环体
         visit(ctx->stmt());
