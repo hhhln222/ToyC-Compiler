@@ -69,6 +69,11 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
 std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
     if (!op) return "";
     
+    if (op->type != OperandType::CONSTANT && 
+        regAlloc.isInReg(op->toString())) {
+        return regAlloc.allocateReg(op->toString());
+    }
+
     std::string reg;
     if (op->type == OperandType::CONSTANT) {
         reg = regAlloc.allocateReg("const_" + op->value);
@@ -300,7 +305,7 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
     }
     
     storeIfTemp(inst.result, rd);
-    regAlloc.freeReg(inst.arg1->toString());
-    regAlloc.freeReg(inst.arg2->toString());
+    // regAlloc.freeReg(inst.arg1->toString());
+    // regAlloc.freeReg(inst.arg2->toString());
     regAlloc.freeReg(inst.result->toString());
 }
