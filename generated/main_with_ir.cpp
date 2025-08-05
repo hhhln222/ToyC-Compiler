@@ -53,6 +53,7 @@ int main(int argc, const char* argv[]) {
     // 7. 生成IR代码
     IRGenerator irGenerator;
     irGenerator.visit(tree);
+    irGenerator.printIR(); // 输出IR到output.txt
 
     // 8. 生成目标代码
     CodeGenerator codeGen;

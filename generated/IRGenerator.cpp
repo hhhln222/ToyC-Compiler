@@ -1,5 +1,7 @@
 #include "IRGenerator.h"
 #include <sstream>
+#include <fstream>
+#include <iostream>
 
 // 辅助方法实现
 std::string IRGenerator::generateTemp() {
@@ -21,24 +23,30 @@ std::shared_ptr<Operand> IRGenerator::createOperand(const std::string& value, Op
 }
 
 // 打印IR代码
-void IRGenerator::printIR() const {
+void IRGenerator::printIR(const std::string& outputFile) const {
+    std::ofstream out(outputFile);
+    if (!out.is_open()) {
+        std::cerr << "无法打开文件: " << outputFile << std::endl;
+        return;
+    }
     for (const auto& func : functions) {
-        std::cout << "\n=== Function: " << func.name << " ===" << std::endl;
-        std::cout << "Return type: " << func.returnType << std::endl;
+        out << "\n=== Function: " << func.name << " ===" << std::endl;
+        out << "Return type: " << func.returnType << std::endl;
         if (!func.params.empty()) {
-            std::cout << "Parameters: ";
+            out << "Parameters: ";
             for (size_t i = 0; i < func.params.size(); ++i) {
-                if (i > 0) std::cout << ", ";
-                std::cout << func.params[i];
+                if (i > 0) out << ", ";
+                out << func.params[i];
             }
-            std::cout << std::endl;
+            out << std::endl;
         }
-        std::cout << "Instructions:" << std::endl;
+        out << "Instructions:" << std::endl;
         
         for (size_t i = 0; i < func.instructions.size(); ++i) {
-            std::cout << "  " << i << ": " << func.instructions[i].toString() << std::endl;
+            out << "  " << i << ": " << func.instructions[i].toString() << std::endl;
         }
     }
+    out.close();
 }
 
 // 访问编译单元

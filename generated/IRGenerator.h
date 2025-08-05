@@ -150,7 +150,7 @@ public:
     std::vector<FunctionInfo> getFunctions() const { return functions; }
     
     // 打印IR代码
-    void printIR() const;
+    void printIR(const std::string& outputFile = "output.txt") const;
     
     // --- 访问方法重写 ---
     
