@@ -15,7 +15,7 @@ stmt: block                             # BlockStmt
     | WHILE LPAREN expr RPAREN stmt     # WhileStmt
     | BREAK SEMI                        # BreakStmt
     | CONTINUE SEMI                     # ContinueStmt
-    | RETURN expr SEMI                  # ReturnStmt
+    | RETURN expr? SEMI                  # ReturnStmt
     ;
 
 block: LBRACE stmt* RBRACE;
