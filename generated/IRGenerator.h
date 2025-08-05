@@ -219,6 +219,14 @@ private:
     int tempCounter;                               // 临时变量计数器
     int labelCounter;                              // 标签计数器
     
+    // 循环标签栈，用于处理break和continue语句
+    struct LoopLabels {
+        std::string loopLabel;    // 循环开始标签
+        std::string bodyLabel;    // 循环体标签  
+        std::string endLabel;     // 循环结束标签
+    };
+    std::vector<LoopLabels> loopStack;            // 循环标签栈
+    
     // 辅助方法
     std::string generateTemp();                    // 生成临时变量名
     std::string generateLabel();                   // 生成标签名

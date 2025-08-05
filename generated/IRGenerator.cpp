@@ -113,40 +113,87 @@ std::any IRGenerator::visitAssignStmt(ToyCParser::AssignStmtContext *ctx) {
 
 // 访问if语句
 std::any IRGenerator::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
-    std::string thenLabel = generateLabel();
-    std::string elseLabel = generateLabel();
-    std::string endLabel = generateLabel();
-    
     // 计算条件表达式
     auto condResult = visit(ctx->expr());
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
         
-        // 如果条件为真，跳转到then部分
-        addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, thenLabel));
-        
-        // 否则跳转到else部分
-        addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, elseLabel));
-        
-        // then部分标签
-        addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, thenLabel));
-        
-        // 访问then部分
-        visit(ctx->stmt(0));
-        
-        // 跳转到结束
-        addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
-        
-        // else部分标签
-        addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, elseLabel));
-        
-        // 如果有else部分
         if (ctx->stmt().size() > 1) {
+            // 有else部分的if语句
+            std::string thenLabel = generateLabel();
+            std::string elseLabel = generateLabel();
+            std::string endLabel = generateLabel();
+            
+            // 如果条件为真，跳转到then部分
+            addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, thenLabel));
+            
+            // 否则跳转到else部分
+            addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, elseLabel));
+            
+            // then部分标签
+            addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, thenLabel));
+            
+            // 访问then部分
+            visit(ctx->stmt(0));
+            
+            // 检查then部分是否以跳转指令结束
+            bool thenEndsWithJump = false;
+            if (!currentFunction->instructions.empty()) {
+                auto& lastInstruction = currentFunction->instructions.back();
+                if (lastInstruction.opcode == IROpcode::GOTO || 
+                    lastInstruction.opcode == IROpcode::IF_GOTO ||
+                    lastInstruction.opcode == IROpcode::RETURN) {
+                    thenEndsWithJump = true;
+                }
+            }
+            
+            // 只有当then部分不以跳转结束时，才添加跳转到endLabel
+            if (!thenEndsWithJump) {
+                addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
+            }
+            
+            // else部分标签
+            addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, elseLabel));
             visit(ctx->stmt(1));
+            
+            // 结束标签
+            addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, endLabel));
+        } else {
+            // 没有else部分的if语句 - 使用更简单的结构
+            std::string thenLabel = generateLabel();
+            std::string endLabel = generateLabel();
+            
+            // 如果条件为真，跳转到then部分
+            addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, thenLabel));
+            
+            // 否则跳转到结束
+            addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
+            
+            // then部分标签
+            addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, thenLabel));
+            
+            // 访问then部分
+            visit(ctx->stmt(0));
+            
+            // 检查then部分是否以跳转指令结束
+            bool thenEndsWithJump = false;
+            if (!currentFunction->instructions.empty()) {
+                auto& lastInstruction = currentFunction->instructions.back();
+                if (lastInstruction.opcode == IROpcode::GOTO || 
+                    lastInstruction.opcode == IROpcode::IF_GOTO ||
+                    lastInstruction.opcode == IROpcode::RETURN) {
+                    thenEndsWithJump = true;
+                }
+            }
+            
+            // 只有当then部分不以跳转结束时，才添加跳转到endLabel
+            if (!thenEndsWithJump) {
+                addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
+            }
+            
+            // 结束标签
+            addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, endLabel));
         }
-        
-        // 结束标签
-        addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, endLabel));
     }
     
     return nullptr;
@@ -157,6 +204,9 @@ std::any IRGenerator::visitWhileStmt(ToyCParser::WhileStmtContext *ctx) {
     std::string loopLabel = generateLabel();
     std::string bodyLabel = generateLabel();
     std::string endLabel = generateLabel();
+    
+    // 将循环标签压入栈
+    loopStack.push_back({loopLabel, bodyLabel, endLabel});
     
     // 循环开始标签
     addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, loopLabel));
@@ -184,6 +234,9 @@ std::any IRGenerator::visitWhileStmt(ToyCParser::WhileStmtContext *ctx) {
         // 结束标签
         addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, endLabel));
     }
+    
+    // 弹出循环标签栈
+    loopStack.pop_back();
     
     return nullptr;
 }
@@ -437,12 +490,30 @@ std::any IRGenerator::visitExprStmt(ToyCParser::ExprStmtContext *ctx) {
 }
 
 std::any IRGenerator::visitBreakStmt(ToyCParser::BreakStmtContext *ctx) {
-    // TODO: 实现break语句的IR生成
+    // 检查是否在循环中
+    if (loopStack.empty()) {
+        std::cerr << "错误: break语句不在循环中" << std::endl;
+        return nullptr;
+    }
+    
+    // 跳转到当前循环的结束标签
+    std::string endLabel = loopStack.back().endLabel;
+    addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
+    
     return nullptr;
 }
 
 std::any IRGenerator::visitContinueStmt(ToyCParser::ContinueStmtContext *ctx) {
-    // TODO: 实现continue语句的IR生成
+    // 检查是否在循环中
+    if (loopStack.empty()) {
+        std::cerr << "错误: continue语句不在循环中" << std::endl;
+        return nullptr;
+    }
+    
+    // 跳转到当前循环的开始标签
+    std::string loopLabel = loopStack.back().loopLabel;
+    addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, loopLabel));
+    
     return nullptr;
 }
 
