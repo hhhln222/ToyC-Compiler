@@ -69,64 +69,65 @@ void toycParserInitialize() {
     }
   );
   static const int32_t serializedATNSegment[] = {
-  	4,1,34,184,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
+  	4,1,34,185,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
   	7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,1,0,4,0,28,8,0,11,
   	0,12,0,29,1,1,1,1,1,1,1,1,1,1,1,1,5,1,38,8,1,10,1,12,1,41,9,1,3,1,43,
   	8,1,1,1,1,1,1,1,1,2,1,2,1,2,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,
   	3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,74,8,3,1,3,1,3,
-  	1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,90,8,3,1,4,1,4,5,
-  	4,94,8,4,10,4,12,4,97,9,4,1,4,1,4,1,5,1,5,1,6,1,6,1,6,1,6,1,6,1,6,5,6,
-  	109,8,6,10,6,12,6,112,9,6,1,7,1,7,1,7,1,7,1,7,1,7,5,7,120,8,7,10,7,12,
-  	7,123,9,7,1,8,1,8,1,8,1,8,1,8,1,8,5,8,131,8,8,10,8,12,8,134,9,8,1,9,1,
-  	9,1,9,1,9,1,9,1,9,5,9,142,8,9,10,9,12,9,145,9,9,1,10,1,10,1,10,1,10,1,
-  	10,1,10,5,10,153,8,10,10,10,12,10,156,9,10,1,11,1,11,1,11,3,11,161,8,
-  	11,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,5,12,174,8,
-  	12,10,12,12,12,177,9,12,3,12,179,8,12,1,12,3,12,182,8,12,1,12,0,5,12,
-  	14,16,18,20,13,0,2,4,6,8,10,12,14,16,18,20,22,24,0,5,1,0,1,2,1,0,11,16,
-  	1,0,17,18,1,0,19,21,2,0,17,18,22,22,195,0,27,1,0,0,0,2,31,1,0,0,0,4,47,
-  	1,0,0,0,6,89,1,0,0,0,8,91,1,0,0,0,10,100,1,0,0,0,12,102,1,0,0,0,14,113,
-  	1,0,0,0,16,124,1,0,0,0,18,135,1,0,0,0,20,146,1,0,0,0,22,160,1,0,0,0,24,
-  	181,1,0,0,0,26,28,3,2,1,0,27,26,1,0,0,0,28,29,1,0,0,0,29,27,1,0,0,0,29,
-  	30,1,0,0,0,30,1,1,0,0,0,31,32,7,0,0,0,32,33,5,30,0,0,33,42,5,26,0,0,34,
-  	39,3,4,2,0,35,36,5,25,0,0,36,38,3,4,2,0,37,35,1,0,0,0,38,41,1,0,0,0,39,
-  	37,1,0,0,0,39,40,1,0,0,0,40,43,1,0,0,0,41,39,1,0,0,0,42,34,1,0,0,0,42,
-  	43,1,0,0,0,43,44,1,0,0,0,44,45,5,27,0,0,45,46,3,8,4,0,46,3,1,0,0,0,47,
-  	48,5,1,0,0,48,49,5,30,0,0,49,5,1,0,0,0,50,90,3,8,4,0,51,90,5,24,0,0,52,
-  	53,3,10,5,0,53,54,5,24,0,0,54,90,1,0,0,0,55,56,5,30,0,0,56,57,5,23,0,
-  	0,57,58,3,10,5,0,58,59,5,24,0,0,59,90,1,0,0,0,60,61,5,1,0,0,61,62,5,30,
-  	0,0,62,63,5,23,0,0,63,64,3,10,5,0,64,65,5,24,0,0,65,90,1,0,0,0,66,67,
-  	5,3,0,0,67,68,5,26,0,0,68,69,3,10,5,0,69,70,5,27,0,0,70,73,3,6,3,0,71,
-  	72,5,4,0,0,72,74,3,6,3,0,73,71,1,0,0,0,73,74,1,0,0,0,74,90,1,0,0,0,75,
-  	76,5,5,0,0,76,77,5,26,0,0,77,78,3,10,5,0,78,79,5,27,0,0,79,80,3,6,3,0,
-  	80,90,1,0,0,0,81,82,5,6,0,0,82,90,5,24,0,0,83,84,5,7,0,0,84,90,5,24,0,
-  	0,85,86,5,8,0,0,86,87,3,10,5,0,87,88,5,24,0,0,88,90,1,0,0,0,89,50,1,0,
-  	0,0,89,51,1,0,0,0,89,52,1,0,0,0,89,55,1,0,0,0,89,60,1,0,0,0,89,66,1,0,
-  	0,0,89,75,1,0,0,0,89,81,1,0,0,0,89,83,1,0,0,0,89,85,1,0,0,0,90,7,1,0,
-  	0,0,91,95,5,28,0,0,92,94,3,6,3,0,93,92,1,0,0,0,94,97,1,0,0,0,95,93,1,
-  	0,0,0,95,96,1,0,0,0,96,98,1,0,0,0,97,95,1,0,0,0,98,99,5,29,0,0,99,9,1,
-  	0,0,0,100,101,3,12,6,0,101,11,1,0,0,0,102,103,6,6,-1,0,103,104,3,14,7,
-  	0,104,110,1,0,0,0,105,106,10,1,0,0,106,107,5,9,0,0,107,109,3,14,7,0,108,
-  	105,1,0,0,0,109,112,1,0,0,0,110,108,1,0,0,0,110,111,1,0,0,0,111,13,1,
-  	0,0,0,112,110,1,0,0,0,113,114,6,7,-1,0,114,115,3,16,8,0,115,121,1,0,0,
-  	0,116,117,10,1,0,0,117,118,5,10,0,0,118,120,3,16,8,0,119,116,1,0,0,0,
-  	120,123,1,0,0,0,121,119,1,0,0,0,121,122,1,0,0,0,122,15,1,0,0,0,123,121,
-  	1,0,0,0,124,125,6,8,-1,0,125,126,3,18,9,0,126,132,1,0,0,0,127,128,10,
-  	1,0,0,128,129,7,1,0,0,129,131,3,18,9,0,130,127,1,0,0,0,131,134,1,0,0,
-  	0,132,130,1,0,0,0,132,133,1,0,0,0,133,17,1,0,0,0,134,132,1,0,0,0,135,
-  	136,6,9,-1,0,136,137,3,20,10,0,137,143,1,0,0,0,138,139,10,1,0,0,139,140,
-  	7,2,0,0,140,142,3,20,10,0,141,138,1,0,0,0,142,145,1,0,0,0,143,141,1,0,
-  	0,0,143,144,1,0,0,0,144,19,1,0,0,0,145,143,1,0,0,0,146,147,6,10,-1,0,
-  	147,148,3,22,11,0,148,154,1,0,0,0,149,150,10,1,0,0,150,151,7,3,0,0,151,
-  	153,3,22,11,0,152,149,1,0,0,0,153,156,1,0,0,0,154,152,1,0,0,0,154,155,
-  	1,0,0,0,155,21,1,0,0,0,156,154,1,0,0,0,157,161,3,24,12,0,158,159,7,4,
-  	0,0,159,161,3,22,11,0,160,157,1,0,0,0,160,158,1,0,0,0,161,23,1,0,0,0,
-  	162,182,5,30,0,0,163,182,5,31,0,0,164,165,5,26,0,0,165,166,3,10,5,0,166,
-  	167,5,27,0,0,167,182,1,0,0,0,168,169,5,30,0,0,169,178,5,26,0,0,170,175,
-  	3,10,5,0,171,172,5,25,0,0,172,174,3,10,5,0,173,171,1,0,0,0,174,177,1,
-  	0,0,0,175,173,1,0,0,0,175,176,1,0,0,0,176,179,1,0,0,0,177,175,1,0,0,0,
-  	178,170,1,0,0,0,178,179,1,0,0,0,179,180,1,0,0,0,180,182,5,27,0,0,181,
-  	162,1,0,0,0,181,163,1,0,0,0,181,164,1,0,0,0,181,168,1,0,0,0,182,25,1,
-  	0,0,0,15,29,39,42,73,89,95,110,121,132,143,154,160,175,178,181
+  	1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,88,8,3,1,3,3,3,91,8,3,1,4,
+  	1,4,5,4,95,8,4,10,4,12,4,98,9,4,1,4,1,4,1,5,1,5,1,6,1,6,1,6,1,6,1,6,1,
+  	6,5,6,110,8,6,10,6,12,6,113,9,6,1,7,1,7,1,7,1,7,1,7,1,7,5,7,121,8,7,10,
+  	7,12,7,124,9,7,1,8,1,8,1,8,1,8,1,8,1,8,5,8,132,8,8,10,8,12,8,135,9,8,
+  	1,9,1,9,1,9,1,9,1,9,1,9,5,9,143,8,9,10,9,12,9,146,9,9,1,10,1,10,1,10,
+  	1,10,1,10,1,10,5,10,154,8,10,10,10,12,10,157,9,10,1,11,1,11,1,11,3,11,
+  	162,8,11,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,1,12,5,12,
+  	175,8,12,10,12,12,12,178,9,12,3,12,180,8,12,1,12,3,12,183,8,12,1,12,0,
+  	5,12,14,16,18,20,13,0,2,4,6,8,10,12,14,16,18,20,22,24,0,5,1,0,1,2,1,0,
+  	11,16,1,0,17,18,1,0,19,21,2,0,17,18,22,22,197,0,27,1,0,0,0,2,31,1,0,0,
+  	0,4,47,1,0,0,0,6,90,1,0,0,0,8,92,1,0,0,0,10,101,1,0,0,0,12,103,1,0,0,
+  	0,14,114,1,0,0,0,16,125,1,0,0,0,18,136,1,0,0,0,20,147,1,0,0,0,22,161,
+  	1,0,0,0,24,182,1,0,0,0,26,28,3,2,1,0,27,26,1,0,0,0,28,29,1,0,0,0,29,27,
+  	1,0,0,0,29,30,1,0,0,0,30,1,1,0,0,0,31,32,7,0,0,0,32,33,5,30,0,0,33,42,
+  	5,26,0,0,34,39,3,4,2,0,35,36,5,25,0,0,36,38,3,4,2,0,37,35,1,0,0,0,38,
+  	41,1,0,0,0,39,37,1,0,0,0,39,40,1,0,0,0,40,43,1,0,0,0,41,39,1,0,0,0,42,
+  	34,1,0,0,0,42,43,1,0,0,0,43,44,1,0,0,0,44,45,5,27,0,0,45,46,3,8,4,0,46,
+  	3,1,0,0,0,47,48,5,1,0,0,48,49,5,30,0,0,49,5,1,0,0,0,50,91,3,8,4,0,51,
+  	91,5,24,0,0,52,53,3,10,5,0,53,54,5,24,0,0,54,91,1,0,0,0,55,56,5,30,0,
+  	0,56,57,5,23,0,0,57,58,3,10,5,0,58,59,5,24,0,0,59,91,1,0,0,0,60,61,5,
+  	1,0,0,61,62,5,30,0,0,62,63,5,23,0,0,63,64,3,10,5,0,64,65,5,24,0,0,65,
+  	91,1,0,0,0,66,67,5,3,0,0,67,68,5,26,0,0,68,69,3,10,5,0,69,70,5,27,0,0,
+  	70,73,3,6,3,0,71,72,5,4,0,0,72,74,3,6,3,0,73,71,1,0,0,0,73,74,1,0,0,0,
+  	74,91,1,0,0,0,75,76,5,5,0,0,76,77,5,26,0,0,77,78,3,10,5,0,78,79,5,27,
+  	0,0,79,80,3,6,3,0,80,91,1,0,0,0,81,82,5,6,0,0,82,91,5,24,0,0,83,84,5,
+  	7,0,0,84,91,5,24,0,0,85,87,5,8,0,0,86,88,3,10,5,0,87,86,1,0,0,0,87,88,
+  	1,0,0,0,88,89,1,0,0,0,89,91,5,24,0,0,90,50,1,0,0,0,90,51,1,0,0,0,90,52,
+  	1,0,0,0,90,55,1,0,0,0,90,60,1,0,0,0,90,66,1,0,0,0,90,75,1,0,0,0,90,81,
+  	1,0,0,0,90,83,1,0,0,0,90,85,1,0,0,0,91,7,1,0,0,0,92,96,5,28,0,0,93,95,
+  	3,6,3,0,94,93,1,0,0,0,95,98,1,0,0,0,96,94,1,0,0,0,96,97,1,0,0,0,97,99,
+  	1,0,0,0,98,96,1,0,0,0,99,100,5,29,0,0,100,9,1,0,0,0,101,102,3,12,6,0,
+  	102,11,1,0,0,0,103,104,6,6,-1,0,104,105,3,14,7,0,105,111,1,0,0,0,106,
+  	107,10,1,0,0,107,108,5,9,0,0,108,110,3,14,7,0,109,106,1,0,0,0,110,113,
+  	1,0,0,0,111,109,1,0,0,0,111,112,1,0,0,0,112,13,1,0,0,0,113,111,1,0,0,
+  	0,114,115,6,7,-1,0,115,116,3,16,8,0,116,122,1,0,0,0,117,118,10,1,0,0,
+  	118,119,5,10,0,0,119,121,3,16,8,0,120,117,1,0,0,0,121,124,1,0,0,0,122,
+  	120,1,0,0,0,122,123,1,0,0,0,123,15,1,0,0,0,124,122,1,0,0,0,125,126,6,
+  	8,-1,0,126,127,3,18,9,0,127,133,1,0,0,0,128,129,10,1,0,0,129,130,7,1,
+  	0,0,130,132,3,18,9,0,131,128,1,0,0,0,132,135,1,0,0,0,133,131,1,0,0,0,
+  	133,134,1,0,0,0,134,17,1,0,0,0,135,133,1,0,0,0,136,137,6,9,-1,0,137,138,
+  	3,20,10,0,138,144,1,0,0,0,139,140,10,1,0,0,140,141,7,2,0,0,141,143,3,
+  	20,10,0,142,139,1,0,0,0,143,146,1,0,0,0,144,142,1,0,0,0,144,145,1,0,0,
+  	0,145,19,1,0,0,0,146,144,1,0,0,0,147,148,6,10,-1,0,148,149,3,22,11,0,
+  	149,155,1,0,0,0,150,151,10,1,0,0,151,152,7,3,0,0,152,154,3,22,11,0,153,
+  	150,1,0,0,0,154,157,1,0,0,0,155,153,1,0,0,0,155,156,1,0,0,0,156,21,1,
+  	0,0,0,157,155,1,0,0,0,158,162,3,24,12,0,159,160,7,4,0,0,160,162,3,22,
+  	11,0,161,158,1,0,0,0,161,159,1,0,0,0,162,23,1,0,0,0,163,183,5,30,0,0,
+  	164,183,5,31,0,0,165,166,5,26,0,0,166,167,3,10,5,0,167,168,5,27,0,0,168,
+  	183,1,0,0,0,169,170,5,30,0,0,170,179,5,26,0,0,171,176,3,10,5,0,172,173,
+  	5,25,0,0,173,175,3,10,5,0,174,172,1,0,0,0,175,178,1,0,0,0,176,174,1,0,
+  	0,0,176,177,1,0,0,0,177,180,1,0,0,0,178,176,1,0,0,0,179,171,1,0,0,0,179,
+  	180,1,0,0,0,180,181,1,0,0,0,181,183,5,27,0,0,182,163,1,0,0,0,182,164,
+  	1,0,0,0,182,165,1,0,0,0,182,169,1,0,0,0,183,25,1,0,0,0,16,29,39,42,73,
+  	87,90,96,111,122,133,144,155,161,176,179,182
   };
   staticData->serializedATN = antlr4::atn::SerializedATNView(serializedATNSegment, sizeof(serializedATNSegment) / sizeof(serializedATNSegment[0]));
 
@@ -653,12 +654,12 @@ tree::TerminalNode* ToyCParser::ReturnStmtContext::RETURN() {
   return getToken(ToyCParser::RETURN, 0);
 }
 
-ToyCParser::ExprContext* ToyCParser::ReturnStmtContext::expr() {
-  return getRuleContext<ToyCParser::ExprContext>(0);
-}
-
 tree::TerminalNode* ToyCParser::ReturnStmtContext::SEMI() {
   return getToken(ToyCParser::SEMI, 0);
+}
+
+ToyCParser::ExprContext* ToyCParser::ReturnStmtContext::expr() {
+  return getRuleContext<ToyCParser::ExprContext>(0);
 }
 
 ToyCParser::ReturnStmtContext::ReturnStmtContext(StmtContext *ctx) { copyFrom(ctx); }
@@ -673,6 +674,7 @@ std::any ToyCParser::ReturnStmtContext::accept(tree::ParseTreeVisitor *visitor) 
 ToyCParser::StmtContext* ToyCParser::stmt() {
   StmtContext *_localctx = _tracker.createInstance<StmtContext>(_ctx, getState());
   enterRule(_localctx, 6, ToyCParser::RuleStmt);
+  size_t _la = 0;
 
 #if __cplusplus > 201703L
   auto onExit = finally([=, this] {
@@ -682,9 +684,9 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
     exitRule();
   });
   try {
-    setState(89);
+    setState(90);
     _errHandler->sync(this);
-    switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 4, _ctx)) {
+    switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 5, _ctx)) {
     case 1: {
       _localctx = _tracker.createInstance<ToyCParser::BlockStmtContext>(_localctx);
       enterOuterAlt(_localctx, 1);
@@ -813,9 +815,16 @@ ToyCParser::StmtContext* ToyCParser::stmt() {
       enterOuterAlt(_localctx, 10);
       setState(85);
       match(ToyCParser::RETURN);
-      setState(86);
-      expr();
       setState(87);
+      _errHandler->sync(this);
+
+      _la = _input->LA(1);
+      if ((((_la & ~ 0x3fULL) == 0) &&
+        ((1ULL << _la) & 3292921856) != 0)) {
+        setState(86);
+        expr();
+      }
+      setState(89);
       match(ToyCParser::SEMI);
       break;
     }
@@ -883,20 +892,20 @@ ToyCParser::BlockContext* ToyCParser::block() {
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(91);
+    setState(92);
     match(ToyCParser::LBRACE);
-    setState(95);
+    setState(96);
     _errHandler->sync(this);
     _la = _input->LA(1);
     while ((((_la & ~ 0x3fULL) == 0) &&
       ((1ULL << _la) & 3578135018) != 0)) {
-      setState(92);
+      setState(93);
       stmt();
-      setState(97);
+      setState(98);
       _errHandler->sync(this);
       _la = _input->LA(1);
     }
-    setState(98);
+    setState(99);
     match(ToyCParser::RBRACE);
    
   }
@@ -945,7 +954,7 @@ ToyCParser::ExprContext* ToyCParser::expr() {
   });
   try {
     enterOuterAlt(_localctx, 1);
-    setState(100);
+    setState(101);
     lOrExpr(0);
    
   }
@@ -1041,12 +1050,12 @@ ToyCParser::LOrExprContext* ToyCParser::lOrExpr(int precedence) {
     _ctx = _localctx;
     previousContext = _localctx;
 
-    setState(103);
+    setState(104);
     lAndExpr(0);
     _ctx->stop = _input->LT(-1);
-    setState(110);
+    setState(111);
     _errHandler->sync(this);
-    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 6, _ctx);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 7, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
         if (!_parseListeners.empty())
@@ -1055,17 +1064,17 @@ ToyCParser::LOrExprContext* ToyCParser::lOrExpr(int precedence) {
         auto newContext = _tracker.createInstance<MulLOrExprContext>(_tracker.createInstance<LOrExprContext>(parentContext, parentState));
         _localctx = newContext;
         pushNewRecursionContext(newContext, startState, RuleLOrExpr);
-        setState(105);
+        setState(106);
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
-        setState(106);
-        match(ToyCParser::OR);
         setState(107);
+        match(ToyCParser::OR);
+        setState(108);
         lAndExpr(0); 
       }
-      setState(112);
+      setState(113);
       _errHandler->sync(this);
-      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 6, _ctx);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 7, _ctx);
     }
   }
   catch (RecognitionException &e) {
@@ -1159,12 +1168,12 @@ ToyCParser::LAndExprContext* ToyCParser::lAndExpr(int precedence) {
     _ctx = _localctx;
     previousContext = _localctx;
 
-    setState(114);
+    setState(115);
     relExpr(0);
     _ctx->stop = _input->LT(-1);
-    setState(121);
+    setState(122);
     _errHandler->sync(this);
-    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 7, _ctx);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 8, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
         if (!_parseListeners.empty())
@@ -1173,17 +1182,17 @@ ToyCParser::LAndExprContext* ToyCParser::lAndExpr(int precedence) {
         auto newContext = _tracker.createInstance<MulLAndExprContext>(_tracker.createInstance<LAndExprContext>(parentContext, parentState));
         _localctx = newContext;
         pushNewRecursionContext(newContext, startState, RuleLAndExpr);
-        setState(116);
+        setState(117);
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
-        setState(117);
-        match(ToyCParser::AND);
         setState(118);
+        match(ToyCParser::AND);
+        setState(119);
         relExpr(0); 
       }
-      setState(123);
+      setState(124);
       _errHandler->sync(this);
-      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 7, _ctx);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 8, _ctx);
     }
   }
   catch (RecognitionException &e) {
@@ -1297,12 +1306,12 @@ ToyCParser::RelExprContext* ToyCParser::relExpr(int precedence) {
     _ctx = _localctx;
     previousContext = _localctx;
 
-    setState(125);
+    setState(126);
     addExpr(0);
     _ctx->stop = _input->LT(-1);
-    setState(132);
+    setState(133);
     _errHandler->sync(this);
-    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 8, _ctx);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 9, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
         if (!_parseListeners.empty())
@@ -1311,10 +1320,10 @@ ToyCParser::RelExprContext* ToyCParser::relExpr(int precedence) {
         auto newContext = _tracker.createInstance<MulRelExprContext>(_tracker.createInstance<RelExprContext>(parentContext, parentState));
         _localctx = newContext;
         pushNewRecursionContext(newContext, startState, RuleRelExpr);
-        setState(127);
+        setState(128);
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
-        setState(128);
+        setState(129);
         _la = _input->LA(1);
         if (!((((_la & ~ 0x3fULL) == 0) &&
           ((1ULL << _la) & 129024) != 0))) {
@@ -1324,12 +1333,12 @@ ToyCParser::RelExprContext* ToyCParser::relExpr(int precedence) {
           _errHandler->reportMatch(this);
           consume();
         }
-        setState(129);
+        setState(130);
         addExpr(0); 
       }
-      setState(134);
+      setState(135);
       _errHandler->sync(this);
-      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 8, _ctx);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 9, _ctx);
     }
   }
   catch (RecognitionException &e) {
@@ -1427,12 +1436,12 @@ ToyCParser::AddExprContext* ToyCParser::addExpr(int precedence) {
     _ctx = _localctx;
     previousContext = _localctx;
 
-    setState(136);
+    setState(137);
     mulExpr(0);
     _ctx->stop = _input->LT(-1);
-    setState(143);
+    setState(144);
     _errHandler->sync(this);
-    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 9, _ctx);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 10, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
         if (!_parseListeners.empty())
@@ -1441,10 +1450,10 @@ ToyCParser::AddExprContext* ToyCParser::addExpr(int precedence) {
         auto newContext = _tracker.createInstance<MulAddExprContext>(_tracker.createInstance<AddExprContext>(parentContext, parentState));
         _localctx = newContext;
         pushNewRecursionContext(newContext, startState, RuleAddExpr);
-        setState(138);
+        setState(139);
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
-        setState(139);
+        setState(140);
         _la = _input->LA(1);
         if (!(_la == ToyCParser::ADD
 
@@ -1455,12 +1464,12 @@ ToyCParser::AddExprContext* ToyCParser::addExpr(int precedence) {
           _errHandler->reportMatch(this);
           consume();
         }
-        setState(140);
+        setState(141);
         mulExpr(0); 
       }
-      setState(145);
+      setState(146);
       _errHandler->sync(this);
-      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 9, _ctx);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 10, _ctx);
     }
   }
   catch (RecognitionException &e) {
@@ -1562,12 +1571,12 @@ ToyCParser::MulExprContext* ToyCParser::mulExpr(int precedence) {
     _ctx = _localctx;
     previousContext = _localctx;
 
-    setState(147);
+    setState(148);
     unaryExpr();
     _ctx->stop = _input->LT(-1);
-    setState(154);
+    setState(155);
     _errHandler->sync(this);
-    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 10, _ctx);
+    alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 11, _ctx);
     while (alt != 2 && alt != atn::ATN::INVALID_ALT_NUMBER) {
       if (alt == 1) {
         if (!_parseListeners.empty())
@@ -1576,10 +1585,10 @@ ToyCParser::MulExprContext* ToyCParser::mulExpr(int precedence) {
         auto newContext = _tracker.createInstance<MulMulExprContext>(_tracker.createInstance<MulExprContext>(parentContext, parentState));
         _localctx = newContext;
         pushNewRecursionContext(newContext, startState, RuleMulExpr);
-        setState(149);
+        setState(150);
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
-        setState(150);
+        setState(151);
         _la = _input->LA(1);
         if (!((((_la & ~ 0x3fULL) == 0) &&
           ((1ULL << _la) & 3670016) != 0))) {
@@ -1589,12 +1598,12 @@ ToyCParser::MulExprContext* ToyCParser::mulExpr(int precedence) {
           _errHandler->reportMatch(this);
           consume();
         }
-        setState(151);
+        setState(152);
         unaryExpr(); 
       }
-      setState(156);
+      setState(157);
       _errHandler->sync(this);
-      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 10, _ctx);
+      alt = getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 11, _ctx);
     }
   }
   catch (RecognitionException &e) {
@@ -1675,7 +1684,7 @@ ToyCParser::UnaryExprContext* ToyCParser::unaryExpr() {
     exitRule();
   });
   try {
-    setState(160);
+    setState(161);
     _errHandler->sync(this);
     switch (_input->LA(1)) {
       case ToyCParser::LPAREN:
@@ -1683,7 +1692,7 @@ ToyCParser::UnaryExprContext* ToyCParser::unaryExpr() {
       case ToyCParser::NUMBER: {
         _localctx = _tracker.createInstance<ToyCParser::SingleUnaryContext>(_localctx);
         enterOuterAlt(_localctx, 1);
-        setState(157);
+        setState(158);
         primaryExpr();
         break;
       }
@@ -1693,7 +1702,7 @@ ToyCParser::UnaryExprContext* ToyCParser::unaryExpr() {
       case ToyCParser::NOT: {
         _localctx = _tracker.createInstance<ToyCParser::MulUnaryOpContext>(_localctx);
         enterOuterAlt(_localctx, 2);
-        setState(158);
+        setState(159);
         _la = _input->LA(1);
         if (!((((_la & ~ 0x3fULL) == 0) &&
           ((1ULL << _la) & 4587520) != 0))) {
@@ -1703,7 +1712,7 @@ ToyCParser::UnaryExprContext* ToyCParser::unaryExpr() {
           _errHandler->reportMatch(this);
           consume();
         }
-        setState(159);
+        setState(160);
         unaryExpr();
         break;
       }
@@ -1842,13 +1851,13 @@ ToyCParser::PrimaryExprContext* ToyCParser::primaryExpr() {
     exitRule();
   });
   try {
-    setState(181);
+    setState(182);
     _errHandler->sync(this);
-    switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 14, _ctx)) {
+    switch (getInterpreter<atn::ParserATNSimulator>()->adaptivePredict(_input, 15, _ctx)) {
     case 1: {
       _localctx = _tracker.createInstance<ToyCParser::IdentifierContext>(_localctx);
       enterOuterAlt(_localctx, 1);
-      setState(162);
+      setState(163);
       match(ToyCParser::ID);
       break;
     }
@@ -1856,7 +1865,7 @@ ToyCParser::PrimaryExprContext* ToyCParser::primaryExpr() {
     case 2: {
       _localctx = _tracker.createInstance<ToyCParser::NumberLiteralContext>(_localctx);
       enterOuterAlt(_localctx, 2);
-      setState(163);
+      setState(164);
       match(ToyCParser::NUMBER);
       break;
     }
@@ -1864,11 +1873,11 @@ ToyCParser::PrimaryExprContext* ToyCParser::primaryExpr() {
     case 3: {
       _localctx = _tracker.createInstance<ToyCParser::ParenthesizedExprContext>(_localctx);
       enterOuterAlt(_localctx, 3);
-      setState(164);
-      match(ToyCParser::LPAREN);
       setState(165);
-      expr();
+      match(ToyCParser::LPAREN);
       setState(166);
+      expr();
+      setState(167);
       match(ToyCParser::RPAREN);
       break;
     }
@@ -1876,32 +1885,32 @@ ToyCParser::PrimaryExprContext* ToyCParser::primaryExpr() {
     case 4: {
       _localctx = _tracker.createInstance<ToyCParser::FunctionCallContext>(_localctx);
       enterOuterAlt(_localctx, 4);
-      setState(168);
-      match(ToyCParser::ID);
       setState(169);
+      match(ToyCParser::ID);
+      setState(170);
       match(ToyCParser::LPAREN);
-      setState(178);
+      setState(179);
       _errHandler->sync(this);
 
       _la = _input->LA(1);
       if ((((_la & ~ 0x3fULL) == 0) &&
         ((1ULL << _la) & 3292921856) != 0)) {
-        setState(170);
+        setState(171);
         expr();
-        setState(175);
+        setState(176);
         _errHandler->sync(this);
         _la = _input->LA(1);
         while (_la == ToyCParser::COMMA) {
-          setState(171);
-          match(ToyCParser::COMMA);
           setState(172);
+          match(ToyCParser::COMMA);
+          setState(173);
           expr();
-          setState(177);
+          setState(178);
           _errHandler->sync(this);
           _la = _input->LA(1);
         }
       }
-      setState(180);
+      setState(181);
       match(ToyCParser::RPAREN);
       break;
     }

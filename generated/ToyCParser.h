@@ -226,8 +226,8 @@ public:
     ReturnStmtContext(StmtContext *ctx);
 
     antlr4::tree::TerminalNode *RETURN();
-    ExprContext *expr();
     antlr4::tree::TerminalNode *SEMI();
+    ExprContext *expr();
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
   };
