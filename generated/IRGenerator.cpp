@@ -536,7 +536,7 @@ void IRGenerator::exitScope() {
 
 std::string IRGenerator::addVariable(const std::string& name) {
     int version = ++varVersion[name];
-    std::string uniqueName = name + "#" + std::to_string(version);
+    std::string uniqueName = name + "_" + std::to_string(version);
     symbolTableStack.back()[name] = uniqueName;
     return uniqueName;
 }
