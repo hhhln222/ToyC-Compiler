@@ -59,15 +59,13 @@ struct IRInstruction {
     std::shared_ptr<Operand> arg2;      // 第二个操作数
     std::string label;                  // 标签（用于跳转指令）
     
-    // 原有构造函数
+    // 构造函数
     IRInstruction(IROpcode op, std::shared_ptr<Operand> res = nullptr,
                   std::shared_ptr<Operand> a1 = nullptr,
                   std::shared_ptr<Operand> a2 = nullptr)
         : opcode(op), result(res), arg1(a1), arg2(a2), label("") {}
-    // 新增：仅带label的构造函数
     IRInstruction(IROpcode op, const std::string& lbl)
         : opcode(op), result(nullptr), arg1(nullptr), arg2(nullptr), label(lbl) {}
-    // 新增：带label和参数的构造函数
     IRInstruction(IROpcode op, std::shared_ptr<Operand> res,
                   std::shared_ptr<Operand> a1,
                   std::shared_ptr<Operand> a2,
@@ -226,6 +224,13 @@ private:
         std::string endLabel;     // 循环结束标签
     };
     std::vector<LoopLabels> loopStack;            // 循环标签栈
+    //用于变量作用域的书写
+    std::vector<std::unordered_map<std::string, std::string>> symbolTableStack; // 作用域栈
+    std::unordered_map<std::string, int> varVersion; // 变量名到版本号
+    void enterScope();
+    void exitScope();
+    std::string addVariable(const std::string& name);
+    std::string lookupVariable(const std::string& name);
     
     // 辅助方法
     std::string generateTemp();                    // 生成临时变量名

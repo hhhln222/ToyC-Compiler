@@ -83,13 +83,14 @@ std::any IRGenerator::visitFuncDef(ToyCParser::FuncDefContext *ctx) {
 // 访问变量声明语句
 std::any IRGenerator::visitDeclStmt(ToyCParser::DeclStmtContext *ctx) {
     std::string varName = ctx->ID()->getText();
+    std::string uniqueName = addVariable(varName);
     
     // 如果有初始化表达式
     if (ctx->expr()) {
         auto exprResult = visit(ctx->expr());
         if (exprResult.has_value()) {
             auto operand = std::any_cast<std::shared_ptr<Operand>>(exprResult);
-            auto varOperand = createOperand(varName, OperandType::VARIABLE);
+            auto varOperand = createOperand(uniqueName, OperandType::VARIABLE);
             addInstruction(IRInstruction(IROpcode::ASSIGN, varOperand, operand));
         }
     }
@@ -100,7 +101,8 @@ std::any IRGenerator::visitDeclStmt(ToyCParser::DeclStmtContext *ctx) {
 // 访问赋值语句
 std::any IRGenerator::visitAssignStmt(ToyCParser::AssignStmtContext *ctx) {
     std::string varName = ctx->ID()->getText();
-    auto varOperand = createOperand(varName, OperandType::VARIABLE);
+    std::string uniqueName = lookupVariable(varName);
+    auto varOperand = createOperand(uniqueName, OperandType::VARIABLE);
     
     auto exprResult = visit(ctx->expr());
     if (exprResult.has_value()) {
@@ -258,9 +260,11 @@ std::any IRGenerator::visitReturnStmt(ToyCParser::ReturnStmtContext *ctx) {
 
 // 访问代码块
 std::any IRGenerator::visitBlock(ToyCParser::BlockContext *ctx) {
+    enterScope();
     for (auto stmt : ctx->stmt()) {
         visit(stmt);
     }
+    exitScope();
     return nullptr;
 }
 
@@ -272,7 +276,8 @@ std::any IRGenerator::visitExpr(ToyCParser::ExprContext *ctx) {
 // 访问标识符
 std::any IRGenerator::visitIdentifier(ToyCParser::IdentifierContext *ctx) {
     std::string varName = ctx->ID()->getText();
-    return std::make_any<std::shared_ptr<Operand>>(createOperand(varName, OperandType::VARIABLE));
+    std::string uniqueName = lookupVariable(varName);
+    return std::make_any<std::shared_ptr<Operand>>(createOperand(uniqueName, OperandType::VARIABLE));
 }
 
 // 访问数字字面量
@@ -519,4 +524,26 @@ std::any IRGenerator::visitContinueStmt(ToyCParser::ContinueStmtContext *ctx) {
 
 std::any IRGenerator::visitParam(ToyCParser::ParamContext *ctx) {
     return visitChildren(ctx);
+} 
+
+void IRGenerator::enterScope() {
+    symbolTableStack.push_back({});
+}
+
+void IRGenerator::exitScope() {
+    symbolTableStack.pop_back();
+}
+
+std::string IRGenerator::addVariable(const std::string& name) {
+    int version = ++varVersion[name];
+    std::string uniqueName = name + "#" + std::to_string(version);
+    symbolTableStack.back()[name] = uniqueName;
+    return uniqueName;
+}
+
+std::string IRGenerator::lookupVariable(const std::string& name) {
+    for (auto it = symbolTableStack.rbegin(); it != symbolTableStack.rend(); ++it) {
+        if (it->count(name)) return it->at(name);
+    }
+    return name;
 } 
