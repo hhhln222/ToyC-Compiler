@@ -38,15 +38,78 @@ void CodeGenerator::emitEpilogue(int frameSize) {
     emit("ret");
 }
 
+int countLocalVariables(const FunctionInfo& func) {
+    // 1. 收集所有参数名（用于排除参数）
+    std::unordered_set<std::string> paramNames;
+    for (const auto& param : func.params) {
+        paramNames.insert(param);
+    }
+    
+    // 2. 收集所有局部变量（用户定义变量 + 临时变量）
+    std::unordered_set<std::string> localVarIdentifiers;
+    
+    // 遍历所有指令的操作数
+    auto processOperand = [&](const std::shared_ptr<Operand>& op) {
+        if (!op) return; // 跳过空操作数
+        
+        // 处理用户定义的局部变量（排除参数）
+        if (op->type == OperandType::VARIABLE) {
+            // 检查是否为参数
+            if (paramNames.find(op->value) == paramNames.end()) {
+                localVarIdentifiers.insert(op->value);
+            }
+        }
+        // 处理编译器生成的临时变量（TEMP类型）
+        else if (op->type == OperandType::TEMP) {
+            // 临时变量的标识是"t"+value，直接用value作为唯一标识
+            localVarIdentifiers.insert("t" + op->value);
+        }
+    };
+    
+    // 遍历所有指令
+    for (const auto& inst : func.instructions) {
+        processOperand(inst.result);
+        processOperand(inst.arg1);
+        processOperand(inst.arg2);
+    }
+    
+    // 3. 集合大小即为局部变量总数（自动去重）
+    return localVarIdentifiers.size();
+}
+
 void CodeGenerator::emitFunction(const FunctionInfo& func) {
     // 重置标签映射
     labelMap.clear();
     usedLabels.clear();
     
-    // 计算栈帧大小（简化版：每个变量4字节）
-    int frameSize = 4 * (func.params.size() + 5); // 参数+局部变量+保留空间
-    
+    // 计算栈帧大小
+    int localVarSize = countLocalVariables(func);
+    // 正确计算：保存ra(4) + s0(4) + 参数(每个4字节) + 局部变量(每个4字节)
+    int frameSize = 8 + 4 * (func.params.size() + localVarSize); 
+    // 确保栈帧大小按16字节对齐（RISC-V调用约定）
+    if (frameSize % 16 != 0) {
+        frameSize += 16 - (frameSize % 16);
+    }
+
     emitPrologue(func.name, frameSize);
+
+    // 处理函数参数：保存a0,a1...到栈中，按约定顺序存取
+    if (!func.params.empty()) {
+        // 1. 保存参数寄存器到栈（a0对应第一个参数，依次类推）
+        int paramOffset = -20;  // 初始偏移，与目标汇编一致
+        for (int i = 0; i < func.params.size(); ++i) {
+            emit("sw a" + std::to_string(i) + ", " + std::to_string(paramOffset) + "(s0)");
+            paramOffset -= 4;
+        }
+
+        // 2. 从栈加载参数到临时寄存器（a4,a5...）
+        paramOffset = -20;  // 重置偏移
+        for (int i = 0; i < func.params.size(); ++i) {
+            std::string tempReg = "a" + std::to_string(4 + i);  // a4,a5,a6...
+            emit("lw " + tempReg + ", " + std::to_string(paramOffset) + "(s0)");
+            paramOffset -= 4;
+        }
+    }
     
     // 生成函数体指令
     for (const auto& inst : func.instructions) {
@@ -58,6 +121,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
             case IROpcode::GE: case IROpcode::EQ: case IROpcode::NE: generateComparison(inst); break;
             case IROpcode::GOTO: case IROpcode::IF_GOTO: case IROpcode::LABEL: generateControlFlow(inst); break;
             case IROpcode::CALL: generateFunctionCall(inst); break;
+            case IROpcode::PARAM: generateParam(inst); break;
             case IROpcode::RETURN: generateReturn(inst); break;
             default: break;
         }
@@ -68,9 +132,8 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
 
 std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
     if (!op) return "";
-    
-    if (op->type != OperandType::CONSTANT && 
-        regAlloc.isInReg(op->toString())) {
+
+    if (op->type != OperandType::CONSTANT && regAlloc.isInReg(op->toString())) {
         return regAlloc.allocateReg(op->toString());
     }
 
@@ -90,8 +153,8 @@ std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
 void CodeGenerator::storeIfTemp(const std::shared_ptr<Operand>& op, const std::string& reg) {
     if (op && op->type == OperandType::TEMP) {
         if (!varStackMap.count(op->value)) {
-            varStackMap[op->value] = stackOffset;
-            stackOffset -= 4;
+            // 从-4开始（s0指向栈帧顶部，向下增长）
+            varStackMap[op->value] = -4 * (varStackMap.size() + 1); 
         }
         emit(RiscVUtils::emitStore(reg, varStackMap[op->value]));
     }
@@ -203,9 +266,9 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     }
     
     storeIfTemp(inst.result, rd);
-    regAlloc.freeReg(inst.arg1->toString());
-    regAlloc.freeReg(inst.arg2->toString());
-    regAlloc.freeReg(inst.result->toString());
+    // regAlloc.freeReg(inst.arg1->toString());
+    // regAlloc.freeReg(inst.arg2->toString());
+    // regAlloc.freeReg(inst.result->toString());
 }
 
 void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
@@ -232,36 +295,38 @@ void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
 }
 
 void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
-    // 保存调用者保存的寄存器
-    emit("addi sp, sp, -16");
-    emit("sw ra, 0(sp)");
-    emit("sw a0, 4(sp)");
-    emit("sw a1, 8(sp)");
-    emit("sw a2, 12(sp)");
+    emit("call " + inst.arg1->toString());
+    resetParamCounter();
+}
+
+// 重置参数计数器（在函数调用前调用）
+void CodeGenerator::resetParamCounter() {
+    paramCounter = 0;
+}
+
+// 处理param指令（无索引，自动按顺序映射到a0、a1...）
+void CodeGenerator::generateParam(const IRInstruction& inst) {
+    if (!inst.arg1) {
+        throw std::runtime_error("Invalid parameter operand");
+    }
+
+    // 按顺序自动分配参数寄存器：第1个参数→a0，第2个→a1，以此类推
+    std::string targetReg = "a" + std::to_string(paramCounter);
     
-    // 设置参数（假设最多3个参数）
-    if (inst.arg1) {
-        std::string argReg = getRegOrLoad(inst.arg1);
-        emit("mv a0, " + argReg);
+    // 处理常量参数（直接加载到目标寄存器）
+    if (inst.arg1->type == OperandType::CONSTANT) {
+        emit("li " + targetReg + ", " + inst.arg1->value);
+    } else {
+        // 处理变量参数（从内存加载后移动到目标寄存器）
+        std::string paramReg = getRegOrLoad(inst.arg1);
+        if (paramReg != targetReg) {
+            emit("mv " + targetReg + ", " + paramReg);
+        }
         regAlloc.freeReg(inst.arg1->toString());
     }
     
-    emit("call " + inst.arg1->toString());
-    
-    // 恢复寄存器
-    emit("lw a2, 12(sp)");
-    emit("lw a1, 8(sp)");
-    emit("lw a0, 4(sp)");
-    emit("lw ra, 0(sp)");
-    emit("addi sp, sp, 16");
-    
-    // 处理返回值
-    if (inst.result) {
-        std::string rd = regAlloc.allocateReg(inst.result->toString());
-        emit("mv " + rd + ", a0");
-        storeIfTemp(inst.result, rd);
-        regAlloc.freeReg(inst.result->toString());
-    }
+    // 参数计数器自增，确保下一个参数使用下一个寄存器
+    paramCounter++;
 }
 
 void CodeGenerator::generateReturn(const IRInstruction& inst) {
@@ -305,7 +370,7 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
     }
     
     storeIfTemp(inst.result, rd);
-    // regAlloc.freeReg(inst.arg1->toString());
-    // regAlloc.freeReg(inst.arg2->toString());
+    regAlloc.freeReg(inst.arg1->toString());
+    regAlloc.freeReg(inst.arg2->toString());
     regAlloc.freeReg(inst.result->toString());
 }

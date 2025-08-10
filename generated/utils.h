@@ -14,10 +14,13 @@ public:
 
 private:
     std::vector<std::string> freeRegs = {
-        "t0", "t1", "t2", "t3", "t4", "t5", "t6",
-        "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
+        "a4", "a5",         // 优先分配的寄存器（按顺序）
+        "a6", "a7",         // 次优先的参数寄存器
+        "t0", "t1", "t2", "t3", "t4", "t5", "t6",  // 临时寄存器
+        "a0", "a1", "a2", "a3"  // 最后使用（a0-a3用于参数和返回值，尽量避免提前占用）
     };
     std::map<std::string, std::string> varToReg;
+    std::vector<std::string> initialRegOrder = freeRegs;
 };
 
 // RISC-V指令生成工具
