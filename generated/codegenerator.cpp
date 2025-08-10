@@ -153,8 +153,8 @@ std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
 void CodeGenerator::storeIfTemp(const std::shared_ptr<Operand>& op, const std::string& reg) {
     if (op && op->type == OperandType::TEMP) {
         if (!varStackMap.count(op->value)) {
-            // 从-4开始（s0指向栈帧顶部，向下增长）
-            varStackMap[op->value] = -4 * (varStackMap.size() + 1); 
+            varStackMap[op->value] = stackOffset;
+            stackOffset -= 4;
         }
         emit(RiscVUtils::emitStore(reg, varStackMap[op->value]));
     }

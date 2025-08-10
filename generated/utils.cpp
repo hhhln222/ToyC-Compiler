@@ -68,11 +68,11 @@ void RegisterAllocator::spillRegister() {
 
 namespace RiscVUtils {
     std::string emitLoad(const std::string& reg, int offset) {
-        return "lw " + reg + ", " + std::to_string(offset) + "(s0)";
+        return "lw " + reg + ", " + std::to_string(offset) + "(sp)";
     }
     
     std::string emitStore(const std::string& reg, int offset) {
-        return "sw " + reg + ", " + std::to_string(offset) + "(s0)";
+        return "sw " + reg + ", " + std::to_string(offset) + "(sp)";
     }
     
     std::string emitBinaryOp(const std::string& op, 
