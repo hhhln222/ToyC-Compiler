@@ -32,6 +32,7 @@ void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize) {
 }
 
 void CodeGenerator::emitEpilogue(int frameSize) {
+    emit(".L_func_end:");
     emit("lw s0, " + std::to_string(frameSize-8) + "(sp)");
     emit("lw ra, " + std::to_string(frameSize-4) + "(sp)");
     emit("addi sp, sp, " + std::to_string(frameSize));
@@ -335,6 +336,7 @@ void CodeGenerator::generateReturn(const IRInstruction& inst) {
         emit("mv a0, " + retReg);
         regAlloc.freeReg(inst.arg1->toString());
     }
+    emit("j .L_func_end");  // 跳转到函数统一退出标签
 }
 
 void CodeGenerator::generateComparison(const IRInstruction& inst) {
