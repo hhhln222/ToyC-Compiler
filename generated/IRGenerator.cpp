@@ -403,45 +403,124 @@ std::any IRGenerator::visitSingleLAnd(ToyCParser::SingleLAndContext *ctx) {
     return visit(ctx->relExpr());
 }
 
+// 处理逻辑与（&&），实现短路判断
 std::any IRGenerator::visitMulLAndExpr(ToyCParser::MulLAndExprContext *ctx) {
     auto leftResult = visit(ctx->lAndExpr());
+    if (!leftResult.has_value()) return std::any(); // 左操作数无效
+    auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
+
+    // 生成临时变量存储最终结果
+    std::string tempVar = generateTemp();
+    auto resultOperand = createOperand(tempVar, OperandType::TEMP);
+
+    // 生成标签：左为假时跳转（短路）、计算右操作数、结束
+    std::string leftFalseLabel = generateLabel();  // 左操作数为假时进入
+    std::string computeRightLabel = generateLabel(); // 左为真，需要计算右操作数
+    std::string endLabel = generateLabel();        // 统一结束点
+
+    // 1. 检查左操作数是否为假（0）
+    auto zeroOperand = createOperand("0", OperandType::CONSTANT);
+    auto isLeftFalse = createOperand(generateTemp(), OperandType::TEMP);
+    addInstruction(IRInstruction(IROpcode::EQ, isLeftFalse, leftOperand, zeroOperand));
+    addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, isLeftFalse, nullptr, leftFalseLabel));
+
+    // 2. 左为真，跳转到计算右操作数
+    addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, computeRightLabel));
+
+    // 3. 左为假：直接结果为0（短路，不执行右操作数）
+    addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, leftFalseLabel));
+    addInstruction(IRInstruction(IROpcode::ASSIGN, resultOperand, zeroOperand)); // 结果为假
+    addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
+
+    // 4. 左为真：计算右操作数，再执行与运算
+    addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, computeRightLabel));
     auto rightResult = visit(ctx->relExpr());
-    
-    if (leftResult.has_value() && rightResult.has_value()) {
-        auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
-        auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
-        
-        std::string tempVar = generateTemp();
-        auto tempOperand = createOperand(tempVar, OperandType::TEMP);
-        
-        addInstruction(IRInstruction(IROpcode::AND, tempOperand, leftOperand, rightOperand));
-        return std::make_any<std::shared_ptr<Operand>>(tempOperand);
-    }
-    
-    return std::any();
+    if (!rightResult.has_value()) return std::any(); // 右操作数无效
+    auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
+    addInstruction(IRInstruction(IROpcode::AND, resultOperand, leftOperand, rightOperand));
+    addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
+
+    // 5. 结束标签
+    addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, endLabel));
+
+    return std::make_any<std::shared_ptr<Operand>>(resultOperand);
 }
+
+// std::any IRGenerator::visitMulLAndExpr(ToyCParser::MulLAndExprContext *ctx) {
+//     auto leftResult = visit(ctx->lAndExpr());
+//     auto rightResult = visit(ctx->relExpr());
+    
+//     if (leftResult.has_value() && rightResult.has_value()) {
+//         auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
+//         auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
+        
+//         std::string tempVar = generateTemp();
+//         auto tempOperand = createOperand(tempVar, OperandType::TEMP);
+        
+//         addInstruction(IRInstruction(IROpcode::AND, tempOperand, leftOperand, rightOperand));
+//         return std::make_any<std::shared_ptr<Operand>>(tempOperand);
+//     }
+    
+//     return std::any();
+// }
 
 std::any IRGenerator::visitSingleLOr(ToyCParser::SingleLOrContext *ctx) {
     return visit(ctx->lAndExpr());
 }
 
+// 处理逻辑或（||），实现短路判断
 std::any IRGenerator::visitMulLOrExpr(ToyCParser::MulLOrExprContext *ctx) {
+    // 生成标签
+    std::string trueLabel = generateLabel();  // 结果为真的标签
+    std::string endLabel = generateLabel();   // 结束标签
+
+    // 1. 计算左操作数
     auto leftResult = visit(ctx->lOrExpr());
+    if (!leftResult.has_value()) return std::any();
+    auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
+
+    // 2. 直接检查左操作数是否为真（短路优化）
+    addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, leftOperand, nullptr, trueLabel));
+
+    // 3. 左为假：计算右操作数
     auto rightResult = visit(ctx->lAndExpr());
-    
-    if (leftResult.has_value() && rightResult.has_value()) {
-        auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
-        auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
-        
-        std::string tempVar = generateTemp();
-        auto tempOperand = createOperand(tempVar, OperandType::TEMP);
-        
-        addInstruction(IRInstruction(IROpcode::OR, tempOperand, leftOperand, rightOperand));
-        return std::make_any<std::shared_ptr<Operand>>(tempOperand);
-    }
-    
-    return std::any();
+    if (!rightResult.has_value()) return std::any();
+    auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
+
+    // 4. 创建结果临时变量（重用右操作数）
+    std::string tempVar = generateTemp();
+    auto resultOperand = createOperand(tempVar, OperandType::TEMP);
+    addInstruction(IRInstruction(IROpcode::ASSIGN, resultOperand, rightOperand));
+    addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
+
+    // 5. 左为真：直接设置结果为1（短路）
+    addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, trueLabel));
+    auto oneOperand = createOperand("1", OperandType::CONSTANT);
+    addInstruction(IRInstruction(IROpcode::ASSIGN, resultOperand, oneOperand));
+
+    // 6. 结束标签
+    addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, endLabel));
+
+    return std::make_any<std::shared_ptr<Operand>>(resultOperand);
 }
+
+// std::any IRGenerator::visitMulLOrExpr(ToyCParser::MulLOrExprContext *ctx) {
+//     auto leftResult = visit(ctx->lOrExpr());
+//     auto rightResult = visit(ctx->lAndExpr());
+    
+//     if (leftResult.has_value() && rightResult.has_value()) {
+//         auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
+//         auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
+        
+//         std::string tempVar = generateTemp();
+//         auto tempOperand = createOperand(tempVar, OperandType::TEMP);
+        
+//         addInstruction(IRInstruction(IROpcode::OR, tempOperand, leftOperand, rightOperand));
+//         return std::make_any<std::shared_ptr<Operand>>(tempOperand);
+//     }
+    
+//     return std::any();
+// }
 
 // 访问一元表达式
 std::any IRGenerator::visitSingleUnary(ToyCParser::SingleUnaryContext *ctx) {
