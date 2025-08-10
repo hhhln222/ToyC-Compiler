@@ -153,8 +153,8 @@ std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
 void CodeGenerator::storeIfTemp(const std::shared_ptr<Operand>& op, const std::string& reg) {
     if (op && op->type == OperandType::TEMP) {
         if (!varStackMap.count(op->value)) {
-            varStackMap[op->value] = stackOffset;
             stackOffset -= 4;
+            varStackMap[op->value] = stackOffset;
         }
         emit(RiscVUtils::emitStore(reg, varStackMap[op->value]));
     }
@@ -370,7 +370,7 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
     }
     
     storeIfTemp(inst.result, rd);
-    regAlloc.freeReg(inst.arg1->toString());
-    regAlloc.freeReg(inst.arg2->toString());
+    // regAlloc.freeReg(inst.arg1->toString());
+    // regAlloc.freeReg(inst.arg2->toString());
     regAlloc.freeReg(inst.result->toString());
 }
