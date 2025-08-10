@@ -24,6 +24,10 @@ void CodeGenerator::emit(const std::string& instruction) {
 }
 
 void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize) {
+    // 生成唯一退出标签（格式：.<函数名>_func_end）
+    std::string exitLabel = "." + funcName + "_func_end";
+    // 记录当前函数的退出标签，供return指令使用
+    currentFuncExitLabel = exitLabel;
     emit(funcName + ":");
     emit("addi sp, sp, -" + std::to_string(frameSize));
     emit("sw ra, " + std::to_string(frameSize-4) + "(sp)");
@@ -32,7 +36,7 @@ void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize) {
 }
 
 void CodeGenerator::emitEpilogue(int frameSize) {
-    emit(".L_func_end:");
+    emit(currentFuncExitLabel + ":");
     emit("lw s0, " + std::to_string(frameSize-8) + "(sp)");
     emit("lw ra, " + std::to_string(frameSize-4) + "(sp)");
     emit("addi sp, sp, " + std::to_string(frameSize));
@@ -336,7 +340,7 @@ void CodeGenerator::generateReturn(const IRInstruction& inst) {
         emit("mv a0, " + retReg);
         regAlloc.freeReg(inst.arg1->toString());
     }
-    emit("j .L_func_end");  // 跳转到函数统一退出标签
+    emit("j " + currentFuncExitLabel);  // 跳转到函数统一退出标签
 }
 
 void CodeGenerator::generateComparison(const IRInstruction& inst) {

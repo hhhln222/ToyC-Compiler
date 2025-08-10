@@ -14,6 +14,7 @@ public:
 
 private:
     std::string asmCode;
+    std::string currentFuncExitLabel;
     RegisterAllocator regAlloc;
     int stackOffset;
     std::map<std::string, int> varStackMap; // 变量栈偏移映射
