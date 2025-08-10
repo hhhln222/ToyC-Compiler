@@ -230,7 +230,7 @@ void CodeGenerator::generateAssignment(const IRInstruction& inst) {
     
     storeIfTemp(inst.result, destReg);
     regAlloc.freeReg(inst.arg1->toString());
-    regAlloc.freeReg(inst.result->toString());
+    // regAlloc.freeReg(inst.result->toString());
 }
 
 void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
