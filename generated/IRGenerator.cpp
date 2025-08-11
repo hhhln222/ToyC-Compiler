@@ -18,8 +18,8 @@ void IRGenerator::addInstruction(const IRInstruction& inst) {
     }
 }
 
-std::shared_ptr<Operand> IRGenerator::createOperand(const std::string& value, OperandType type) {
-    return std::make_shared<Operand>(type, value);
+std::shared_ptr<Operand> IRGenerator::createOperand(const std::string& value, OperandType type, int index) {
+    return std::make_shared<Operand>(type, value, index);
 }
 
 // 打印IR代码
@@ -36,7 +36,7 @@ void IRGenerator::printIR(const std::string& outputFile) const {
             out << "Parameters: ";
             for (size_t i = 0; i < func.params.size(); ++i) {
                 if (i > 0) out << ", ";
-                out << func.params[i];
+                out << func.params[i]->toString();
             }
             out << std::endl;
         }
@@ -68,9 +68,10 @@ std::any IRGenerator::visitFuncDef(ToyCParser::FuncDefContext *ctx) {
     currentFunction = &functions.back();
     
     // 收集参数
-    for (auto param : ctx->param()) {
+    for (size_t i = 0; i < ctx->param().size(); ++i) {
+        auto param = ctx->param()[i];
         std::string paramName = param->ID()->getText();
-        currentFunction->params.push_back(paramName);
+        currentFunction->params.push_back(createOperand(paramName, OperandType::PARAM, i));
     }
     
     // 访问函数体
@@ -120,6 +121,25 @@ std::any IRGenerator::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
         
+        // 常量折叠优化：条件为常量
+        if (condOperand->type == OperandType::CONSTANT) {
+            int condVal = std::stoi(condOperand->value);
+            
+            // 条件恒真
+            if (condVal != 0) {
+                visit(ctx->stmt(0)); // 只生成then分支
+                return nullptr;
+            } 
+            // 条件恒假且有else分支
+            else if (ctx->stmt().size() > 1) {
+                visit(ctx->stmt(1)); // 只生成else分支
+                return nullptr;
+            } else {
+                // 没有else分支且条件恒假，跳过整个if
+                return nullptr;
+            }
+        }
+
         if (ctx->stmt().size() > 1) {
             // 有else部分的if语句
             std::string thenLabel = generateLabel();
@@ -218,6 +238,13 @@ std::any IRGenerator::visitWhileStmt(ToyCParser::WhileStmtContext *ctx) {
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
         
+        // 常量折叠优化：条件恒假
+        if (condOperand->type == OperandType::CONSTANT && 
+            condOperand->value == "0") {
+            // 完全跳过循环体的访问
+            return nullptr;
+        }
+        
         // 如果条件为真，跳转到循环体
         addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, bodyLabel));
         
@@ -307,8 +334,10 @@ std::any IRGenerator::visitFunctionCall(ToyCParser::FunctionCallContext *ctx) {
     std::string tempVar = generateTemp();
     auto tempOperand = createOperand(tempVar, OperandType::TEMP);
     auto paramListOperand = createOperand(paramList, OperandType::CONSTANT);
+    int paramCount = ctx->expr().size();
+    auto paramCountOperand = createOperand(std::to_string(paramCount), OperandType::CONSTANT);
     
-    addInstruction(IRInstruction(IROpcode::CALL, tempOperand, funcOperand, paramListOperand));
+    addInstruction(IRInstruction(IROpcode::CALL, tempOperand, funcOperand, paramCountOperand));
     
     return std::make_any<std::shared_ptr<Operand>>(tempOperand);
 }
@@ -322,6 +351,31 @@ std::any IRGenerator::visitMulAddExpr(ToyCParser::MulAddExprContext *ctx) {
         auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
         auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
         
+        // 常量折叠优化
+        if (leftOperand->type == OperandType::CONSTANT && 
+            rightOperand->type == OperandType::CONSTANT) {
+            int leftVal = std::stoi(leftOperand->value);
+            int rightVal = std::stoi(rightOperand->value);
+            int resultVal;
+            
+            if (ctx->ADD()) resultVal = leftVal + rightVal;
+            else resultVal = leftVal - rightVal;
+            
+            return createOperand(std::to_string(resultVal), OperandType::CONSTANT);
+        }
+
+        // 代数简化：x + 0 = x, x - 0 = x
+        if (rightOperand->type == OperandType::CONSTANT && 
+            std::stoi(rightOperand->value) == 0) {
+            return leftResult;
+        }
+        
+        // 代数简化：0 + x = x
+        if (leftOperand->type == OperandType::CONSTANT && 
+            std::stoi(leftOperand->value) == 0 && ctx->ADD()) {
+            return rightResult;
+        }
+
         std::string tempVar = generateTemp();
         auto tempOperand = createOperand(tempVar, OperandType::TEMP);
         
@@ -352,6 +406,43 @@ std::any IRGenerator::visitMulMulExpr(ToyCParser::MulMulExprContext *ctx) {
         auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
         auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
         
+        // 常量折叠优化
+        if (leftOperand->type == OperandType::CONSTANT && 
+            rightOperand->type == OperandType::CONSTANT) {
+            int leftVal = std::stoi(leftOperand->value);
+            int rightVal = std::stoi(rightOperand->value);
+            int resultVal;
+            
+            if (ctx->MUL()) resultVal = leftVal * rightVal;
+            else if (ctx->DIV()) {
+                if(rightVal == 0) resultVal = 0;
+                else resultVal = leftVal / rightVal;
+            }
+            else {
+                if(rightVal == 0) resultVal = 0;
+                else resultVal = leftVal % rightVal;
+            }
+
+            return createOperand(std::to_string(resultVal), OperandType::CONSTANT);
+        }
+
+        // 代数简化：x * 1 = x, x / 1 = x
+        if (rightOperand->type == OperandType::CONSTANT && 
+            std::stoi(rightOperand->value) == 1) {
+            return leftResult;
+        }
+        
+        // 代数简化：x * 0 = 0
+        if (ctx->MUL() && 
+            ((leftOperand->type == OperandType::CONSTANT && 
+              std::stoi(leftOperand->value) == 0) ||
+             (rightOperand->type == OperandType::CONSTANT && 
+              std::stoi(rightOperand->value) == 0))) {
+            return std::make_any<std::shared_ptr<Operand>>(
+                createOperand("0", OperandType::CONSTANT)
+            );
+        }
+
         std::string tempVar = generateTemp();
         auto tempOperand = createOperand(tempVar, OperandType::TEMP);
         
@@ -380,6 +471,26 @@ std::any IRGenerator::visitMulRelExpr(ToyCParser::MulRelExprContext *ctx) {
         auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
         auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
         
+        // 常量折叠优化
+        if (leftOperand->type == OperandType::CONSTANT && 
+            rightOperand->type == OperandType::CONSTANT) {
+            int leftVal = std::stoi(leftOperand->value);
+            int rightVal = std::stoi(rightOperand->value);
+            bool resultVal;
+
+            if (ctx->LT()) resultVal = (leftVal < rightVal);
+            else if (ctx->GT()) resultVal = (leftVal > rightVal);
+            else if (ctx->LE()) resultVal = (leftVal <= rightVal);
+            else if (ctx->GE()) resultVal = (leftVal >= rightVal);
+            else if (ctx->EQ()) resultVal = (leftVal == rightVal);
+            else resultVal = (leftVal != rightVal);
+
+            // 布尔值转换为整数常量1或0
+            return std::make_any<std::shared_ptr<Operand>>(
+                createOperand(std::to_string(resultVal?1:0), OperandType::CONSTANT)
+            );
+        }
+
         std::string tempVar = generateTemp();
         auto tempOperand = createOperand(tempVar, OperandType::TEMP);
         
@@ -409,6 +520,26 @@ std::any IRGenerator::visitMulLAndExpr(ToyCParser::MulLAndExprContext *ctx) {
     if (!leftResult.has_value()) return std::any(); // 左操作数无效
     auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
 
+    // 常量折叠：左操作数为常量
+    if (leftOperand->type == OperandType::CONSTANT) {
+        int leftVal = std::stoi(leftOperand->value);
+        
+        // 左为假（0），直接返回0（短路）
+        if (leftVal == 0) {
+            return std::make_any<std::shared_ptr<Operand>>(
+                createOperand("0", OperandType::CONSTANT)
+            );
+        }
+        // 左为真（非0），结果取决于右操作数
+        else {
+            auto rightResult = visit(ctx->relExpr());
+            if (rightResult.has_value()) {
+                return rightResult;
+            }
+        }
+        return std::any();
+    }
+
     // 生成临时变量存储最终结果
     std::string tempVar = generateTemp();
     auto resultOperand = createOperand(tempVar, OperandType::TEMP);
@@ -418,51 +549,25 @@ std::any IRGenerator::visitMulLAndExpr(ToyCParser::MulLAndExprContext *ctx) {
     std::string computeRightLabel = generateLabel(); // 左为真，需要计算右操作数
     std::string endLabel = generateLabel();        // 统一结束点
 
-    // 1. 检查左操作数是否为假（0）
     auto zeroOperand = createOperand("0", OperandType::CONSTANT);
     auto isLeftFalse = createOperand(generateTemp(), OperandType::TEMP);
     addInstruction(IRInstruction(IROpcode::EQ, isLeftFalse, leftOperand, zeroOperand));
     addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, isLeftFalse, nullptr, leftFalseLabel));
-
-    // 2. 左为真，跳转到计算右操作数
     addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, computeRightLabel));
-
-    // 3. 左为假：直接结果为0（短路，不执行右操作数）
     addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, leftFalseLabel));
     addInstruction(IRInstruction(IROpcode::ASSIGN, resultOperand, zeroOperand)); // 结果为假
     addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
-
-    // 4. 左为真：计算右操作数，再执行与运算
     addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, computeRightLabel));
+    
     auto rightResult = visit(ctx->relExpr());
     if (!rightResult.has_value()) return std::any(); // 右操作数无效
     auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
     addInstruction(IRInstruction(IROpcode::AND, resultOperand, leftOperand, rightOperand));
     addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
-
-    // 5. 结束标签
     addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, endLabel));
 
     return std::make_any<std::shared_ptr<Operand>>(resultOperand);
 }
-
-// std::any IRGenerator::visitMulLAndExpr(ToyCParser::MulLAndExprContext *ctx) {
-//     auto leftResult = visit(ctx->lAndExpr());
-//     auto rightResult = visit(ctx->relExpr());
-    
-//     if (leftResult.has_value() && rightResult.has_value()) {
-//         auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
-//         auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
-        
-//         std::string tempVar = generateTemp();
-//         auto tempOperand = createOperand(tempVar, OperandType::TEMP);
-        
-//         addInstruction(IRInstruction(IROpcode::AND, tempOperand, leftOperand, rightOperand));
-//         return std::make_any<std::shared_ptr<Operand>>(tempOperand);
-//     }
-    
-//     return std::any();
-// }
 
 std::any IRGenerator::visitSingleLOr(ToyCParser::SingleLOrContext *ctx) {
     return visit(ctx->lAndExpr());
@@ -470,7 +575,6 @@ std::any IRGenerator::visitSingleLOr(ToyCParser::SingleLOrContext *ctx) {
 
 // 处理逻辑或（||），实现短路判断
 std::any IRGenerator::visitMulLOrExpr(ToyCParser::MulLOrExprContext *ctx) {
-    // 生成标签
     std::string trueLabel = generateLabel();  // 结果为真的标签
     std::string endLabel = generateLabel();   // 结束标签
 
@@ -479,48 +583,49 @@ std::any IRGenerator::visitMulLOrExpr(ToyCParser::MulLOrExprContext *ctx) {
     if (!leftResult.has_value()) return std::any();
     auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
 
-    // 2. 直接检查左操作数是否为真（短路优化）
+    // 常量折叠：左操作数为常量
+    if (leftOperand->type == OperandType::CONSTANT) {
+        int leftVal = std::stoi(leftOperand->value);
+        
+        // 左为真（非0），直接返回1（短路）
+        if (leftVal != 0) {
+            return std::make_any<std::shared_ptr<Operand>>(
+                createOperand("1", OperandType::CONSTANT)
+            );
+        }
+        // 左为假（0），结果取决于右操作数
+        else {
+            auto rightResult = visit(ctx->lAndExpr());
+            if (rightResult.has_value()) {
+                return rightResult;
+            }
+        }
+        return std::any();
+    }
+
+    // 直接检查左操作数是否为真（短路优化）
     addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, leftOperand, nullptr, trueLabel));
 
-    // 3. 左为假：计算右操作数
+    // 左为假：计算右操作数
     auto rightResult = visit(ctx->lAndExpr());
     if (!rightResult.has_value()) return std::any();
     auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
 
-    // 4. 创建结果临时变量（重用右操作数）
+    // 创建结果临时变量（重用右操作数）
     std::string tempVar = generateTemp();
     auto resultOperand = createOperand(tempVar, OperandType::TEMP);
     addInstruction(IRInstruction(IROpcode::ASSIGN, resultOperand, rightOperand));
     addInstruction(IRInstruction(IROpcode::GOTO, nullptr, nullptr, nullptr, endLabel));
 
-    // 5. 左为真：直接设置结果为1（短路）
+    // 左为真：直接设置结果为1（短路）
     addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, trueLabel));
     auto oneOperand = createOperand("1", OperandType::CONSTANT);
     addInstruction(IRInstruction(IROpcode::ASSIGN, resultOperand, oneOperand));
 
-    // 6. 结束标签
     addInstruction(IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, endLabel));
 
     return std::make_any<std::shared_ptr<Operand>>(resultOperand);
 }
-
-// std::any IRGenerator::visitMulLOrExpr(ToyCParser::MulLOrExprContext *ctx) {
-//     auto leftResult = visit(ctx->lOrExpr());
-//     auto rightResult = visit(ctx->lAndExpr());
-    
-//     if (leftResult.has_value() && rightResult.has_value()) {
-//         auto leftOperand = std::any_cast<std::shared_ptr<Operand>>(leftResult);
-//         auto rightOperand = std::any_cast<std::shared_ptr<Operand>>(rightResult);
-        
-//         std::string tempVar = generateTemp();
-//         auto tempOperand = createOperand(tempVar, OperandType::TEMP);
-        
-//         addInstruction(IRInstruction(IROpcode::OR, tempOperand, leftOperand, rightOperand));
-//         return std::make_any<std::shared_ptr<Operand>>(tempOperand);
-//     }
-    
-//     return std::any();
-// }
 
 // 访问一元表达式
 std::any IRGenerator::visitSingleUnary(ToyCParser::SingleUnaryContext *ctx) {
@@ -533,6 +638,33 @@ std::any IRGenerator::visitMulUnaryOp(ToyCParser::MulUnaryOpContext *ctx) {
     if (operandResult.has_value()) {
         auto operand = std::any_cast<std::shared_ptr<Operand>>(operandResult);
         
+        // 常量折叠优化
+        if (operand->type == OperandType::CONSTANT) {
+            int val = std::stoi(operand->value);
+            int resultVal;
+            
+            if (ctx->ADD()) resultVal = val;        // +x = x
+            else if (ctx->SUB()) resultVal = -val;   // -x
+            else if (ctx->NOT()) resultVal = !val;   // !x
+            
+            return std::make_any<std::shared_ptr<Operand>>(
+                createOperand(std::to_string(resultVal), OperandType::CONSTANT)
+            );
+        }
+        
+        // 代数简化：-(-x) = x
+        if (ctx->SUB() && operand->type == OperandType::TEMP) {
+            // 检查前一条指令是否是负号操作
+            if (!currentFunction->instructions.empty()) {
+                auto& lastInst = currentFunction->instructions.back();
+                if (lastInst.opcode == IROpcode::SUB && 
+                    lastInst.arg1->value == "0" && 
+                    lastInst.arg2->toString() == operand->toString()) {
+                    return std::make_any<std::shared_ptr<Operand>>(lastInst.arg2);
+                }
+            }
+        }
+
         std::string tempVar = generateTemp();
         auto tempOperand = createOperand(tempVar, OperandType::TEMP);
         

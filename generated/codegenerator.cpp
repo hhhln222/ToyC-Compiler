@@ -31,54 +31,54 @@ void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize) {
     emit(funcName + ":");
     emit("addi sp, sp, -" + std::to_string(frameSize));
     emit("sw ra, " + std::to_string(frameSize-4) + "(sp)");
-    emit("sw s0, " + std::to_string(frameSize-8) + "(sp)");
+    for (int i = 0; i <= 11; ++i) {
+        int offset = frameSize - 8 - i * 4;  // 计算每个寄存器的栈偏移
+        emit("sw s" + std::to_string(i) + ", " + std::to_string(offset) + "(sp)");
+    }
     emit("addi s0, sp, " + std::to_string(frameSize));
 }
 
 void CodeGenerator::emitEpilogue(int frameSize) {
     emit(currentFuncExitLabel + ":");
-    emit("lw s0, " + std::to_string(frameSize-8) + "(sp)");
+    for (int i = 0; i <= 11; ++i) {
+        int offset = frameSize - 8 - i * 4;  // 计算每个寄存器的栈偏移
+        emit("lw s" + std::to_string(i) + ", " + std::to_string(offset) + "(sp)");
+    }
     emit("lw ra, " + std::to_string(frameSize-4) + "(sp)");
     emit("addi sp, sp, " + std::to_string(frameSize));
     emit("ret");
 }
 
 int countLocalVariables(const FunctionInfo& func) {
-    // 1. 收集所有参数名（用于排除参数）
     std::unordered_set<std::string> paramNames;
     for (const auto& param : func.params) {
-        paramNames.insert(param);
+        paramNames.insert(param->toString());
     }
     
-    // 2. 收集所有局部变量（用户定义变量 + 临时变量）
+    // 所有局部变量（用户定义变量 + 临时变量）
     std::unordered_set<std::string> localVarIdentifiers;
     
-    // 遍历所有指令的操作数
     auto processOperand = [&](const std::shared_ptr<Operand>& op) {
         if (!op) return; // 跳过空操作数
         
-        // 处理用户定义的局部变量（排除参数）
         if (op->type == OperandType::VARIABLE) {
             // 检查是否为参数
             if (paramNames.find(op->value) == paramNames.end()) {
                 localVarIdentifiers.insert(op->value);
             }
         }
-        // 处理编译器生成的临时变量（TEMP类型）
         else if (op->type == OperandType::TEMP) {
             // 临时变量的标识是"t"+value，直接用value作为唯一标识
             localVarIdentifiers.insert("t" + op->value);
         }
     };
     
-    // 遍历所有指令
     for (const auto& inst : func.instructions) {
         processOperand(inst.result);
         processOperand(inst.arg1);
         processOperand(inst.arg2);
     }
     
-    // 3. 集合大小即为局部变量总数（自动去重）
     return localVarIdentifiers.size();
 }
 
@@ -86,34 +86,29 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     // 重置标签映射
     labelMap.clear();
     usedLabels.clear();
+    regAlloc.reset();
+    varStackMap.clear();
+    stackOffset = 0;
     
-    // 计算栈帧大小
     int localVarSize = countLocalVariables(func);
-    // 正确计算：保存ra(4) + s0(4) + 参数(每个4字节) + 局部变量(每个4字节)
-    int frameSize = 8 + 4 * (func.params.size() + localVarSize); 
-    // 确保栈帧大小按16字节对齐（RISC-V调用约定）
+    int paramCount = func.params.size();
+    int paramSaveSize = (paramCount > 8) ? 8 * 4 : paramCount * 4;
+    int frameSize = 4 + 12*4 + 4 * localVarSize + paramSaveSize;
+    // 确保栈帧大小按16字节对齐
     if (frameSize % 16 != 0) {
         frameSize += 16 - (frameSize % 16);
     }
 
     emitPrologue(func.name, frameSize);
 
-    // 处理函数参数：保存a0,a1...到栈中，按约定顺序存取
-    if (!func.params.empty()) {
-        // 1. 保存参数寄存器到栈（a0对应第一个参数，依次类推）
-        int paramOffset = -20;  // 初始偏移，与目标汇编一致
-        for (int i = 0; i < func.params.size(); ++i) {
-            emit("sw a" + std::to_string(i) + ", " + std::to_string(paramOffset) + "(s0)");
-            paramOffset -= 4;
-        }
-
-        // 2. 从栈加载参数到临时寄存器（a4,a5...）
-        paramOffset = -20;  // 重置偏移
-        for (int i = 0; i < func.params.size(); ++i) {
-            std::string tempReg = "a" + std::to_string(4 + i);  // a4,a5,a6...
-            emit("lw " + tempReg + ", " + std::to_string(paramOffset) + "(s0)");
-            paramOffset -= 4;
-        }
+    // 保存参数到栈帧
+    int paramOffset = 0; // 参数在栈帧中的偏移量
+    for (int i = 0; i < func.params.size() && i < 8; i++) {
+        std::string reg = "a" + std::to_string(i);
+        int offset = frameSize - 4 - 12*4 - paramSaveSize + i*4;
+        emit("sw " + reg + ", " + std::to_string(offset) + "(sp)");
+        
+        varStackMap[func.params[i]->toString()] = offset;
     }
     
     // 生成函数体指令
@@ -139,18 +134,36 @@ std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
     if (!op) return "";
 
     if (op->type != OperandType::CONSTANT && regAlloc.isInReg(op->toString())) {
-        return regAlloc.allocateReg(op->toString());
+        return regAlloc.allocateReg(op->toString(),op->type);
     }
 
     std::string reg;
     if (op->type == OperandType::CONSTANT) {
-        reg = regAlloc.allocateReg("const_" + op->value);
+        reg = regAlloc.allocateReg("const_" + op->value,op->type);
         emit("li " + reg + ", " + op->value);
-    } else {
-        reg = regAlloc.allocateReg(op->toString());
-        if (varStackMap.count(op->value)) {
-            emit(RiscVUtils::emitLoad(reg, varStackMap[op->value]));
+    } 
+    else {
+        while (true) {
+            try {
+                reg = regAlloc.allocateReg(op->toString(), op->type);
+                break;
+            } catch (const std::runtime_error& e) {
+                auto spillInsts = regAlloc.spillRegister();
+                for (const auto& inst : spillInsts) {
+                    emit(inst);
+                }
+            }
         }
+        
+        // 检查是否是参数或局部变量
+        if (varStackMap.find(op->value) != varStackMap.end()) {
+            int offset = varStackMap[op->value];
+            emit(RiscVUtils::emitLoad(reg, offset));
+        }
+        if (op->type == OperandType::PARAM && op->index >= 8) {
+            int offset = 16 + (op->index - 8) * 4; // 在调用者栈帧中的位置
+            emit("lw " + reg + ", " + std::to_string(offset) + "(s0)");
+        } 
     }
     return reg;
 }
@@ -227,7 +240,7 @@ bool CodeGenerator::isValidLabel(const std::string& label) {
 
 void CodeGenerator::generateAssignment(const IRInstruction& inst) {
     std::string srcReg = getRegOrLoad(inst.arg1);
-    std::string destReg = regAlloc.allocateReg(inst.result->toString());
+    std::string destReg = regAlloc.allocateReg(inst.result->toString(),inst.result->type);
     
     if (srcReg != destReg) {
         emit("mv " + destReg + ", " + srcReg);
@@ -254,21 +267,9 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     
     std::string rs1 = getRegOrLoad(inst.arg1);
     std::string rs2 = getRegOrLoad(inst.arg2);
-    std::string rd = regAlloc.allocateReg(inst.result->toString());
-    
-    if (isMulDiv) {
-        // 对于乘除法，添加M扩展标记
-        emit(".option rvc");  // 可选：启用压缩指令
-        emit(".option arch, +m");  // 启用M扩展
-    }
+    std::string rd = regAlloc.allocateReg(inst.result->toString(),inst.result->type);
     
     emit(op + " " + rd + ", " + rs1 + ", " + rs2);
-    
-    if (isMulDiv) {
-        // 恢复默认选项
-        emit(".option rvc");  // 可选
-        emit(".option arch, -m");  // 禁用M扩展
-    }
     
     storeIfTemp(inst.result, rd);
     // regAlloc.freeReg(inst.arg1->toString());
@@ -300,8 +301,60 @@ void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
 }
 
 void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
-    emit("call " + inst.arg1->toString());
+    // 调用者保存寄存器列表
+    std::vector<std::string> callerSaved = {};
+    for (int i = 0; i < 8; i++) {
+        callerSaved.push_back("a" + std::to_string(i));
+    }
+    
+    // 记录需要保存的寄存器
+    std::vector<std::string> savedRegisters;
+    for (const auto& reg : callerSaved) {
+        if (regAlloc.isRegInUse(reg)) {
+            savedRegisters.push_back(reg);
+        }
+    }
+    
+    // 计算保存寄存器所需的栈空间（确保16字节对齐）
+    int saveSize = savedRegisters.size() * 4;
+    int alignPadding = (16 - (saveSize % 16)) % 16; // RISC-V调用规范要求栈16字节对齐
+    saveSize += alignPadding;
+    
+    // 先调整栈指针
+    if (saveSize > 0) {
+        emit("addi sp, sp, -" + std::to_string(saveSize));
+    }
+    
+    // 保存寄存器到栈（从高地址到低地址）
+    int offset = alignPadding; // 跳过对齐填充
+    for (const auto& reg : savedRegisters) {
+        offset += 4;
+        emit("sw " + reg + ", " + std::to_string(saveSize - offset) + "(sp)");
+    }
+    
     resetParamCounter();
+
+    // 调用函数
+    emit("call " + inst.arg1->toString());
+    
+    // 处理返回值
+    if (inst.result) {
+        std::string destReg = regAlloc.allocateReg(inst.result->toString(), inst.result->type);
+        emit("mv " + destReg + ", a0"); // a0存放返回值
+        storeIfTemp(inst.result, destReg);
+    }
+    
+    // 恢复寄存器（按保存的逆序，从低地址到高地址）
+    offset = alignPadding;
+    for (auto it = savedRegisters.rbegin(); it != savedRegisters.rend(); ++it) {
+        offset += 4;
+        emit("lw " + *it + ", " + std::to_string(saveSize - offset) + "(sp)");
+    }
+    
+    // 恢复栈指针
+    if (saveSize > 0) {
+        emit("addi sp, sp, " + std::to_string(saveSize));
+    }
 }
 
 // 重置参数计数器（在函数调用前调用）
@@ -309,28 +362,24 @@ void CodeGenerator::resetParamCounter() {
     paramCounter = 0;
 }
 
-// 处理param指令（无索引，自动按顺序映射到a0、a1...）
+// 处理param指令
 void CodeGenerator::generateParam(const IRInstruction& inst) {
-    if (!inst.arg1) {
-        throw std::runtime_error("Invalid parameter operand");
-    }
+    if (!inst.arg1) return;
 
-    // 按顺序自动分配参数寄存器：第1个参数→a0，第2个→a1，以此类推
-    std::string targetReg = "a" + std::to_string(paramCounter);
+    std::string paramReg = getRegOrLoad(inst.arg1);
     
-    // 处理常量参数（直接加载到目标寄存器）
-    if (inst.arg1->type == OperandType::CONSTANT) {
-        emit("li " + targetReg + ", " + inst.arg1->value);
-    } else {
-        // 处理变量参数（从内存加载后移动到目标寄存器）
-        std::string paramReg = getRegOrLoad(inst.arg1);
+    if (paramCounter < 8) {
+        std::string targetReg = "a" + std::to_string(paramCounter);
         if (paramReg != targetReg) {
             emit("mv " + targetReg + ", " + paramReg);
+            regAlloc.freeReg(inst.arg1->toString());
         }
-        regAlloc.freeReg(inst.arg1->toString());
+    } else {
+        int offset = (paramCounter - 8) * 4;
+        emit("sw " + paramReg + ", " + std::to_string(offset) + "(sp)");
+        varStackMap[inst.arg1->value] = offset;
     }
     
-    // 参数计数器自增，确保下一个参数使用下一个寄存器
     paramCounter++;
 }
 
@@ -346,7 +395,7 @@ void CodeGenerator::generateReturn(const IRInstruction& inst) {
 void CodeGenerator::generateComparison(const IRInstruction& inst) {
     std::string rs1 = getRegOrLoad(inst.arg1);
     std::string rs2 = getRegOrLoad(inst.arg2);
-    std::string rd = regAlloc.allocateReg(inst.result->toString());
+    std::string rd = regAlloc.allocateReg(inst.result->toString(),inst.result->type);
     
     switch (inst.opcode) {
         case IROpcode::LT: 

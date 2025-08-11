@@ -1,26 +1,46 @@
 #pragma once
+#include "IRGenerator.h"
 #include <string>
 #include <vector>
 #include <map>
-#include <stdexcept> 
+#include <stdexcept>
+
+// 变量信息结构体
+struct VarInfo {
+    std::string reg;       // 绑定的寄存器
+    OperandType type;      // 变量类型
+    std::size_t lastUsed;  // 最后使用时间戳（用于LRU溢出策略）
+    int spillOffset;       // 溢出到栈的偏移量
+};
+
 // RISC-V寄存器分配器
 class RegisterAllocator {
 public:
     RegisterAllocator();
-    std::string allocateReg(const std::string& var);
+    std::string allocateReg(const std::string& var, OperandType type);
     void freeReg(const std::string& var);
     bool isInReg(const std::string& var) const;
-    void spillRegister(); // 寄存器溢出处理
+    std::string getReg(const std::string& var) const;
+    std::vector<std::string> spillRegister();
+    void reset();
+    // 获取所有已分配的变量信息
+    const std::map<std::string, VarInfo>& getAllocatedVars() const {
+        return varInfoMap;
+    }
+    std::vector<std::string> getUsedSRegs() const;
+    void forceAllocateReg(const std::string& var, OperandType type, const std::string& targetReg);
+    bool isRegInUse(const std::string& reg) const;
 
 private:
-    std::vector<std::string> freeRegs = {
-        "a4", "a5",         // 优先分配的寄存器（按顺序）
-        "a6", "a7",         // 次优先的参数寄存器
-        "t0", "t1", "t2", "t3", "t4", "t5", "t6",  // 临时寄存器
-        "a0", "a1", "a2", "a3"  // 最后使用（a0-a3用于参数和返回值，尽量避免提前占用）
-    };
-    std::map<std::string, std::string> varToReg;
-    std::vector<std::string> initialRegOrder = freeRegs;
+    std::vector<std::string> freeRegs;                // 空闲寄存器列表
+    const std::vector<std::string> initialRegOrder;   // 初始寄存器优先级顺序
+    std::map<std::string, VarInfo> varInfoMap;        // 变量信息映射表
+    std::set<std::string> usedRegisters;
+    std::size_t timestamp = 0;                        // 时间戳计数器
+    int nextSpillOffset = -4;                         // 下一个溢出位置的栈偏移
+    std::vector<std::string> spillReg(const std::string& reg);// 用于强制绑定时释放目标寄存器
+    std::string generateSpillStore(const VarInfo& varInfo);
+    std::string generateSpillLoad(const VarInfo& varInfo);
 };
 
 // RISC-V指令生成工具
@@ -31,4 +51,7 @@ namespace RiscVUtils {
                            const std::string& rd, 
                            const std::string& rs1, 
                            const std::string& rs2);
+    std::string emitCall(const std::string& func, int paramCount);
+    std::string emitReturn();
+    std::string emitParam(int index, const std::string& reg);
 };

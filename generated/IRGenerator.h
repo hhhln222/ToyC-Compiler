@@ -30,15 +30,17 @@ enum class OperandType {
     VARIABLE,    // 变量
     CONSTANT,    // 常量
     TEMP,        // 临时变量
-    LABEL        // 标签
+    LABEL,        // 标签
+    PARAM
 };
 
 // 操作数结构
 struct Operand {
     OperandType type;
     std::string value;
+    int index;
     
-    Operand(OperandType t, const std::string& v) : type(t), value(v) {}
+    Operand(OperandType t, const std::string& v, int idx = -1) : type(t), value(v), index(idx) {}
     
     std::string toString() const {
         switch (type) {
@@ -46,6 +48,7 @@ struct Operand {
             case OperandType::CONSTANT: return value;
             case OperandType::TEMP: return "t" + value;
             case OperandType::LABEL: return "L" + value;
+            case OperandType::PARAM: return value;
             default: return "unknown";
         }
     }
@@ -58,7 +61,8 @@ struct IRInstruction {
     std::shared_ptr<Operand> arg1;      // 第一个操作数
     std::shared_ptr<Operand> arg2;      // 第二个操作数
     std::string label;                  // 标签（用于跳转指令）
-    
+    bool isLeader = false;              // 标记是否为基本块入口
+
     // 构造函数
     IRInstruction(IROpcode op, std::shared_ptr<Operand> res = nullptr,
                   std::shared_ptr<Operand> a1 = nullptr,
@@ -115,7 +119,7 @@ struct IRInstruction {
             case IROpcode::LABEL:
                 return label + ":";
             case IROpcode::CALL:
-                return result_str + " = call " + arg1_str + "(" + arg2_str + ")";
+                return result_str + " = call " + arg1_str + ", " + arg2_str;
             case IROpcode::PARAM:
                 return "param " + arg1_str;
             case IROpcode::RETURN:
@@ -132,7 +136,7 @@ struct IRInstruction {
 struct FunctionInfo {
     std::string name;
     std::string returnType;
-    std::vector<std::string> params;
+    std::vector<std::shared_ptr<Operand>> params;
     std::vector<IRInstruction> instructions;
     
     FunctionInfo(const std::string& n, const std::string& rt) 
@@ -236,7 +240,7 @@ private:
     std::string generateTemp();                    // 生成临时变量名
     std::string generateLabel();                   // 生成标签名
     void addInstruction(const IRInstruction& inst); // 添加指令到当前函数
-    std::shared_ptr<Operand> createOperand(const std::string& value, OperandType type);
+    std::shared_ptr<Operand> createOperand(const std::string& value, OperandType type, int index = -1);
 };
 
 #endif // IR_GENERATOR_H 
