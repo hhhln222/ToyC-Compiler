@@ -60,7 +60,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     int tempVarSize = func.endTempCounter - func.startTempCounter;
     int paramCount = func.params.size();
     int localConut = func.varCount;
-    int frameSize = 4 * (2 + localConut + tempVarSize);
+    int frameSize = 4 * (2 + localConut + paramCount + tempVarSize);
     // 确保栈帧大小按16字节对齐
     if (frameSize % 16 != 0) {
         frameSize += 16 - (frameSize % 16);
@@ -69,14 +69,16 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     emitPrologue(func.name, frameSize, localConut);
 
     // 保存参数到栈帧
-    int paramOffset = 0; // 参数在栈帧中的偏移量
+    int paramOffset = frameSize - 4 * (2 + localConut); // 参数在栈帧中的偏移量
     for (int i = 0; i < func.params.size() && i < 8; i++) {
         std::string reg = "a" + std::to_string(i);
-        int offset = frameSize - 4 - 12*4 - paramCount*4 + i*4;
+        int offset = paramOffset - 4;
+        paramOffset-=4;
         emit("  sw " + reg + ", " + std::to_string(offset) + "(sp)");
         
         varStackMap[func.params[i]->toString()] = offset;
     }
+    stackOffset = paramOffset;
     
     // 生成函数体指令
     for (const auto& inst : func.instructions) {
