@@ -264,7 +264,9 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     emit("  call " + funcName);
 
     if (inst.result) {
-        std::string destReg = regAlloc.allocateReg(inst.result->toString(), inst.result->type).reg;
+        AllocationResult regResult = regAlloc.allocateReg(inst.result->toString(), inst.result->type);
+        std::string destReg = regResult.reg;
+        spillReg(regResult);
         emit("  mv " + destReg + ", a0"); // 将a0的值移动到结果寄存器
     }
 
@@ -410,7 +412,7 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
 
     // 处理常量：直接分配寄存器并加载值
     if (operand->type == OperandType::CONSTANT) {
-        AllocationResult regResult = regAlloc.allocateReg(operand->toString(), operand->type);
+        AllocationResult regResult = regAlloc.allocateReg("const_" + operand->toString(), operand->type);
         std::string reg = regResult.reg;
         spillReg(regResult);
         emit("  li " + reg + ", " + operand->toString());
