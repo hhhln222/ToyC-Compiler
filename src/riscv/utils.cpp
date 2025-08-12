@@ -234,33 +234,33 @@ void RegisterAllocator::forceAllocateReg(const std::string& var, OperandType typ
 
 namespace RiscVUtils {
     std::string emitLoad(const std::string& reg, int offset) {
-        return "lw " + reg + ", " + std::to_string(offset) + "(sp)";
+        return "  lw " + reg + ", " + std::to_string(offset) + "(sp)";
     }
     
     std::string emitStore(const std::string& reg, int offset) {
-        return "sw " + reg + ", " + std::to_string(offset) + "(sp)";
+        return "  sw " + reg + ", " + std::to_string(offset) + "(sp)";
     }
     
     std::string emitBinaryOp(const std::string& op, 
                            const std::string& rd, 
                            const std::string& rs1, 
                            const std::string& rs2) {
-        return op + " " + rd + ", " + rs1 + ", " + rs2;
+        return "  " + op + " " + rd + ", " + rs1 + ", " + rs2;
     }
 
     std::string emitCall(const std::string& func, int paramCount) {
-        return "call " + func + " # " + std::to_string(paramCount) + " parameters";
+        return "  call " + func + " # " + std::to_string(paramCount) + " parameters";
     }
     
     std::string emitReturn() {
-        return "ret";
+        return "  ret";
     }
     
     std::string emitParam(int index, const std::string& reg) {
         if (index < 8) {
             // 使用a0-a7寄存器传递参数
             std::string paramReg = "a" + std::to_string(index);
-            return "mv " + paramReg + ", " + reg;
+            return "  mv " + paramReg + ", " + reg;
         } else {
             // 超过8个参数用栈传递
             int offset = (index - 8) * 4;  // 整数占4字节

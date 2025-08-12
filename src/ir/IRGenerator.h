@@ -138,9 +138,12 @@ struct FunctionInfo {
     std::string returnType;
     std::vector<std::shared_ptr<Operand>> params;
     std::vector<IRInstruction> instructions;
+    int varCount;          // 变量（包括参数和局部变量）的总数
+    int startTempCounter;   // 函数开始时的临时变量计数器值
+    int endTempCounter;     // 函数结束时的临时变量计数器值
     
     FunctionInfo(const std::string& n, const std::string& rt) 
-        : name(n), returnType(rt) {}
+        : name(n), returnType(rt), varCount(0), startTempCounter(0), endTempCounter(0) {}
 };
 
 // IR生成器类

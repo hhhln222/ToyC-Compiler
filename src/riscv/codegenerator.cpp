@@ -23,63 +23,30 @@ void CodeGenerator::emit(const std::string& instruction) {
     asmCode += instruction + "\n";
 }
 
-void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize) {
+void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize, int valConut) {
     // 生成唯一退出标签（格式：.<函数名>_func_end）
     std::string exitLabel = "." + funcName + "_func_end";
     // 记录当前函数的退出标签，供return指令使用
     currentFuncExitLabel = exitLabel;
     emit(funcName + ":");
-    emit("addi sp, sp, -" + std::to_string(frameSize));
-    emit("sw ra, " + std::to_string(frameSize-4) + "(sp)");
-    for (int i = 0; i <= 11; ++i) {
+    emit("  addi sp, sp, -" + std::to_string(frameSize));
+    emit("  sw ra, " + std::to_string(frameSize-4) + "(sp)");
+    for (int i = 0; i <= valConut; ++i) {
         int offset = frameSize - 8 - i * 4;  // 计算每个寄存器的栈偏移
-        emit("sw s" + std::to_string(i) + ", " + std::to_string(offset) + "(sp)");
+        emit("  sw s" + std::to_string(i) + ", " + std::to_string(offset) + "(sp)");
     }
-    emit("addi s0, sp, " + std::to_string(frameSize));
+    emit("  addi s0, sp, " + std::to_string(frameSize));
 }
 
-void CodeGenerator::emitEpilogue(int frameSize) {
+void CodeGenerator::emitEpilogue(int frameSize, int valConut) {
     emit(currentFuncExitLabel + ":");
-    for (int i = 0; i <= 11; ++i) {
+    for (int i = 0; i <= valConut; ++i) {
         int offset = frameSize - 8 - i * 4;  // 计算每个寄存器的栈偏移
-        emit("lw s" + std::to_string(i) + ", " + std::to_string(offset) + "(sp)");
+        emit("  lw s" + std::to_string(i) + ", " + std::to_string(offset) + "(sp)");
     }
-    emit("lw ra, " + std::to_string(frameSize-4) + "(sp)");
-    emit("addi sp, sp, " + std::to_string(frameSize));
-    emit("ret");
-}
-
-int countLocalVariables(const FunctionInfo& func) {
-    std::unordered_set<std::string> paramNames;
-    for (const auto& param : func.params) {
-        paramNames.insert(param->toString());
-    }
-    
-    // 所有局部变量（用户定义变量 + 临时变量）
-    std::unordered_set<std::string> localVarIdentifiers;
-    
-    auto processOperand = [&](const std::shared_ptr<Operand>& op) {
-        if (!op) return; // 跳过空操作数
-        
-        if (op->type == OperandType::VARIABLE) {
-            // 检查是否为参数
-            if (paramNames.find(op->value) == paramNames.end()) {
-                localVarIdentifiers.insert(op->value);
-            }
-        }
-        else if (op->type == OperandType::TEMP) {
-            // 临时变量的标识是"t"+value，直接用value作为唯一标识
-            localVarIdentifiers.insert("t" + op->value);
-        }
-    };
-    
-    for (const auto& inst : func.instructions) {
-        processOperand(inst.result);
-        processOperand(inst.arg1);
-        processOperand(inst.arg2);
-    }
-    
-    return localVarIdentifiers.size();
+    emit("  lw ra, " + std::to_string(frameSize-4) + "(sp)");
+    emit("  addi sp, sp, " + std::to_string(frameSize));
+    emit("  ret");
 }
 
 void CodeGenerator::emitFunction(const FunctionInfo& func) {
@@ -90,23 +57,23 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     varStackMap.clear();
     stackOffset = 0;
     
-    int localVarSize = countLocalVariables(func);
+    int tempVarSize = func.endTempCounter - func.startTempCounter;
     int paramCount = func.params.size();
-    int paramSaveSize = (paramCount > 8) ? 8 * 4 : paramCount * 4;
-    int frameSize = 4 + 12*4 + 4 * localVarSize + paramSaveSize;
+    int localConut = func.varCount;
+    int frameSize = 4 * (2 + localConut + tempVarSize);
     // 确保栈帧大小按16字节对齐
     if (frameSize % 16 != 0) {
         frameSize += 16 - (frameSize % 16);
     }
 
-    emitPrologue(func.name, frameSize);
+    emitPrologue(func.name, frameSize, localConut);
 
     // 保存参数到栈帧
     int paramOffset = 0; // 参数在栈帧中的偏移量
     for (int i = 0; i < func.params.size() && i < 8; i++) {
         std::string reg = "a" + std::to_string(i);
-        int offset = frameSize - 4 - 12*4 - paramSaveSize + i*4;
-        emit("sw " + reg + ", " + std::to_string(offset) + "(sp)");
+        int offset = frameSize - 4 - 12*4 - paramCount*4 + i*4;
+        emit("  sw " + reg + ", " + std::to_string(offset) + "(sp)");
         
         varStackMap[func.params[i]->toString()] = offset;
     }
@@ -127,7 +94,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
         }
     }
     
-    emitEpilogue(frameSize);
+    emitEpilogue(frameSize, localConut);
 }
 
 std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
@@ -140,7 +107,7 @@ std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
     std::string reg;
     if (op->type == OperandType::CONSTANT) {
         reg = regAlloc.allocateReg("const_" + op->value,op->type);
-        emit("li " + reg + ", " + op->value);
+        emit("  li " + reg + ", " + op->value);
     } 
     else {
         while (true) {
@@ -162,7 +129,7 @@ std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
         }
         if (op->type == OperandType::PARAM && op->index >= 8) {
             int offset = 16 + (op->index - 8) * 4; // 在调用者栈帧中的位置
-            emit("lw " + reg + ", " + std::to_string(offset) + "(s0)");
+            emit("  lw " + reg + ", " + std::to_string(offset) + "(s0)");
         } 
     }
     return reg;
@@ -243,7 +210,7 @@ void CodeGenerator::generateAssignment(const IRInstruction& inst) {
     std::string destReg = regAlloc.allocateReg(inst.result->toString(),inst.result->type);
     
     if (srcReg != destReg) {
-        emit("mv " + destReg + ", " + srcReg);
+        emit("  mv " + destReg + ", " + srcReg);
     }
     
     storeIfTemp(inst.result, destReg);
@@ -269,7 +236,7 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     std::string rs2 = getRegOrLoad(inst.arg2);
     std::string rd = regAlloc.allocateReg(inst.result->toString(),inst.result->type);
     
-    emit(op + " " + rd + ", " + rs1 + ", " + rs2);
+    emit("  " + op + " " + rd + ", " + rs1 + ", " + rs2);
     
     storeIfTemp(inst.result, rd);
     // regAlloc.freeReg(inst.arg1->toString());
@@ -286,13 +253,13 @@ void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
         }
         case IROpcode::GOTO: {
             std::string validLabel = generateValidLabel(inst.label);
-            emit("j " + validLabel);
+            emit("  j " + validLabel);
             break;
         }
         case IROpcode::IF_GOTO: {
             std::string condReg = getRegOrLoad(inst.arg1);
             std::string validLabel = generateValidLabel(inst.label);
-            emit("bnez " + condReg + ", " + validLabel);
+            emit("  bnez " + condReg + ", " + validLabel);
             regAlloc.freeReg(inst.arg1->toString());
             break;
         }
@@ -322,25 +289,25 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     
     // 先调整栈指针
     if (saveSize > 0) {
-        emit("addi sp, sp, -" + std::to_string(saveSize));
+        emit("  addi sp, sp, -" + std::to_string(saveSize));
     }
     
     // 保存寄存器到栈（从高地址到低地址）
     int offset = alignPadding; // 跳过对齐填充
     for (const auto& reg : savedRegisters) {
         offset += 4;
-        emit("sw " + reg + ", " + std::to_string(saveSize - offset) + "(sp)");
+        emit("  sw " + reg + ", " + std::to_string(saveSize - offset) + "(sp)");
     }
     
     resetParamCounter();
 
     // 调用函数
-    emit("call " + inst.arg1->toString());
+    emit("  call " + inst.arg1->toString());
     
     // 处理返回值
     if (inst.result) {
         std::string destReg = regAlloc.allocateReg(inst.result->toString(), inst.result->type);
-        emit("mv " + destReg + ", a0"); // a0存放返回值
+        emit("  mv " + destReg + ", a0"); // a0存放返回值
         storeIfTemp(inst.result, destReg);
     }
     
@@ -348,12 +315,12 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     offset = alignPadding;
     for (auto it = savedRegisters.rbegin(); it != savedRegisters.rend(); ++it) {
         offset += 4;
-        emit("lw " + *it + ", " + std::to_string(saveSize - offset) + "(sp)");
+        emit("  lw " + *it + ", " + std::to_string(saveSize - offset) + "(sp)");
     }
     
     // 恢复栈指针
     if (saveSize > 0) {
-        emit("addi sp, sp, " + std::to_string(saveSize));
+        emit("  addi sp, sp, " + std::to_string(saveSize));
     }
 }
 
@@ -371,12 +338,12 @@ void CodeGenerator::generateParam(const IRInstruction& inst) {
     if (paramCounter < 8) {
         std::string targetReg = "a" + std::to_string(paramCounter);
         if (paramReg != targetReg) {
-            emit("mv " + targetReg + ", " + paramReg);
+            emit("  mv " + targetReg + ", " + paramReg);
             regAlloc.freeReg(inst.arg1->toString());
         }
     } else {
         int offset = (paramCounter - 8) * 4;
-        emit("sw " + paramReg + ", " + std::to_string(offset) + "(sp)");
+        emit("  sw " + paramReg + ", " + std::to_string(offset) + "(sp)");
         varStackMap[inst.arg1->value] = offset;
     }
     
@@ -386,10 +353,10 @@ void CodeGenerator::generateParam(const IRInstruction& inst) {
 void CodeGenerator::generateReturn(const IRInstruction& inst) {
     if (inst.arg1) {
         std::string retReg = getRegOrLoad(inst.arg1);
-        emit("mv a0, " + retReg);
+        emit("  mv a0, " + retReg);
         regAlloc.freeReg(inst.arg1->toString());
     }
-    emit("j " + currentFuncExitLabel);  // 跳转到函数统一退出标签
+    emit("  j " + currentFuncExitLabel);  // 跳转到函数统一退出标签
 }
 
 void CodeGenerator::generateComparison(const IRInstruction& inst) {
@@ -399,26 +366,26 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
     
     switch (inst.opcode) {
         case IROpcode::LT: 
-            emit("slt " + rd + ", " + rs1 + ", " + rs2);
+            emit("  slt " + rd + ", " + rs1 + ", " + rs2);
             break;
         case IROpcode::GT: 
-            emit("slt " + rd + ", " + rs2 + ", " + rs1);
+            emit("  slt " + rd + ", " + rs2 + ", " + rs1);
             break;
         case IROpcode::LE: 
-            emit("slt " + rd + ", " + rs2 + ", " + rs1);
-            emit("xori " + rd + ", " + rd + ", 1");
+            emit("  slt " + rd + ", " + rs2 + ", " + rs1);
+            emit("  xori " + rd + ", " + rd + ", 1");
             break;
         case IROpcode::GE:
-            emit("slt " + rd + ", " + rs1 + ", " + rs2);
-            emit("xori " + rd + ", " + rd + ", 1");
+            emit("  slt " + rd + ", " + rs1 + ", " + rs2);
+            emit("  xori " + rd + ", " + rd + ", 1");
             break;
         case IROpcode::EQ:
-            emit("xor " + rd + ", " + rs1 + ", " + rs2);
-            emit("seqz " + rd + ", " + rd);
+            emit("  xor " + rd + ", " + rs1 + ", " + rs2);
+            emit("  seqz " + rd + ", " + rd);
             break;
         case IROpcode::NE:
-            emit("xor " + rd + ", " + rs1 + ", " + rs2);
-            emit("snez " + rd + ", " + rd);
+            emit("  xor " + rd + ", " + rs1 + ", " + rs2);
+            emit("  snez " + rd + ", " + rd);
             break;
         default:
             throw std::runtime_error("Unsupported comparison operator");

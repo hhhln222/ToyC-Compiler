@@ -1,21 +1,28 @@
 cmake_minimum_required(VERSION 3.5)
-project(antlr_parser)
+project(toyC_compiler)
 
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 17)
 
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "src/*.h")
 
-# 添加带IR生成的可执行文件
-add_executable(parser_with_ir
-    generated/main_with_ir.cpp
-    generated/ToyCLexer.cpp
-    generated/ToyCParser.cpp
-    generated/SemanticAnalyzer.cpp
-    generated/IRGenerator.cpp
-    generated/codegenerator.cpp
-    generated/utils.cpp
+add_executable(toyC_compiler
+    main.cpp
+    ${SOURCES} 
+    ${HEADERS}
 )
+
+target_include_directories(toyC_compiler PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}       
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/fronted 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/semantic
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ir 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/riscv
+)
+
+
 
 # 链接 ANTLR4 库 
 #target_link_libraries(parser antlr4-runtime)
-target_link_libraries(parser_with_ir antlr4-runtime)
+target_link_libraries(toyC_compiler antlr4-runtime)

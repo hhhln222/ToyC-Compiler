@@ -32,6 +32,9 @@ void IRGenerator::printIR(const std::string& outputFile) const {
     for (const auto& func : functions) {
         out << "\n=== Function: " << func.name << " ===" << std::endl;
         out << "Return type: " << func.returnType << std::endl;
+        out << "Number of variables (including parameters): " << func.varCount << std::endl;
+        int tempCount = func.endTempCounter - func.startTempCounter;
+        out << "Number of temporary variables: " << tempCount << std::endl;
         if (!func.params.empty()) {
             out << "Parameters: ";
             for (size_t i = 0; i < func.params.size(); ++i) {
@@ -66,17 +69,25 @@ std::any IRGenerator::visitFuncDef(ToyCParser::FuncDefContext *ctx) {
     // 创建新函数
     functions.emplace_back(funcName, returnType);
     currentFunction = &functions.back();
+
+    currentFunction->startTempCounter = tempCounter;
+    currentFunction->varCount = ctx->param().size();
+    // 进入函数作用域
+    enterScope();
     
     // 收集参数
     for (size_t i = 0; i < ctx->param().size(); ++i) {
         auto param = ctx->param()[i];
         std::string paramName = param->ID()->getText();
+        // std::string uniqueName = addVariable(paramName);
         currentFunction->params.push_back(createOperand(paramName, OperandType::PARAM, i));
     }
-    
     // 访问函数体
     visit(ctx->block());
+
+    exitScope();
     
+    currentFunction->endTempCounter = tempCounter;
     currentFunction = nullptr;
     return nullptr;
 }
@@ -749,6 +760,9 @@ std::string IRGenerator::addVariable(const std::string& name) {
     int version = ++varVersion[name];
     std::string uniqueName = name + "_" + std::to_string(version);
     symbolTableStack.back()[name] = uniqueName;
+    if (currentFunction) {
+        currentFunction->varCount++;
+    }
     return uniqueName;
 }
 

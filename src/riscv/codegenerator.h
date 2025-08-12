@@ -23,8 +23,8 @@ private:
     int paramCounter = 0;  // 用于记录参数顺序的计数器
 
     // 生成函数框架
-    void emitPrologue(const std::string& funcName, int frameSize);
-    void emitEpilogue(int frameSize);
+    void emitPrologue(const std::string& funcName, int frameSize, int valConut);
+    void emitEpilogue(int frameSize, int valConut);
 
     // 指令生成
     void emit(const std::string& instruction);

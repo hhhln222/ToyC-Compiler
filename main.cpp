@@ -62,6 +62,13 @@ int main(int argc, const char* argv[]) {
     
     // 9. 向标准输出写入汇编代码
     std::cout << assemblyCode;
-    
+    // std::ofstream outFile("output_code.txt");  // 创建输出文件流，指定输出文件名为output.txt
+    // if (outFile.is_open()) {  // 检查文件是否成功打开
+    //     outFile << assemblyCode;  // 将汇编代码写入文件
+    //     outFile.close();  // 关闭文件流
+    //     std::cout << "汇编代码已成功写入到output.s文件" << std::endl;
+    // } else {
+    //     std::cerr << "无法打开文件进行写入！" << std::endl;
+    // }
     return 0;
 } 
