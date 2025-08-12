@@ -60,13 +60,14 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     int tempVarSize = func.endTempCounter - func.startTempCounter;
     int paramCount = func.params.size();
     int localConut = func.varCount;
+    int valConut = (localConut > 11)?11:localConut;
     int frameSize = 4 * (2 + localConut + paramCount + tempVarSize);
     // 确保栈帧大小按16字节对齐
     if (frameSize % 16 != 0) {
         frameSize += 16 - (frameSize % 16);
     }
 
-    emitPrologue(func.name, frameSize, localConut);
+    emitPrologue(func.name, frameSize, valConut);
 
     // 保存参数到栈帧
     int paramOffset = frameSize - 4 * (2 + localConut); // 参数在栈帧中的偏移量
@@ -96,7 +97,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
         }
     }
     
-    emitEpilogue(frameSize, localConut);
+    emitEpilogue(frameSize, valConut);
 }
 
 std::string CodeGenerator::getRegOrLoad(const std::shared_ptr<Operand>& op) {
