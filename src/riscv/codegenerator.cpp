@@ -120,7 +120,7 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     std::string op;
 
     switch (inst.opcode) {
-        case IROpcode::ADD: op = (inst.arg2->type == OperandType::CONSTANT) ? "addi" : "add"; break;
+        case IROpcode::ADD: op = "add"; break;
         case IROpcode::SUB: op = "sub"; break;
         case IROpcode::MUL: op = "mul"; break;
         case IROpcode::DIV: op = "div"; break;
@@ -130,8 +130,12 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
 
     std::string rs1 = getRegorLoad(inst.arg1);
     std::string rs2;
-    if(inst.arg2->type==OperandType::CONSTANT && op=="addi"){
-        rs2 = inst.arg2->toString();
+    if(inst.arg2->type==OperandType::CONSTANT){
+        AllocationResult regResult = regAlloc.allocateReg(inst.arg2->toString(), inst.arg2->type);
+        std::string tempReg = regResult.reg;
+        spillReg(regResult);
+        emit("  li " + tempReg + ", " + inst.arg2->toString());
+        rs2 = tempReg;
     }
     else{
         rs2 = getRegorLoad(inst.arg2);
@@ -263,13 +267,6 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     std::string funcName = inst.arg1->toString();
     emit("  call " + funcName);
 
-    if (inst.result) {
-        AllocationResult regResult = regAlloc.allocateReg(inst.result->toString(), inst.result->type);
-        std::string destReg = regResult.reg;
-        spillReg(regResult);
-        emit("  mv " + destReg + ", a0"); // 将a0的值移动到结果寄存器
-    }
-
     int index = savedRegisters.size() - 1;  // 从最后保存的寄存器开始恢复
     for (auto it = savedRegisters.rbegin(); it != savedRegisters.rend(); ++it, --index) {
         // 计算该寄存器保存时的偏移量（与保存阶段完全一致）
@@ -279,6 +276,13 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
 
     if (totalStackSize > 0) {
         emit("  addi sp, sp, " + std::to_string(totalStackSize));
+    }
+
+    if (inst.result) {
+        AllocationResult regResult = regAlloc.allocateReg(inst.result->toString(), inst.result->type);
+        std::string destReg = regResult.reg;
+        spillReg(regResult);
+        emit("  mv " + destReg + ", a0"); // 将a0的值移动到结果寄存器
     }
 }
 
