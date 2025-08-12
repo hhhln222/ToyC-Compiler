@@ -113,7 +113,9 @@ void CodeGenerator::generateAssignment(const IRInstruction& inst) {
         if (srcReg != destReg) {
             emit("  mv " + destReg + ", " + srcReg);
         }
+        if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
     }
+
 }
 
 void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
@@ -145,6 +147,9 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     spillReg(regResult);
 
     emit("  " + op + " " + rd + ", " + rs1 + ", " + rs2);
+
+    if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
+    if(inst.arg2->type == OperandType::TEMP) regAlloc.freeReg(inst.arg2->toString());
 }
 
 void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
@@ -163,7 +168,7 @@ void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
             std::string condReg = getRegorLoad(inst.arg1);;
             std::string validLabel = generateValidLabel(inst.label);
             emit("  bnez " + condReg + ", " + validLabel);
-            regAlloc.freeReg(inst.arg1->toString());
+            if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
             break;
         }
         default: break;
@@ -229,13 +234,16 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     for (int i = 0; i < regParamCount; ++i) {
         const auto& arg = paramStrings[i];
         std::string destReg = "a" + std::to_string(i); // 目标参数寄存器a0-a7
-        
+        Operand operand={OperandType::VARIABLE, arg, i};
+        if(arg[0]=='t') {operand.type=OperandType::TEMP;}
+        else operand={OperandType::VARIABLE, arg, i};
         if (isNumber(arg)) {
             // 数字常量使用li指令
             emit("  li " + destReg + ", " + arg);
         } else {
             // 变量/标识符使用mv指令（从其绑定的寄存器移动）
-            std::string srcReg = regAlloc.getReg(arg);
+            std::shared_ptr<Operand> operandPtr = std::make_shared<Operand>(operand);
+            std::string srcReg = getRegorLoad(operandPtr);
             emit("  mv " + destReg + ", " + srcReg);
         }
     }
@@ -245,27 +253,37 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         int stackParamOffset = (stackParamCount - 1 - i) * 4;
         const auto& arg = paramStrings[8 + i];
         std::string argReg;
+        Operand operand={OperandType::VARIABLE, arg, i};
+        if(arg[0]=='t') {operand.type=OperandType::TEMP;}
         if (isNumber(arg)) {
             // 数字常量使用li指令
-            AllocationResult regResult = regAlloc.allocateReg("const_" + arg, OperandType::CONSTANT);
+            AllocationResult regResult = regAlloc.allocateReg(arg, OperandType::CONSTANT);
             argReg = regResult.reg;
             spillReg(regResult);
             emit("  li " + argReg + ", " + arg);
         } else {
             // 变量/标识符使用mv指令（从其绑定的寄存器移动）
-            std::string srcReg = regAlloc.getReg(arg);
+            std::shared_ptr<Operand> operandPtr = std::make_shared<Operand>(operand);
+            std::string srcReg = getRegorLoad(operandPtr);
             AllocationResult regResult = regAlloc.allocateReg(arg, OperandType::TEMP);
             argReg = regResult.reg;
             spillReg(regResult);
             emit("  mv " + argReg + ", " + srcReg);
         }
         emit("  sw " + argReg + ", " + std::to_string(stackParamOffset) + "(sp)");
-        regAlloc.freeReg(arg);
+        if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(arg);
     }
 
     resetParamStrings();
     std::string funcName = inst.arg1->toString();
     emit("  call " + funcName);
+
+    if (inst.result) {
+        AllocationResult regResult = regAlloc.allocateReg(inst.result->toString(), inst.result->type);
+        std::string destReg = regResult.reg;
+        spillReg(regResult);
+        emit("  mv " + destReg + ", a0"); // 将a0的值移动到结果寄存器
+    }
 
     int index = savedRegisters.size() - 1;  // 从最后保存的寄存器开始恢复
     for (auto it = savedRegisters.rbegin(); it != savedRegisters.rend(); ++it, --index) {
@@ -278,12 +296,6 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         emit("  addi sp, sp, " + std::to_string(totalStackSize));
     }
 
-    if (inst.result) {
-        AllocationResult regResult = regAlloc.allocateReg(inst.result->toString(), inst.result->type);
-        std::string destReg = regResult.reg;
-        spillReg(regResult);
-        emit("  mv " + destReg + ", a0"); // 将a0的值移动到结果寄存器
-    }
 }
 
 // 重置参数计数器（在函数调用前调用）
@@ -305,7 +317,7 @@ void CodeGenerator::generateReturn(const IRInstruction& inst) {
             emit("  li a0, " + inst.arg1->toString());
         }
         else{
-            std::string retReg = regAlloc.getReg(inst.arg1->toString());
+            std::string retReg = getRegorLoad(inst.arg1);
             emit("  mv a0, " + retReg);
             regAlloc.freeReg(inst.arg1->toString());
         }
@@ -346,6 +358,9 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
         default:
             throw std::runtime_error("Unsupported comparison operator");
     }
+
+    if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
+    if(inst.arg2->type == OperandType::TEMP) regAlloc.freeReg(inst.arg2->toString());
     
 }
 

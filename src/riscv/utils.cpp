@@ -165,8 +165,8 @@ bool RegisterAllocator::isInReg(const std::string& var) const {
 // 获取变量绑定的寄存器
 std::string RegisterAllocator::getReg(const std::string& var) const {
     auto it = varInfoMap.find(var);
-    if (it == varInfoMap.end()) {
-        throw std::runtime_error("Variable not in register: " + var);
+     if (it == varInfoMap.end()) {
+       throw std::runtime_error("Variable not in register: " + var);
     }
     return it->second.reg;
 }
