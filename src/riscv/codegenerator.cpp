@@ -268,10 +268,11 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         emit("  mv " + destReg + ", a0"); // 将a0的值移动到结果寄存器
     }
 
-    offset = alignPadding;
-    for (auto it = savedRegisters.rbegin(); it != savedRegisters.rend(); ++it) {
-        offset += 4;
-        emit("  lw " + *it + ", " + std::to_string(totalStackSize - offset) + "(sp)");
+    int index = savedRegisters.size() - 1;  // 从最后保存的寄存器开始恢复
+    for (auto it = savedRegisters.rbegin(); it != savedRegisters.rend(); ++it, --index) {
+        // 计算该寄存器保存时的偏移量（与保存阶段完全一致）
+        int restoreOffset = alignPadding + 4 * (index + 1);
+        emit("  lw " + *it + ", " + std::to_string(totalStackSize - restoreOffset) + "(sp)");
     }
 
     if (totalStackSize > 0) {
