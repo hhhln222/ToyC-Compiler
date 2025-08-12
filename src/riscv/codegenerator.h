@@ -21,6 +21,7 @@ private:
     std::set<std::string> usedLabels; // 已使用的标签集合
     std::map<std::string, std::string> labelMap; // IR标签到汇编标签的映射
     int paramCounter = 0;  // 用于记录参数顺序的计数器
+    std::vector<std::string> paramStrings;
 
     // 生成函数框架
     void emitPrologue(const std::string& funcName, int frameSize, int valConut);
@@ -40,10 +41,12 @@ private:
     void generateReturn(const IRInstruction& inst);
     
     // 辅助方法
-    std::string getRegOrLoad(const std::shared_ptr<Operand>& op);
-    void storeIfTemp(const std::shared_ptr<Operand>& op, const std::string& reg);
     void resetParamCounter();
-    
+    void resetParamStrings() { paramStrings.clear(); }  // 重置参数数组
+    const std::vector<std::string>& getParamStrings() const { return paramStrings; }
+    std::string getRegorLoad(const std::shared_ptr<Operand> operand);
+    void spillReg(AllocationResult result);
+
     // 标签管理
     std::string generateValidLabel(const std::string& irLabel);
     std::string sanitizeLabel(const std::string& label);
