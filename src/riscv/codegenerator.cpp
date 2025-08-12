@@ -130,7 +130,7 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
 
     std::string rs1 = getRegorLoad(inst.arg1);
     std::string rs2;
-    if(inst.arg2->type==OperandType::CONSTANT){
+    if(inst.arg2->type==OperandType::CONSTANT && op=="addi"){
         rs2 = inst.arg2->toString();
     }
     else{
