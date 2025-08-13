@@ -491,11 +491,11 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
         return regAlloc.getReg(operandStr);
     }
 
-    std::string error_reg="finding vartoReg: " + operandStr + "\n";
-    for (const auto& [varName, info] : regAlloc.getVarInfoMap()) {
-        error_reg+=" varName: "+varName+", reg: "+info.reg+"\n";
-    }
-    std::cout<<error_reg;
+    // std::string error_reg="finding vartoReg: " + operandStr + "\n";
+    // for (const auto& [varName, info] : regAlloc.getVarInfoMap()) {
+    //     error_reg+=" varName: "+varName+", reg: "+info.reg+"\n";
+    // }
+    // std::cout<<error_reg;
 
     // 不在寄存器中，从栈加载
     AllocationResult regResult = regAlloc.allocateReg(operandStr, OperandType::TEMP);
