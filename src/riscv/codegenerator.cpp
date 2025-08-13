@@ -153,8 +153,8 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
 
     emit("  " + op + " " + rd + ", " + rs1 + ", " + rs2);
 
-    if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
-    if(inst.arg2->type == OperandType::TEMP) regAlloc.freeReg(inst.arg2->toString());
+    // if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
+    // if(inst.arg2->type == OperandType::TEMP) regAlloc.freeReg(inst.arg2->toString());
 }
 
 void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
@@ -173,7 +173,7 @@ void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
             std::string condReg = getRegorLoad(inst.arg1);;
             std::string validLabel = generateValidLabel(inst.label);
             emit("  bnez " + condReg + ", " + validLabel);
-            if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
+            // if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
             break;
         }
         default: break;
@@ -289,7 +289,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
             emit("  mv " + argReg + ", " + srcReg);
         }
         emit("  sw " + argReg + ", " + std::to_string(stackParamOffset) + "(sp)");
-        if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(arg);
+        // if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(arg);
     }
 
     resetParamStrings();
@@ -337,7 +337,7 @@ void CodeGenerator::generateReturn(const IRInstruction& inst) {
         else{
             std::string retReg = getRegorLoad(inst.arg1);
             emit("  mv a0, " + retReg);
-            regAlloc.freeReg(inst.arg1->toString());
+            // regAlloc.freeReg(inst.arg1->toString());
         }
     }
     emit("  j " + currentFuncExitLabel);  // 跳转到函数统一退出标签
@@ -357,8 +357,8 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
         emit("  xori " + rd + ", " + rd + ", 1");  // 异或1实现取反
         emit("  andi " + rd + ", " + rd + ", 1");  // 确保结果只有0或1
         
-        if (inst.arg1->type == OperandType::TEMP) 
-            regAlloc.freeReg(inst.arg1->toString());
+        // if (inst.arg1->type == OperandType::TEMP) 
+        //     regAlloc.freeReg(inst.arg1->toString());
         return;
     }
 
@@ -405,8 +405,8 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
             throw std::runtime_error("Unsupported comparison operator");
     }
 
-    if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
-    if(inst.arg2->type == OperandType::TEMP) regAlloc.freeReg(inst.arg2->toString());
+    // if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
+    // if(inst.arg2->type == OperandType::TEMP) regAlloc.freeReg(inst.arg2->toString());
     
 }
 
