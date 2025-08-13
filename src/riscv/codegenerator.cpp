@@ -118,7 +118,7 @@ void CodeGenerator::generateAssignment(const IRInstruction& inst) {
         if (srcReg != destReg) {
             emit("  mv " + destReg + ", " + srcReg);
         }
-        if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
+        // if(inst.arg1->type == OperandType::TEMP) regAlloc.freeReg(inst.arg1->toString());
     }
 
 }
@@ -138,7 +138,7 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     std::string rs1 = getRegorLoad(inst.arg1);
     std::string rs2;
     if(inst.arg2->type==OperandType::CONSTANT){
-        AllocationResult regResult = regAlloc.allocateReg(inst.arg2->toString(), OperandType::TEMP);
+        AllocationResult regResult = regAlloc.allocateReg("const_" + inst.arg2->toString(), OperandType::TEMP);
         std::string tempReg = regResult.reg;
         spillReg(regResult);
         emit("  li " + tempReg + ", " + inst.arg2->toString());
@@ -491,11 +491,11 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
         return regAlloc.getReg(operandStr);
     }
 
-    // std::string error_reg="finding vartoReg: " + operandStr + "\n";
-    // for (const auto& [varName, info] : regAlloc.getVarInfoMap()) {
-    //     error_reg+=" varName: "+varName+", reg: "+info.reg+"\n";
-    // }
-    // std::cout<<error_reg;
+    std::string error_reg="finding vartoReg: " + operandStr + "\n";
+    for (const auto& [varName, info] : regAlloc.getVarInfoMap()) {
+        error_reg+=" varName: "+varName+", reg: "+info.reg+"\n";
+    }
+    std::cout<<error_reg;
 
     // 不在寄存器中，从栈加载
     AllocationResult regResult = regAlloc.allocateReg(operandStr, OperandType::TEMP);
