@@ -14,6 +14,7 @@ using namespace antlr4;
 // 语义分析器和IR生成器头文件
 #include "SemanticAnalyzer.h"
 #include "IRGenerator.h"
+#include "IROptimizer.h"
 #include "codegenerator.h"
 
 int main(int argc, const char* argv[]) {
@@ -39,6 +40,7 @@ int main(int argc, const char* argv[]) {
 
     // 4. 调用起始规则获取解析树
     ToyCParser::CompUnitContext* tree = parser.compUnit();
+    // std::cout << tree->toStringTree(&parser) << std::endl;
 
     // 5. 进行语义分析
     SemanticAnalyzer analyzer;
@@ -53,11 +55,17 @@ int main(int argc, const char* argv[]) {
     // 7. 生成IR代码
     IRGenerator irGenerator;
     irGenerator.visit(tree);
-    irGenerator.printIR(); // 输出IR到output.txt
+    irGenerator.printIR("ir_output.txt"); // 输出IR到output.txt
+
+    IROptimizer optimizer;
+    auto& functions = irGenerator.getFunctions();
+    optimizer.optimize(functions);
+
+    optimizer.printIR("optimized_ir.txt",functions);
 
     // 8. 生成目标代码
     CodeGenerator codeGen;
-    codeGen.generate(irGenerator.getFunctions());
+    codeGen.generate(functions);
     std::string assemblyCode = codeGen.getAssemblyCode();
     
     // 9. 向标准输出写入汇编代码
