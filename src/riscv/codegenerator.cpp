@@ -57,7 +57,16 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     
     // 执行活跃变量分析
     liveAnalyzer.analyze(func.instructions);
+    liveRanges = liveAnalyzer.getLiveRanges();
+    currentInstrIndex = 0;
+    activeVars.clear();
     
+    // 初始化活跃变量集合
+    for (const auto& [var, range] : liveRanges) {
+        if (range.start == 0) {
+            activeVars.insert(var);
+        }
+    }
     // 基于活跃分析分配栈槽
     allocateStackSlots(func);  // 这会设置 stackSlotsCount
     
@@ -104,6 +113,11 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     
     // 生成函数体指令
     for (const auto& inst : func.instructions) {
+        // 更新活跃变量状态
+        updateActiveVars(inst);
+        
+        // 释放死亡寄存器
+        freeDeadRegisters();
         switch (inst.opcode) {
             case IROpcode::ASSIGN: generateAssignment(inst); break;
             case IROpcode::ADD: case IROpcode::SUB: case IROpcode::MUL: 
@@ -117,6 +131,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
             case IROpcode::RETURN: generateReturn(inst); break;
             default: break;
         }
+        currentInstrIndex++; // 移动到下一条指令
     }
     
     emitEpilogue(frameSize, valCount);
@@ -539,6 +554,17 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
 
 void CodeGenerator::spillReg(AllocationResult result) {
     if (result.spill.varName.empty()) return;
+
+    // 优先溢出最短活跃期的变量
+    if (liveRanges.find(result.spill.varName) != liveRanges.end()) {
+        int remainingLife = liveRanges[result.spill.varName].end - currentInstrIndex;
+        
+        // 如果剩余活跃期很短，跳过溢出
+        if (remainingLife < 3) {
+            regAlloc.freeReg(result.spill.varName);
+            return;
+        }
+    }
     
     // 使用预分配的栈偏移
     if (varStackMap.find(result.spill.varName) != varStackMap.end()) {
@@ -601,4 +627,57 @@ void CodeGenerator::allocateStackSlots(const FunctionInfo& func) {
     
     // 设置类成员变量
     stackSlotsCount = nextSlot;  // 保存结果
+}
+
+void CodeGenerator::freeDeadRegisters() {
+    // 收集当前死亡的变量
+    std::vector<std::string> deadVars;
+    for (const auto& var : activeVars) {
+        if (liveRanges.find(var) != liveRanges.end() && 
+            liveRanges[var].end < currentInstrIndex) {
+            deadVars.push_back(var);
+        }
+    }
+    
+    // 释放死亡变量的寄存器
+    for (const auto& var : deadVars) {
+        if (regAlloc.isInReg(var)) {
+            regAlloc.freeReg(var);
+            activeVars.erase(var);
+        }
+    }
+}
+
+void CodeGenerator::updateActiveVars(const IRInstruction& inst) {
+    // 处理定义点（杀死旧变量）
+    if (inst.result) {
+        std::string resultVar = inst.result->toString();
+        
+        // 杀死旧定义（如果有）
+        if (activeVars.find(resultVar) != activeVars.end()) {
+            regAlloc.freeReg(resultVar);
+            activeVars.erase(resultVar);
+        }
+        
+        // 添加新定义
+        if (liveRanges.find(resultVar) != liveRanges.end() && 
+            liveRanges[resultVar].start == currentInstrIndex) {
+            activeVars.insert(resultVar);
+        }
+    }
+    
+    // 处理使用点
+    auto addUseVar = [&](const std::shared_ptr<Operand> op) {
+        if (op && op->type != OperandType::CONSTANT) {
+            std::string var = op->toString();
+            if (liveRanges.find(var) != liveRanges.end() && 
+                liveRanges[var].start <= currentInstrIndex &&
+                liveRanges[var].end >= currentInstrIndex) {
+                activeVars.insert(var);
+            }
+        }
+    };
+    
+    addUseVar(inst.arg1);
+    addUseVar(inst.arg2);
 }

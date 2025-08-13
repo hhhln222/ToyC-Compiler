@@ -56,4 +56,12 @@ private:
     std::string generateValidLabel(const std::string& irLabel);
     std::string sanitizeLabel(const std::string& label);
     bool isValidLabel(const std::string& label);
+
+    std::map<std::string, LiveRange> liveRanges; // 变量活跃区间
+    int currentInstrIndex;                       // 当前指令索引
+    std::set<std::string> activeVars;            // 当前活跃变量集合
+    
+    // 辅助方法
+    void freeDeadRegisters();                    // 释放死亡寄存器
+    void updateActiveVars(const IRInstruction& inst); // 更新活跃变量
 };

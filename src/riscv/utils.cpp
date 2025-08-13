@@ -127,6 +127,11 @@ void RegisterAllocator::freeReg(const std::string& var) {
     }
     
     varInfoMap.erase(it);
+    
+    // 优化：排序寄存器池以便优先分配低编号寄存器
+    std::sort(freeTempRegs.begin(), freeTempRegs.end());
+    std::sort(freeParamRegs.begin(), freeParamRegs.end());
+    std::sort(freeSavedRegs.begin(), freeSavedRegs.end());
 }
 
 // 检查变量是否在寄存器中
