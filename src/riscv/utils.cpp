@@ -35,8 +35,7 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
     // 选择目标寄存器池
     std::vector<std::string>* targetPool = nullptr;
     switch (type) {
-        case OperandType::TEMP:    
-        case OperandType::CONSTANT: 
+        case OperandType::TEMP:
             targetPool = &freeTempRegs; break;
         case OperandType::PARAM:   
             targetPool = &freeParamRegs; break;

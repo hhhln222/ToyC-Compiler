@@ -134,7 +134,7 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     std::string rs1 = getRegorLoad(inst.arg1);
     std::string rs2;
     if(inst.arg2->type==OperandType::CONSTANT){
-        AllocationResult regResult = regAlloc.allocateReg(inst.arg2->toString(), inst.arg2->type);
+        AllocationResult regResult = regAlloc.allocateReg(inst.arg2->toString(), OperandType::TEMP);
         std::string tempReg = regResult.reg;
         spillReg(regResult);
         emit("  li " + tempReg + ", " + inst.arg2->toString());
@@ -271,7 +271,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         operand = {operand.type, actualArg, -1}; // 使用处理后的参数名
         if (isNumber(arg)) {
             // 数字常量使用li指令
-            AllocationResult regResult = regAlloc.allocateReg(arg, OperandType::CONSTANT);
+            AllocationResult regResult = regAlloc.allocateReg("const_" + arg, OperandType::TEMP);
             argReg = regResult.reg;
             spillReg(regResult);
             emit("  li " + argReg + ", " + arg);
@@ -473,7 +473,7 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
 
     // 处理常量：直接分配寄存器并加载值
     if (operand->type == OperandType::CONSTANT) {
-        AllocationResult regResult = regAlloc.allocateReg("const_" + operand->toString(), operand->type);
+        AllocationResult regResult = regAlloc.allocateReg("const_" + operand->toString(), OperandType::TEMP);
         std::string reg = regResult.reg;
         spillReg(regResult);
         emit("  li " + reg + ", " + operand->toString());
