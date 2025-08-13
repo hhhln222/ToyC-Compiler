@@ -56,11 +56,9 @@ int main(int argc, const char* argv[]) {
     IRGenerator irGenerator;
     irGenerator.visit(tree);
     irGenerator.printIR("ir_output.txt"); // 输出IR到output.txt
-
-    IROptimizer optimizer;
     auto& functions = irGenerator.getFunctions();
+    IROptimizer optimizer;
     optimizer.optimize(functions);
-
     optimizer.printIR("optimized_ir.txt",functions);
 
     // 8. 生成目标代码
