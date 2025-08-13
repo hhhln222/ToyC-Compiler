@@ -23,7 +23,6 @@ struct AllocationResult {
 struct VarInfo {
     std::string reg;       // 绑定的寄存器
     OperandType type;      // 变量类型
-    std::size_t lastUsed;  // 最后使用时间戳
 };
 
 // RISC-V寄存器分配器
@@ -33,6 +32,7 @@ public:
     AllocationResult allocateReg(const std::string& var, OperandType type);
     bool isInReg(const std::string& var) const;
     std::string getReg(const std::string& var) const;
+    std::map<std::string, VarInfo> getVarInfoMap(){return varInfoMap;}
     void freeReg(const std::string& var);
     void reset();
     bool isRegInUse(const std::string& reg) const;
@@ -44,9 +44,7 @@ private:
     const std::vector<std::string> initialTempRegs;
     const std::vector<std::string> initialParamRegs;
     const std::vector<std::string> initialSavedRegs;
-    
     std::map<std::string, VarInfo> varInfoMap;
-    std::size_t timestamp = 0;
 };
 
 // RISC-V指令生成工具

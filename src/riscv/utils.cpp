@@ -19,43 +19,13 @@ void RegisterAllocator::reset() {
     freeParamRegs = initialParamRegs;
     freeSavedRegs = initialSavedRegs;
     varInfoMap.clear();
-    timestamp = 0;
 }
 
-// 查找指定类型中最久未使用的寄存器，返回复用的寄存器和溢出变量信息
-std::pair<std::string, SpilledVar> findLRUAndSpill(OperandType type, const std::map<std::string, VarInfo>& varInfoMap) {
-    std::string lruVar;
-    size_t minLastUsed = std::numeric_limits<size_t>::max();
-
-    // 遍历所有变量，找到同类型中最久未使用的
-    for (const auto& [varName, info] : varInfoMap) {
-        if (info.type == type && info.lastUsed < minLastUsed) {
-            minLastUsed = info.lastUsed;
-            lruVar = varName;
-        }
-    }
-
-    // 理论上不会触发（至少有当前类型的寄存器被分配过）
-    if (lruVar.empty()) {
-        throw std::runtime_error("No reusable registers for type: " + std::to_string(static_cast<int>(type)));
-    }
-
-    // 生成溢出变量信息
-    const auto& lruInfo = varInfoMap.at(lruVar);
-    SpilledVar spilled{
-        .varName = lruVar,
-        .reg = lruInfo.reg,
-        .type = lruInfo.type
-    };
-
-    return {lruInfo.reg, spilled}; // 返回复用的寄存器和溢出信息
-}
 
 // 分配寄存器
 AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandType type) {
     // 变量已在寄存器中：更新时间戳，返回无溢出结果
     if (isInReg(var)) {
-        varInfoMap[var].lastUsed = timestamp++;
         return {
             .reg = varInfoMap[var].reg,
             .spill = {"", "", OperandType::TEMP}  // 无溢出：默认值
@@ -84,7 +54,6 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
         varInfoMap[var] = {
             reg,
             type,
-            timestamp++
         };
 
         return {
@@ -101,16 +70,20 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
     // 临时/变量寄存器不足：LRU策略溢出，返回溢出信息
     // 查找最久未使用的寄存器
     std::string lruVar;
-    size_t minLastUsed = std::numeric_limits<size_t>::max();
     for (const auto& [varName, info] : varInfoMap) {
-        if (info.type == type && info.lastUsed < minLastUsed) {
-            minLastUsed = info.lastUsed;
+        if (info.type == type) {
             lruVar = varName;
         }
     }
+    
+    std::string error_reg="";
+    for (const auto& [varName, info] : varInfoMap) {
+        error_reg+=" varName: "+varName+", reg: "+info.reg+"\n";
+    }
 
     if (lruVar.empty()) {
-        throw std::runtime_error("No reusable registers for type: " + std::to_string(static_cast<int>(type)));
+        std::cout<<error_reg;
+        throw std::runtime_error("No reusable registers for type: " + std::to_string(static_cast<int>(type)) + ", val: " + var);
     }
 
     // 生成溢出信息
@@ -124,7 +97,7 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
     // 移除LRU变量记录，分配复用寄存器
     std::string reusedReg = lruInfo.reg;
     varInfoMap.erase(lruVar);
-    varInfoMap[var] = {reusedReg, type, timestamp++};
+    varInfoMap[var] = {reusedReg, type};
 
     // 返回分配结果和溢出信息
     return {
@@ -159,7 +132,12 @@ void RegisterAllocator::freeReg(const std::string& var) {
 
 // 检查变量是否在寄存器中
 bool RegisterAllocator::isInReg(const std::string& var) const {
-    return varInfoMap.find(var) != varInfoMap.end();
+    for (const auto& [varName, info] : varInfoMap) {
+        if (var == varName) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // 获取变量绑定的寄存器

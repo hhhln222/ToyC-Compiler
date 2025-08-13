@@ -44,7 +44,7 @@ struct Operand {
     
     std::string toString() const {
         switch (type) {
-            case OperandType::VARIABLE: return value;
+            case OperandType::VARIABLE: return (value[0]=='t') ? "v_" + value : value;
             case OperandType::CONSTANT: return value;
             case OperandType::TEMP: return "t" + value;
             case OperandType::LABEL: return "L" + value;
