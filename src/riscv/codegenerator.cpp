@@ -88,6 +88,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
             case IROpcode::ASSIGN: generateAssignment(inst); break;
             case IROpcode::ADD: case IROpcode::SUB: case IROpcode::MUL: 
             case IROpcode::DIV: case IROpcode::MOD: generateArithmetic(inst); break;
+            case IROpcode::AND: case IROpcode::OR: case IROpcode::NOT: 
             case IROpcode::LT: case IROpcode::GT: case IROpcode::LE: 
             case IROpcode::GE: case IROpcode::EQ: case IROpcode::NE: generateComparison(inst); break;
             case IROpcode::GOTO: case IROpcode::IF_GOTO: case IROpcode::LABEL: generateControlFlow(inst); break;
@@ -339,6 +340,24 @@ void CodeGenerator::generateReturn(const IRInstruction& inst) {
 }
 
 void CodeGenerator::generateComparison(const IRInstruction& inst) {
+
+    // 处理NOT单目运算
+    if (inst.opcode == IROpcode::NOT) {
+        std::string rs1 = getRegorLoad(inst.arg1);
+        AllocationResult regResult = regAlloc.allocateReg(inst.result->toString(), inst.result->type);
+        std::string rd = regResult.reg;
+        spillReg(regResult);
+        
+        // 逻辑非：将非0值变为0，0变为1
+        emit("  mv " + rd + ", " + rs1);
+        emit("  xori " + rd + ", " + rd + ", 1");  // 异或1实现取反
+        emit("  andi " + rd + ", " + rd + ", 1");  // 确保结果只有0或1
+        
+        if (inst.arg1->type == OperandType::TEMP) 
+            regAlloc.freeReg(inst.arg1->toString());
+        return;
+    }
+
     std::string rs1 = getRegorLoad(inst.arg1);
     std::string rs2 = getRegorLoad(inst.arg2);
     AllocationResult regResult = regAlloc.allocateReg(inst.result->toString(),inst.result->type);
@@ -367,6 +386,16 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
         case IROpcode::NE:
             emit("  xor " + rd + ", " + rs1 + ", " + rs2);
             emit("  snez " + rd + ", " + rd);
+            break;
+            case IROpcode::AND:
+            // 逻辑与：两边都非0则结果为1
+            emit("  and " + rd + ", " + rs1 + ", " + rs2);    // 按位与
+            emit("  snez " + rd + ", " + rd);                // 非零则置1
+            break;
+        case IROpcode::OR:
+            // 逻辑或：任一边非0则结果为1
+            emit("  or " + rd + ", " + rs1 + ", " + rs2);     // 按位或
+            emit("  snez " + rd + ", " + rd);                // 非零则置1
             break;
         default:
             throw std::runtime_error("Unsupported comparison operator");
