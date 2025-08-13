@@ -1,6 +1,7 @@
 #pragma once
 #include "IRGenerator.h"
 #include "utils.h"
+#include "IROptimizer.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -22,7 +23,10 @@ private:
     std::set<std::string> usedLabels; // 已使用的标签集合
     std::map<std::string, std::string> labelMap; // IR标签到汇编标签的映射
     int paramCounter = 0;  // 用于记录参数顺序的计数器
+    int stackSlotsCount; 
     std::vector<std::string> paramStrings;
+    LiveAnalyzer liveAnalyzer;
+    void allocateStackSlots(const FunctionInfo& func);
 
     // 生成函数框架
     void emitPrologue(const std::string& funcName, int frameSize, int valConut);

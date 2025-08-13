@@ -163,7 +163,7 @@ struct FunctionInfo {
     std::string returnType;
     std::vector<std::shared_ptr<Operand>> params;
     std::vector<IRInstruction> instructions;
-    int varCount;          // 变量（包括参数和局部变量）的总数
+    int varCount;          // 变量的总数
     int tempVarCount;       // 临时变量实际数量
     int startTempCounter;   // 函数开始时的临时变量计数器值
     int endTempCounter;     // 函数结束时的临时变量计数器值

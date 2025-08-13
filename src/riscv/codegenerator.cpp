@@ -3,7 +3,7 @@
 #include <sstream>
 #include <cctype>
 
-CodeGenerator::CodeGenerator() : stackOffset(0) {}
+CodeGenerator::CodeGenerator() : stackOffset(0), initialstackOffset(0), stackSlotsCount(0) {}
 
 void CodeGenerator::generate(const std::vector<FunctionInfo>& irFunctions) {
     emit(".global main");
@@ -47,30 +47,46 @@ void CodeGenerator::emitEpilogue(int frameSize, int valCount) {
 }
 
 void CodeGenerator::emitFunction(const FunctionInfo& func) {
-    // 重置标签映射
+     // 重置状态
     labelMap.clear();
     usedLabels.clear();
     regAlloc.reset();
     stackOffset = 0;
     initialstackOffset = 0;
+    varStackMap.clear();  // 清空栈偏移映射
     
-    int tempVarSize = func.tempVarCount;
+    // 执行活跃变量分析
+    liveAnalyzer.analyze(func.instructions);
+    
+    // 基于活跃分析分配栈槽
+    allocateStackSlots(func);  // 这会设置 stackSlotsCount
+    
+    // 计算栈帧大小
+    int tempVarSize = stackSlotsCount; // 使用动态分配的槽位数
     int paramCount = func.params.size();
-    int localConut = func.varCount - paramCount;
-    int valCount = (localConut > 11)?11:localConut;
-    int frameSize = 4 * (2 + valCount + tempVarSize);
-    // 确保栈帧大小按16字节对齐
+    int localCount = func.varCount - paramCount;
+    int valCount = (localCount > 11) ? 11 : localCount;
+    
+    // 固定部分：保存寄存器区域
+    int fixedSize = 4 * (2 + valCount); // ra + s0 + s1-s11
+    
+    // 动态部分：变量存储区域
+    int dynamicSize = stackSlotsCount * 4;
+    
+    // 总栈帧大小
+    int frameSize = fixedSize + dynamicSize;
+    
+    // 确保16字节对齐
     if (frameSize % 16 != 0) {
         frameSize += 16 - (frameSize % 16);
     }
-
-    emitPrologue(func.name, frameSize, valCount);
-    const int MAX_FRAME_SIZE = 4096; // 4KB
-    if (frameSize > MAX_FRAME_SIZE) {
-        throw std::runtime_error("frameSize too big");
-    }
-    stackOffset = - 4 * (2 + valCount);
+    
+    // 设置栈偏移基准
+    stackOffset = -fixedSize;
     initialstackOffset = stackOffset;
+    
+    // 生成函数序言
+    emitPrologue(func.name, frameSize, valCount);
     // 处理函数参数
     for (int i = 0; i < func.params.size(); ++i) {
         const auto& param = func.params[i];
@@ -472,7 +488,7 @@ bool CodeGenerator::isValidLabel(const std::string& label) {
 
 std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) {
     if (!operand) {
-        throw std::runtime_error("Invalid null operand in getRegorLoad");
+        return "op_null";
     }
 
     // 处理常量：直接分配寄存器并加载值
@@ -497,24 +513,92 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
     // }
     // std::cout<<error_reg;
 
-    // 不在寄存器中，从栈加载
-    AllocationResult regResult = regAlloc.allocateReg(operandStr, OperandType::TEMP);
-    std::string tempReg = regResult.reg;
-    spillReg(regResult);
-    int offset = varStackMap[operandStr];
-    emit("  lw " + tempReg + ", " + std::to_string(offset) + "(s0)");
-    
-    return tempReg;
-}
-
-void CodeGenerator::spillReg(AllocationResult result){
-    // 检查是否有需要溢出到栈的寄存器
-    if (result.spill.varName=="") {
-        return;
+    // 在栈中有预分配位置
+    if (varStackMap.find(operandStr) != varStackMap.end()) {
+        AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
+        std::string tempReg = regResult.reg;
+        spillReg(regResult);
+        
+        // 计算实际偏移 = 预分配偏移 + 当前栈偏移基准
+        int offset = varStackMap[operandStr] + initialstackOffset;
+        emit("  lw " + tempReg + ", " + std::to_string(offset) + "(s0)");
+        
+        return tempReg;
     }
 
-    int offset = stackOffset;
-    stackOffset -= 4;
-    emit("  sw " + result.spill.reg + ", " + std::to_string(offset) + "(s0)");
-    varStackMap[result.spill.varName] = offset;
+    // 不在寄存器中，从栈加载
+    // AllocationResult regResult = regAlloc.allocateReg(operandStr, OperandType::TEMP);
+    // std::string tempReg = regResult.reg;
+    // spillReg(regResult);
+    // int offset = varStackMap[operandStr];
+    // emit("  lw " + tempReg + ", " + std::to_string(offset) + "(s0)");
+    std::string error_reg="find failed vartoReg: " + operandStr + "\n";
+    std::cout<<error_reg;
+    return "null";
+}
+
+void CodeGenerator::spillReg(AllocationResult result) {
+    if (result.spill.varName.empty()) return;
+    
+    // 使用预分配的栈偏移
+    if (varStackMap.find(result.spill.varName) != varStackMap.end()) {
+        int offset = varStackMap[result.spill.varName] + stackOffset;
+        emit("  sw " + result.spill.reg + ", " + std::to_string(offset) + "(s0)");
+    } else {
+        // 回退机制：为未预分配的变量动态分配
+        int offset = stackOffset;
+        stackOffset -= 4;
+        emit("  sw " + result.spill.reg + ", " + std::to_string(offset) + "(s0)");
+        varStackMap[result.spill.varName] = offset - initialstackOffset;
+    }
+}
+
+void CodeGenerator::allocateStackSlots(const FunctionInfo& func) {
+    // 获取活跃变量分析结果
+    const auto& liveRanges = liveAnalyzer.getLiveRanges();
+    
+    // 收集所有需要栈存储的变量
+    std::vector<std::string> allVars;
+    for (const auto& [var, range] : liveRanges) {
+        // 排除常量
+        if (var.find("const_") == 0) continue;
+        allVars.push_back(var);
+    }
+    
+    // 按生存期起始位置排序
+    std::sort(allVars.begin(), allVars.end(), 
+        [&](const std::string& a, const std::string& b) {
+            return liveRanges.at(a).start < liveRanges.at(b).start;
+        });
+    
+    // 活动槽位映射：槽位索引 -> 结束位置
+    std::map<int, int> activeSlots;
+    int nextSlot = 0;
+    
+    // 贪心算法分配栈槽
+    for (const auto& var : allVars) {
+        const auto& range = liveRanges.at(var);
+        bool slotFound = false;
+        
+        // 尝试复用已有槽位
+        for (auto& [slotIndex, endPos] : activeSlots) {
+            if (range.start > endPos) {
+                // 可以复用槽位
+                varStackMap[var] = slotIndex * 4; // 每个槽4字节
+                endPos = range.end; // 更新槽位结束位置
+                slotFound = true;
+                break;
+            }
+        }
+        
+        // 分配新槽位
+        if (!slotFound) {
+            varStackMap[var] = nextSlot * 4;
+            activeSlots[nextSlot] = range.end;
+            nextSlot++;
+        }
+    }
+    
+    // 设置类成员变量
+    stackSlotsCount = nextSlot;  // 保存结果
 }

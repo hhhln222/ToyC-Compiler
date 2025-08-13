@@ -6,6 +6,8 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
     for (auto& func : functions) {
         bool changed = false;
         do {
+            LiveAnalyzer liveAnalyzer;
+            liveAnalyzer.analyze(func.instructions);
             changed = false;
             // 1. 分割为基本块并构建CFG
             auto blocks = splitIntoBasicBlocks(func);
@@ -20,7 +22,7 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
             }
 
             // 3. 基于CFG的优化（如跨块死代码消除）
-            deadCodeElimination(blocks, changed);
+            deadCodeElimination(blocks, liveAnalyzer, changed);
 
             // 4. 合并基本块回函数
             mergeBasicBlocks(func, blocks);
@@ -262,7 +264,7 @@ void IROptimizer::copyPropagation(BasicBlock& block, bool& changed) {
 }
 
 // 死代码消除函数
-void IROptimizer::deadCodeElimination(std::vector<BasicBlock>& blocks, bool& changed) {
+void IROptimizer::deadCodeElimination(std::vector<BasicBlock>& blocks, const LiveAnalyzer& liveAnalyzer,bool& changed){
     if (blocks.empty()) return;
 
     // 仅保留：收集所有被使用的变量（包括普通变量和临时变量）
@@ -605,4 +607,57 @@ void IROptimizer::printBasicBlocks(const std::string& outputFile, const std::vec
         }
     }
     out.close();
+}
+
+void LiveAnalyzer::analyze(const std::vector<IRInstruction>& instructions) {
+    std::map<std::string, int> firstUse;
+    std::map<std::string, int> lastUse;
+    
+    // 第一次遍历：记录首次和最后使用位置
+    for (int i = 0; i < instructions.size(); i++) {
+        const auto& inst = instructions[i];
+        
+        // 处理结果变量（定义点）
+        if (inst.result) {
+            const std::string var = inst.result->toString();
+            if (firstUse.find(var) == firstUse.end()) {
+                firstUse[var] = i;
+            }
+            lastUse[var] = i;
+        }
+        
+        // 处理操作数（使用点）
+        auto processOperand = [&](const std::shared_ptr<Operand> op) {
+            if (op && op->type != OperandType::CONSTANT) {
+                const std::string var = op->toString();
+                lastUse[var] = i; // 更新最后使用位置
+                if (firstUse.find(var) == firstUse.end()) {
+                    firstUse[var] = i;
+                }
+            }
+        };
+        
+        processOperand(inst.arg1);
+        processOperand(inst.arg2);
+    }
+    
+    // 构建生存期范围
+    for (const auto& [var, first] : firstUse) {
+        liveRanges[var] = {first, lastUse[var]};
+    }
+}
+
+bool LiveAnalyzer::canShareSlot(const std::string& var1, const std::string& var2) const {
+    if (!liveRanges.count(var1) || !liveRanges.count(var2)) 
+        return false;
+    
+    const auto& range1 = liveRanges.at(var1);
+    const auto& range2 = liveRanges.at(var2);
+    
+    // 检查生存期是否重叠
+    return (range1.end < range2.start) || (range2.end < range1.start);
+}
+
+const std::map<std::string, LiveRange>& LiveAnalyzer::getLiveRanges() const {
+    return liveRanges;
 }

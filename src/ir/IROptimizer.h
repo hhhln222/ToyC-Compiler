@@ -18,6 +18,21 @@ struct BasicBlock {
     BasicBlock(std::string lab = "") : label(std::move(lab)) {}
 };
 
+struct LiveRange {
+    int start; // 起始指令位置
+    int end;   // 结束指令位置
+};
+
+class LiveAnalyzer {
+public:
+    void analyze(const std::vector<IRInstruction>& instructions);
+    bool canShareSlot(const std::string& var1, const std::string& var2) const;
+    const std::map<std::string, LiveRange>& getLiveRanges() const;
+    
+private:
+    std::map<std::string, LiveRange> liveRanges;
+};
+
 class IROptimizer {
 public:
     // 对所有函数进行优化
@@ -33,7 +48,7 @@ private:
 
     // 原有优化方法适配基本块
     void constantFolding(BasicBlock& block, bool& changed);
-    void deadCodeElimination(std::vector<BasicBlock>& blocks, bool& changed);
+    void deadCodeElimination(std::vector<BasicBlock>& blocks, const LiveAnalyzer& liveAnalyzer, bool& changed);
     void algebraicSimplification(BasicBlock& block, bool& changed);
     void copyPropagation(BasicBlock& block, bool& changed);
     void commonSubexpressionElimination(BasicBlock& block, bool& changed);
