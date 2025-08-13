@@ -103,6 +103,9 @@ std::any IRGenerator::visitDeclStmt(ToyCParser::DeclStmtContext *ctx) {
         if (exprResult.has_value()) {
             auto operand = std::any_cast<std::shared_ptr<Operand>>(exprResult);
             auto varOperand = createOperand(uniqueName, OperandType::VARIABLE);
+            if(operand->type == OperandType::CONSTANT) {
+                varOperand->value = operand->value; // 绑定常量值
+            }
             addInstruction(IRInstruction(IROpcode::ASSIGN, varOperand, operand));
         }
     }
@@ -313,7 +316,6 @@ std::any IRGenerator::visitFunctionCall(ToyCParser::FunctionCallContext *ctx) {
         }
         
         auto paramOperand = std::any_cast<std::shared_ptr<Operand>>(paramResult);
-        
         // 确保参数是有效类型
         if (paramOperand->type != OperandType::CONSTANT &&
             paramOperand->type != OperandType::VARIABLE &&
@@ -503,7 +505,7 @@ std::any IRGenerator::visitMulUnaryOp(ToyCParser::MulUnaryOpContext *ctx) {
             addInstruction(IRInstruction(IROpcode::ASSIGN, tempOperand, operand));
         } else if (ctx->SUB()) {
             // 负号，0减去操作数
-            auto zeroOperand = createOperand("0", OperandType::CONSTANT);
+            auto zeroOperand = createOperand("0", OperandType::CONSTANT, -1, 0);
             addInstruction(IRInstruction(IROpcode::SUB, tempOperand, zeroOperand, operand));
         } else if (ctx->NOT()) {
             // 逻辑非
