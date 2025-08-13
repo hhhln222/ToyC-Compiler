@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <memory>
+#include <optional>
 
 // 三地址码指令类型
 enum class IROpcode {
@@ -36,21 +37,45 @@ enum class OperandType {
 
 // 操作数结构
 struct Operand {
-    OperandType type;
-    std::string value;
-    int index;
-    
-    Operand(OperandType t, const std::string& v, int idx = -1) : type(t), value(v), index(idx) {}
-    
+    OperandType type;       // 操作数类型
+    std::string id;         // 唯一标识（变量名、临时变量名、标签名等）
+    int index;              // 可选索引（如参数索引、临时变量序号）
+    std::optional<int> value; // 可选值（仅对CONSTANT有效，或变量被常量绑定后有效）
+
+    // 构造函数（根据类型自动初始化字段）
+    Operand(OperandType t, const std::string& identifier, int idx = -1, std::optional<int> val = std::nullopt)
+        : type(t), id(identifier), index(idx), value(val) {
+        // 常量必须有值
+        if (type == OperandType::CONSTANT && !val.has_value()) {
+            throw std::invalid_argument("Constant operand must have a value");
+        }
+    }
+
+    // 转换为字符串表示（用于IR打印）
     std::string toString() const {
         switch (type) {
-            case OperandType::VARIABLE: return (value[0]=='t') ? "v_" + value : value;
-            case OperandType::CONSTANT: return value;
-            case OperandType::TEMP: return "t" + value;
-            case OperandType::LABEL: return "L" + value;
-            case OperandType::PARAM: return value;
-            default: return "unknown";
+            case OperandType::VARIABLE: return (id[0]=='t')? "v_" + id : id;
+            case OperandType::CONSTANT: return std::to_string(value.value());
+            case OperandType::TEMP: return "t" + id; 
+            case OperandType::LABEL: return "L" + id; // 标签（如L0、L1）
+            case OperandType::PARAM: return id;
+            default: 
+                return "unknown_operand";
         }
+    }
+
+    bool isEffectivelyConstant() const {
+        return (type == OperandType::CONSTANT) || 
+               (type == OperandType::VARIABLE && value.has_value());
+    }
+
+    int getConstantValue() const {
+        if (type == OperandType::CONSTANT) {
+            return value.value();
+        } else if (type == OperandType::VARIABLE && value.has_value()) {
+            return value.value();
+        }
+        throw std::logic_error("Operand is not a constant");
     }
 };
 
@@ -61,7 +86,7 @@ struct IRInstruction {
     std::shared_ptr<Operand> arg1;      // 第一个操作数
     std::shared_ptr<Operand> arg2;      // 第二个操作数
     std::string label;                  // 标签（用于跳转指令）
-    bool isLeader = false;              // 标记是否为基本块入口
+    bool markDead = false;  // 死代码标记
 
     // 构造函数
     IRInstruction(IROpcode op, std::shared_ptr<Operand> res = nullptr,
@@ -139,6 +164,7 @@ struct FunctionInfo {
     std::vector<std::shared_ptr<Operand>> params;
     std::vector<IRInstruction> instructions;
     int varCount;          // 变量（包括参数和局部变量）的总数
+    int tempVarCount;       // 临时变量实际数量
     int startTempCounter;   // 函数开始时的临时变量计数器值
     int endTempCounter;     // 函数结束时的临时变量计数器值
     
@@ -152,10 +178,10 @@ public:
     IRGenerator() : tempCounter(0), labelCounter(0), currentFunction(nullptr) {}
     
     // 获取生成的IR代码
-    std::vector<FunctionInfo> getFunctions() const { return functions; }
+    std::vector<FunctionInfo>& getFunctions() { return functions; }
     
     // 打印IR代码
-    void printIR(const std::string& outputFile = "output.txt") const;
+    void printIR(const std::string& outputFile);
     
     // --- 访问方法重写 ---
     
@@ -243,7 +269,12 @@ private:
     std::string generateTemp();                    // 生成临时变量名
     std::string generateLabel();                   // 生成标签名
     void addInstruction(const IRInstruction& inst); // 添加指令到当前函数
-    std::shared_ptr<Operand> createOperand(const std::string& value, OperandType type, int index = -1);
+    std::shared_ptr<Operand> createOperand(
+        const std::string& id, 
+        OperandType type, 
+        int index = -1,  // 默认索引为-1
+        std::optional<int> valueOpt = std::nullopt  // 默认无值
+    );
 };
 
 #endif // IR_GENERATOR_H 

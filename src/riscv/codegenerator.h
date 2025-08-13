@@ -17,6 +17,7 @@ private:
     std::string currentFuncExitLabel;
     RegisterAllocator regAlloc;
     int stackOffset;
+    int initialstackOffset;
     std::map<std::string, int> varStackMap; // 变量栈偏移映射
     std::set<std::string> usedLabels; // 已使用的标签集合
     std::map<std::string, std::string> labelMap; // IR标签到汇编标签的映射

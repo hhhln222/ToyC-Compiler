@@ -52,8 +52,9 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     usedLabels.clear();
     regAlloc.reset();
     stackOffset = 0;
+    initialstackOffset = 0;
     
-    int tempVarSize = func.endTempCounter - func.startTempCounter;
+    int tempVarSize = func.tempVarCount;
     int paramCount = func.params.size();
     int localConut = func.varCount - paramCount;
     int valCount = (localConut > 11)?11:localConut;
@@ -64,9 +65,12 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     }
 
     emitPrologue(func.name, frameSize, valCount);
-
+    const int MAX_FRAME_SIZE = 4096; // 4KB
+    if (frameSize > MAX_FRAME_SIZE) {
+        throw std::runtime_error("frameSize too big");
+    }
     stackOffset = - 4 * (2 + valCount);
-
+    initialstackOffset = stackOffset;
     // 处理函数参数
     for (int i = 0; i < func.params.size(); ++i) {
         const auto& param = func.params[i];
