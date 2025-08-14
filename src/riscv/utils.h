@@ -5,6 +5,7 @@
 #include <map>
 #include <stdexcept>
 #include <algorithm>
+#include <list>
 
 // 存储溢出变量的信息
 struct SpilledVar {
@@ -50,7 +51,7 @@ private:
     const std::vector<std::string> initialParamRegs;
     const std::vector<std::string> initialSavedRegs;
     std::map<std::string, VarInfo> varInfoMap;
-    std::map<OperandType, std::vector<std::string>> typeVarStacks; // 记录各类型变量分配顺序
+    std::map<OperandType, std::list<std::string>> typeVarQueues; // 记录各类型变量分配顺序
 };
 
 // RISC-V指令生成工具

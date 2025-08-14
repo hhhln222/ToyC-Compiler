@@ -5,13 +5,14 @@
 #include <string>
 #include <iterator>
 
+
 RegisterAllocator::RegisterAllocator() 
     : initialTempRegs({"t0", "t1", "t2", "t3", "t4", "t5", "t6"}),
       initialParamRegs({"a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"}),
       initialSavedRegs({"s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"})
 {
     reset();
-    typeVarStacks.clear();
+    typeVarQueues.clear();
 }
 
 // 重置分配器状态
@@ -20,6 +21,7 @@ void RegisterAllocator::reset() {
     freeParamRegs = initialParamRegs;
     freeSavedRegs = initialSavedRegs;
     varInfoMap.clear();
+    typeVarQueues.clear();
 }
 
 
@@ -27,7 +29,7 @@ void RegisterAllocator::reset() {
 AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandType operandType) {
     
     OperandType type = (operandType==OperandType::CONSTANT)? OperandType::TEMP:operandType;
-    // 变量已在寄存器中：更新时间戳，返回无溢出结果
+    // 变量已在寄存器中：直接返回
     if (isInReg(var)) {
         return {
             .reg = varInfoMap[var].reg,
@@ -60,7 +62,7 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
             type,
         };
 
-        typeVarStacks[type].push_back(var); // 新变量入栈
+        typeVarQueues[type].push_back(var); // 新变量入队列尾部
 
         return {
             .reg = reg,
@@ -74,44 +76,34 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
         throw std::runtime_error("Register exhausted for PARAM type (not handled)");
     }
 
-    // 临时/变量寄存器不足
-    std::string lruVar;
-    for (const auto& [varName, info] : varInfoMap) {
-        if (info.type == type) {
-            lruVar = varName;
-            break;
-        }
-    }
-    
-    std::string error_reg="";
-    for (const auto& [varName, info] : varInfoMap) {
-        error_reg+=" varName: "+varName+", reg: "+info.reg+"\n";
+    // 临时/变量寄存器不足：使用FIFO策略
+    auto& queue = typeVarQueues[type];
+    if (queue.empty()) {
+        throw std::runtime_error("No reusable registers for type: " + std::to_string(static_cast<int>(type)));
     }
 
-    if (lruVar.empty()) {
-        std::cout<<error_reg;
-        throw std::runtime_error("No reusable registers for type: " + std::to_string(static_cast<int>(type)) + ", val: " + var);
-    }
+    // 取出最早分配的变量（队列前端）
+    std::string fifoVar = queue.front();
+    queue.pop_front();
 
     // 生成溢出信息
-    const auto& lruInfo = varInfoMap.at(lruVar);
+    const auto& fifoInfo = varInfoMap.at(fifoVar);
     SpilledVar spilled{
-        .varName = lruVar,
-        .reg = lruInfo.reg,
-        .type = lruInfo.type
+        .varName = fifoVar,
+        .reg = fifoInfo.reg,
+        .type = fifoInfo.type
     };
 
-    std::string filoVar = typeVarStacks[type].back(); // 取最近分配的变量
-    typeVarStacks[type].pop_back(); // 从栈中移除
-
-    // 变量记录，分配复用寄存器
-    std::string reusedReg = lruInfo.reg;
-    varInfoMap.erase(lruVar);
+    // 复用寄存器
+    std::string reusedReg = fifoInfo.reg;
+    varInfoMap.erase(fifoVar);
     varInfoMap[var] = {reusedReg, type};
-    typeVarStacks[type].push_back(var);
+    
+    // 新变量加入队列尾部
+    queue.push_back(var);
 
     // 返回分配结果和溢出信息
-    return {reusedReg,spilled,true};
+    return {reusedReg, spilled, true};
 }
 
 // 释放寄存器
@@ -122,10 +114,13 @@ void RegisterAllocator::freeReg(const std::string& var) {
     const std::string& reg = it->second.reg;
     OperandType type = it->second.type;
 
-    auto& stack = typeVarStacks[type];
-    auto iter = std::find(stack.begin(), stack.end(), var);
-    if (iter != stack.end()) {
-        stack.erase(iter);
+    // 从FIFO队列中删除变量
+    auto& queue = typeVarQueues[type];
+    for (auto iter = queue.begin(); iter != queue.end(); ++iter) {
+        if (*iter == var) {
+            queue.erase(iter);
+            break;
+        }
     }
     
     // 归还到对应寄存器池
