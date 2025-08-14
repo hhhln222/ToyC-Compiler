@@ -50,7 +50,7 @@ private:
     const std::vector<std::string> initialParamRegs;
     const std::vector<std::string> initialSavedRegs;
     std::map<std::string, VarInfo> varInfoMap;
-    std::map<OperandType, std::vector<std::string>> typeVarStacks; // 记录各类型变量分配顺序（FILO栈）
+    std::map<OperandType, std::vector<std::string>> typeVarStacks; // 记录各类型变量分配顺序
 };
 
 // RISC-V指令生成工具

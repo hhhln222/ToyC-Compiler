@@ -79,6 +79,7 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
     for (const auto& [varName, info] : varInfoMap) {
         if (info.type == type) {
             lruVar = varName;
+            break;
         }
     }
     
