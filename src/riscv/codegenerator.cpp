@@ -182,9 +182,17 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
     };
 
+    // 提前获取返回值的目标寄存器（若存在），避免后续被恢复操作覆盖
+    std::string destReg;
+    if (inst.result) {
+        // 提前获取目标寄存器，确保在保存寄存器前确定它
+        destReg = getRegorLoad(inst.result);
+    }
+
     std::vector<std::string> savedRegisters;
     for (const auto& reg : callerSaved) {
-        if (regAlloc.isRegInUse(reg)) {
+        // 若当前寄存器被使用，且不是返回值的目标寄存器，则需要保存
+        if (regAlloc.isRegInUse(reg) && reg != destReg) {
             savedRegisters.push_back(reg);
         }
     }
@@ -262,8 +270,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     emit("  call " + funcName);
 
     if (inst.result) {
-        std::string destReg = getRegorLoad(inst.result);
-        emit("  mv " + destReg + ", a0"); // 将a0的值移动到结果寄存器
+        emit("  mv " + destReg + ", a0");
     }
 
     int index = savedRegisters.size() - 1;  // 从最后保存的寄存器开始恢复
