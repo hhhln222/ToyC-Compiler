@@ -523,6 +523,9 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
 void CodeGenerator::spillReg(AllocationResult result){
     // 检查是否有需要溢出到栈的寄存器
     if (result.isSpill) {
+        if(varStackMap.find(result.spill.varName) != varStackMap.end()){
+            if(varStackMap[result.spill.varName]>=0) return;
+        }
         int offset = stackOffset;
         stackOffset -= 4;
         emit("  sw " + result.spill.reg + ", " + std::to_string(offset) + "(s0)");
