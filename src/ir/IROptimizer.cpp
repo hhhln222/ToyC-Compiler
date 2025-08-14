@@ -23,7 +23,7 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
                 algebraicSimplification(block, changed);
                 constantFolding(block, changed);
                 copyPropagation(block, changed);
-                // commonSubexpressionElimination(block, changed);
+                commonSubexpressionElimination(block, changed);
             }
 
             // 3. 基于CFG的优化（如跨块死代码消除）
@@ -449,8 +449,10 @@ void IROptimizer::commonSubexpressionElimination(BasicBlock& block, bool& change
     for (size_t i = 0; i < block.instructions.size(); i++) {
         auto& inst = block.instructions[i];
         
-        // 只处理可缓存的二元运算
-        if (inst.opcode >= IROpcode::ADD && inst.opcode <= IROpcode::EQ) {
+        // 只处理可缓存的二元运算，且确保操作数非空（关键修复）
+        if (inst.opcode >= IROpcode::ADD && inst.opcode <= IROpcode::EQ &&
+            inst.arg1 != nullptr && inst.arg2 != nullptr) {  // 检查arg1和arg2非空
+            
             // 创建表达式签名
             std::string signature = std::to_string(static_cast<int>(inst.opcode)) + 
                                    "_" + inst.arg1->toString() + 
@@ -473,42 +475,45 @@ void IROptimizer::commonSubexpressionElimination(BasicBlock& block, bool& change
                 // 用之前的结果替换当前计算
                 inst = IRInstruction(IROpcode::ASSIGN, inst.result, cachedEntry.result);
                 changed = true;
-                
-                // 不需要更新缓存，因为结果相同
             }
             // 如果是新表达式，添加到缓存
             else {
-                // 添加新缓存项
-                exprCache[signature] = {inst.result, i, deps};
-                
-                // 更新反向索引
-                for (const auto& var : deps) {
-                    varToExprs[var].insert(signature);
+                // 添加新缓存项（确保结果操作数非空）
+                if (inst.result != nullptr) {
+                    exprCache[signature] = {inst.result, i, deps};
+                    
+                    // 更新反向索引
+                    for (const auto& var : deps) {
+                        varToExprs[var].insert(signature);
+                    }
                 }
             }
         }
         
         // 当变量被重新定义时，精确清理缓存
-        if (inst.result) {
+        if (inst.result != nullptr) {  // 确保result非空再处理
             std::string definedVar = inst.result->toString();
             
             // 检查是否有表达式依赖此变量
-            if (auto it = varToExprs.find(definedVar); it != varToExprs.end()) {
-                // 收集所有受影响的表达式签名
+            auto it = varToExprs.find(definedVar);
+            if (it != varToExprs.end()) {
+                // 收集所有受影响的表达式签名（复制到临时容器避免迭代器失效）
                 std::vector<std::string> exprsToRemove(it->second.begin(), it->second.end());
                 
                 for (const auto& sig : exprsToRemove) {
-                    if (exprCache.find(sig) != exprCache.end()) {
-                        // 从所有依赖项中移除
-                        for (const auto& var : exprCache[sig].dependencies) {
-                            if (varToExprs.find(var) != varToExprs.end()) {
-                                varToExprs[var].erase(sig);
+                    auto cacheIt = exprCache.find(sig);
+                    if (cacheIt != exprCache.end()) {
+                        // 从所有依赖项中移除该表达式
+                        for (const auto& var : cacheIt->second.dependencies) {
+                            auto varIt = varToExprs.find(var);
+                            if (varIt != varToExprs.end()) {
+                                varIt->second.erase(sig);
                             }
                         }
-                        exprCache.erase(sig);
+                        exprCache.erase(cacheIt);
                     }
                 }
-                varToExprs.erase(definedVar);
+                varToExprs.erase(it);
             }
         }
     }
