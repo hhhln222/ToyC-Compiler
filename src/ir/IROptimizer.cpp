@@ -200,12 +200,11 @@ void IROptimizer::constantFolding(BasicBlock& block, bool& changed) {
 
             auto computed = computeBinaryOp(inst.opcode, inst.arg1, inst.arg2);
             if (computed) {
-                // std::cout << "old: " << inst.toString() << std::endl;
+                // 仅当计算结果有效（未溢出且为常量）时，才进行常量折叠
                 inst = IRInstruction(IROpcode::ASSIGN, inst.result, computed);
-                // inst.result->value = computed->value;//绑定
-                // std::cout << "new: " << inst.toString() << std::endl;
                 changed = true;
             }
+            // 若computed为nullptr（溢出或无效），则不修改该指令，跳过折叠
         }
         // 单独处理一元运算NOT指令
         else if (inst.opcode == IROpcode::NOT) {
@@ -214,11 +213,9 @@ void IROptimizer::constantFolding(BasicBlock& block, bool& changed) {
                 int val = inst.arg1->getConstantValue();
                 // 计算NOT结果（逻辑非：0→1，非0→0）
                 int result = (val == 0) ? 1 : 0;
-                
-                // std::cout << "old: " << inst.toString() << std::endl;
+
+                // 逻辑非结果只能是0或1，不可能溢出int范围，直接折叠
                 inst = IRInstruction(IROpcode::ASSIGN, inst.result, createConstant(result));
-                // inst.result->value = result;//绑定
-                // std::cout << "new: " << inst.toString() << std::endl;
                 changed = true;
             }
         }
@@ -522,31 +519,53 @@ std::shared_ptr<Operand> IROptimizer::computeBinaryOp(
     if (!arg1->isConstant() || !arg2->isConstant()) {
         return nullptr; // 非常量，无法计算
     }
+
+    // 用int获取原始值（假设输入值本身在int范围内）
     int val1 = arg1->getConstantValue();
     int val2 = arg2->getConstantValue();
+
+    // 处理除法除零
     if (opcode == IROpcode::DIV && val2 == 0) {
-        // return nullptr; // 避免除零
-        // return createConstant(0);//返回0
-        throw std::runtime_error("Division by zero detected during constant folding");//报错
+        throw std::runtime_error("Division by zero detected during constant folding");
     }
-    int result;
+
+    // 用long long暂存计算结果，避免中间溢出
+    long long result_long = 0;
+    bool valid = true;
+
     switch (opcode) {
-        case IROpcode::ADD: result = val1 + val2; break;
-        case IROpcode::SUB: result = val1 - val2; break;
-        case IROpcode::MUL: result = val1 * val2; break;
-        case IROpcode::DIV: result = val1 / val2; break;
-        case IROpcode::MOD: result = val1 % val2; break;
-        case IROpcode::AND: result = (val1 && val2) ? 1 : 0;; break;
-        case IROpcode::OR:  result = (val1 || val2) ? 1 : 0; break;
-        case IROpcode::LT:  result = (val1 < val2) ? 1 : 0; break;
-        case IROpcode::GT:  result = (val1 > val2) ? 1 : 0; break;
-        case IROpcode::LE:  result = (val1 <= val2) ? 1 : 0; break;
-        case IROpcode::GE:  result = (val1 >= val2) ? 1 : 0; break;
-        case IROpcode::EQ:  result = (val1 == val2) ? 1 : 0; break;
-        case IROpcode::NE:  result = (val1 != val2) ? 1 : 0; break;
-        default: return nullptr;
+        case IROpcode::ADD: result_long = static_cast<long long>(val1) + val2; break;
+        case IROpcode::SUB: result_long = static_cast<long long>(val1) - val2; break;
+        case IROpcode::MUL: result_long = static_cast<long long>(val1) * val2; break;
+        case IROpcode::DIV: 
+            // 除法结果本身不会溢出（商一定小于等于被除数），但需确保val2非零（已提前检查）
+            result_long = static_cast<long long>(val1) / val2; 
+            break;
+        case IROpcode::MOD: 
+            result_long = static_cast<long long>(val1) % val2; 
+            break;
+        case IROpcode::AND: result_long = (val1 && val2) ? 1 : 0; break;
+        case IROpcode::OR:  result_long = (val1 || val2) ? 1 : 0; break;
+        case IROpcode::LT:  result_long = (val1 < val2) ? 1 : 0; break;
+        case IROpcode::GT:  result_long = (val1 > val2) ? 1 : 0; break;
+        case IROpcode::LE:  result_long = (val1 <= val2) ? 1 : 0; break;
+        case IROpcode::GE:  result_long = (val1 >= val2) ? 1 : 0; break;
+        case IROpcode::EQ:  result_long = (val1 == val2) ? 1 : 0; break;
+        case IROpcode::NE:  result_long = (val1 != val2) ? 1 : 0; break;
+        default: valid = false; break;
     }
-    return createConstant(result);
+
+    if (!valid) {
+        return nullptr;
+    }
+
+    // 检查结果是否超出int范围
+    if (result_long < INT_MIN || result_long > INT_MAX) {
+        return nullptr; // 溢出，不进行常量传递
+    }
+
+    // 结果在int范围内，正常返回常量
+    return createConstant(static_cast<int>(result_long));
 }
 
 void IROptimizer::printIR(const std::string& outputFile,std::vector<FunctionInfo>& functions) {

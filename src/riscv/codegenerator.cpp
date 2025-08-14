@@ -76,7 +76,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
 
     std::vector<int> usedSRegisters;
     for (int i = 1; i <= 11; ++i) {  // 检查s1到s11
-        if (regAlloc.isRegInUse("s"+std::to_string(i))) {  // 假设isRegisterUsed(int)检查对应s寄存器是否使用
+        if (regAlloc.isRegInUse("s"+std::to_string(i))) {
             usedSRegisters.push_back(i);
         }
     }
