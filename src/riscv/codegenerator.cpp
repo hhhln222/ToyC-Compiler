@@ -522,6 +522,9 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
     AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
     std::string tempReg = regResult.reg;
     spillReg(regResult);
+    if (operand->isConstant()){
+        emit("  li " + tempReg + ", " + operand->toString());
+    }
     return tempReg;
 }
 
@@ -532,8 +535,8 @@ void CodeGenerator::spillReg(AllocationResult result){
         if(varStackMap.find(result.spill.varName) != varStackMap.end()){
             if(varStackMap[result.spill.varName]>=0) return;
         }
-        int offset = stackOffset;
         stackOffset -= 4;
+        int offset = stackOffset;
         emit("  sw " + result.spill.reg + ", " + std::to_string(offset) + "(s0)");
         varStackMap[result.spill.varName] = offset;
     }
