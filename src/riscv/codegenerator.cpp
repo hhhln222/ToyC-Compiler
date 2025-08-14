@@ -133,7 +133,9 @@ void CodeGenerator::generateAssignment(const IRInstruction& inst) {
     if (srcReg != destReg) {
         emit("  mv " + destReg + ", " + srcReg);
     }
-    // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
+    if(inst.arg1 && inst.arg1->isConstant()) {
+        regAlloc.freeReg(inst.arg1->toString());
+    }
 }
 
 void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
@@ -153,8 +155,13 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     std::string rd = getRegorLoad(inst.result);
 
     emit("  " + op + " " + rd + ", " + rs1 + ", " + rs2);
-    // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
-    // if(inst.arg2->isConstant()) regAlloc.freeReg("const_"+inst.arg2->toString());
+    // 释放常量寄存器
+    if(inst.arg1 && inst.arg1->isConstant()) {
+        regAlloc.freeReg(inst.arg1->toString());
+    }
+    if(inst.arg2 && inst.arg2->isConstant()) {
+        regAlloc.freeReg(inst.arg2->toString());
+    }
 }
 
 void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
@@ -246,47 +253,47 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     for (int i = 0; i < regParamCount; ++i) {
         const auto& arg = paramStrings[i];
         std::string destReg = "a" + std::to_string(i); // 目标参数寄存器a0-a7
-        Operand operand={OperandType::VARIABLE,"",-1};
+        std::shared_ptr<Operand> operand;
         std::string actualArg = arg; // 存储处理后的参数名
-        if (arg[0] == 't') {
-            operand.type = OperandType::TEMP;
-            actualArg = arg.substr(1); // 去掉前面的't'
-        } else {
-            operand.type = OperandType::VARIABLE;
-        }
-        operand = {operand.type, actualArg, -1}; // 使用处理后的参数名
         if (isNumber(arg)) {
-            // 数字常量使用li指令
-            emit("  li " + destReg + ", " + arg);
+            operand = std::make_shared<Operand>(OperandType::CONSTANT, arg, -1);
+        } else if (arg[0] == 't') {
+            operand = std::make_shared<Operand>(OperandType::TEMP, arg.substr(1), -1);
         } else {
-            // 变量/标识符使用mv指令（从其绑定的寄存器移动）
-            std::shared_ptr<Operand> operandPtr = std::make_shared<Operand>(operand);
-            std::string srcReg = getRegorLoad(operandPtr);
+            operand = std::make_shared<Operand>(OperandType::VARIABLE, arg, -1);
+        }
+        
+        if (isNumber(arg)) {
+            emit("  li " + destReg + ", " + arg);
+            // 立即释放常量寄存器
+            regAlloc.freeReg(arg);
+        } else {
+            std::string srcReg = getRegorLoad(operand);
             emit("  mv " + destReg + ", " + srcReg);
         }
     }
 
-    // 栈参数
+     // 栈参数
     for (int i = 0; i < stackParamCount; ++i) {
         int stackParamOffset = (stackParamCount - 1 - i) * 4;
         const auto& arg = paramStrings[8 + i];
         std::string argReg;
-        std::shared_ptr<Operand> operand=std::make_shared<Operand>(OperandType::VARIABLE, "", -1);
-        std::string actualArg = arg; // 存储处理后的参数名
-        if(isNumber(arg)){
-            // operand->type = OperandType::CONSTANT;
-        }
-        else if (arg[0] == 't') {
-            operand->type = OperandType::TEMP;
-            actualArg = arg.substr(1); // 去掉前面的't'
+        std::shared_ptr<Operand> operand;
+        if (isNumber(arg)) {
+            operand = std::make_shared<Operand>(OperandType::CONSTANT, arg, -1);
+        } else if (arg[0] == 't') {
+            operand = std::make_shared<Operand>(OperandType::TEMP, arg.substr(1), -1);
         } else {
-            operand->type = OperandType::VARIABLE;
+            operand = std::make_shared<Operand>(OperandType::VARIABLE, arg, -1);
         }
 
-        operand->value = actualArg; // 根据参数类型构建操作数
-        argReg = getRegorLoad(operand);// 尝试分配寄存器
+        argReg = getRegorLoad(operand);
         emit("  sw " + argReg + ", " + std::to_string(stackParamOffset) + "(sp)");
-        // if(operand->isConstant()) regAlloc.freeReg("const_"+arg);
+        
+        // 释放常量寄存器
+        if (isNumber(arg)) {
+            regAlloc.freeReg(arg);
+        }
     }
 
     resetParamStrings();
@@ -329,15 +336,15 @@ void CodeGenerator::generateParam(const IRInstruction& inst) {
 
 void CodeGenerator::generateReturn(const IRInstruction& inst) {
     if (inst.arg1) {
-        if(inst.arg1->type==OperandType::CONSTANT){
+        if(inst.arg1->isConstant()){
+            // 直接生成li指令加载常量
             emit("  li a0, " + inst.arg1->toString());
-        }
-        else{
+        } else {
             std::string retReg = getRegorLoad(inst.arg1);
             emit("  mv a0, " + retReg);
         }
     }
-    emit("  j " + currentFuncExitLabel);  // 跳转到函数统一退出标签
+    emit("  j " + currentFuncExitLabel);
 }
 
 void CodeGenerator::generateComparison(const IRInstruction& inst) {
@@ -395,8 +402,13 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
         default:
             throw std::runtime_error("Unsupported comparison operator");
     }
-    // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
-    // if(inst.arg2->isConstant()) regAlloc.freeReg("const_"+inst.arg2->toString());
+    // 释放常量寄存器
+    if(inst.arg1 && inst.arg1->isConstant()) {
+        regAlloc.freeReg(inst.arg1->toString());
+    }
+    if(inst.arg2 && inst.arg2->isConstant()) {
+        regAlloc.freeReg(inst.arg2->toString());
+    }
 }
 
 // 标签管理方法
@@ -522,6 +534,8 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
     AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
     std::string tempReg = regResult.reg;
     spillReg(regResult);
+    
+    // 为常量生成li指令
     if (operand->isConstant()){
         emit("  li " + tempReg + ", " + operand->toString());
     }
