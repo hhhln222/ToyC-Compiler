@@ -24,8 +24,8 @@ private:
     std::vector<std::string> paramStrings;
 
     // 生成函数框架
-    void emitPrologue(const std::string& funcName, int frameSize, int valConut);
-    void emitEpilogue(int frameSize, int valConut);
+    void emitPrologue(const std::string& funcName, int frameSize, const std::vector<int>& usedSRegisters);
+    void emitEpilogue(int frameSize, const std::vector<int>& usedSRegisters);
 
     // 指令生成
     void emit(const std::string& instruction);

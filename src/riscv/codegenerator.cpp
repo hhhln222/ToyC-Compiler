@@ -22,26 +22,44 @@ void CodeGenerator::emit(const std::string& instruction) {
     asmCode += instruction + "\n";
 }
 
-void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize, int valCount) {
+void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize, const std::vector<int>& usedSRegisters) {
     std::string exitLabel = "." + funcName + "_func_end";
     currentFuncExitLabel = exitLabel;
     emit(funcName + ":");
     emit("  addi sp, sp, -" + std::to_string(frameSize));
-    emit("  sw ra, " + std::to_string(frameSize-4) + "(sp)");
-    for (int i = 0; i <= valCount; ++i) {
-        int offset = frameSize - 8 - i * 4;
-        emit("  sw s" + std::to_string(i) + ", " + std::to_string(offset) + "(sp)");
+    
+    // 保存返回地址ra
+    emit("  sw ra, " + std::to_string(frameSize - 4) + "(sp)");
+    
+    // 保存s0寄存器
+    emit("  sw s0, " + std::to_string(frameSize - 8) + "(sp)");
+    
+    // 保存使用的s1-s11寄存器，从s0下方开始存放
+    int offset = frameSize - 12;  // 预留ra(4字节)和s0(4字节)的空间
+    for (int reg : usedSRegisters) {
+        emit("  sw s" + std::to_string(reg) + ", " + std::to_string(offset) + "(sp)");
+        offset -= 4;  // 每个寄存器占4字节
     }
+    
     emit("  addi s0, sp, " + std::to_string(frameSize));
 }
 
-void CodeGenerator::emitEpilogue(int frameSize, int valCount) {
+void CodeGenerator::emitEpilogue(int frameSize, const std::vector<int>& usedSRegisters) {
     emit(currentFuncExitLabel + ":");
-    for (int i = 0; i <= valCount; ++i) {
-        int offset = frameSize - 8 - i * 4;  // 计算每个寄存器的栈偏移
-        emit("  lw s" + std::to_string(i) + ", " + std::to_string(offset) + "(sp)");
+    
+    // 恢复使用的s1-s11寄存器，顺序与保存时一致
+    int offset = frameSize - 12;
+    for (int reg : usedSRegisters) {
+        emit("  lw s" + std::to_string(reg) + ", " + std::to_string(offset) + "(sp)");
+        offset -= 4;
     }
-    emit("  lw ra, " + std::to_string(frameSize-4) + "(sp)");
+    
+    // 恢复s0寄存器
+    emit("  lw s0, " + std::to_string(frameSize - 8) + "(sp)");
+    
+    // 恢复返回地址ra
+    emit("  lw ra, " + std::to_string(frameSize - 4) + "(sp)");
+    
     emit("  addi sp, sp, " + std::to_string(frameSize));
     emit("  ret");
 }
@@ -56,16 +74,24 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     int tempVarSize = func.tempVarCount;
     int paramCount = func.params.size();
     int localConut = func.varCount - paramCount;
-    int valCount = (localConut > 11)?11:localConut;
-    int frameSize = 4 * (2 + valCount + tempVarSize);
-    // 确保栈帧大小按16字节对齐
+
+    std::vector<int> usedSRegisters;
+    for (int i = 1; i <= 11; ++i) {  // 检查s1到s11
+        if (regAlloc.isRegInUse("s"+std::to_string(i))) {  // 假设isRegisterUsed(int)检查对应s寄存器是否使用
+            usedSRegisters.push_back(i);
+        }
+    }
+
+    // 计算栈帧大小：ra(4) + s0(4) + 已使用s寄存器*4 + 临时变量*4
+    int frameSize = 4 * (2 + usedSRegisters.size() + tempVarSize);
+    // 确保栈帧按16字节对齐
     if (frameSize % 16 != 0) {
         frameSize += 16 - (frameSize % 16);
     }
+    
+    emitPrologue(func.name, frameSize, usedSRegisters);
 
-    emitPrologue(func.name, frameSize, valCount);
-
-    stackOffset = - 4 * (2 + valCount);
+    stackOffset = - 4 * (2 + usedSRegisters.size());
 
     // 处理函数参数
     for (int i = 0; i < func.params.size(); ++i) {
@@ -99,7 +125,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
         }
     }
     
-    emitEpilogue(frameSize, valCount);
+    emitEpilogue(frameSize, usedSRegisters);
 }
 
 void CodeGenerator::generateAssignment(const IRInstruction& inst) {
