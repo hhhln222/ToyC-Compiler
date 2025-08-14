@@ -490,6 +490,18 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
 
     // writeDebugInfo(operandStr, regAlloc, varStackMap);
 
+    if(regAlloc.hasFreeRegForType(operand)){
+        if (operand->isConstant()) {
+            AllocationResult regResult = regAlloc.allocateReg(operand->toString(), operand->type);
+            std::string reg = regResult.reg;
+            emit("  li " + reg + ", " + operand->toString());
+        return reg;
+        }
+        AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
+        std::string reg = regResult.reg;
+        return reg;
+    }
+
     // 优先检查是否已在寄存器中
     if (regAlloc.isInReg(operandStr)) {
         return regAlloc.getReg(operandStr);
@@ -505,18 +517,6 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
         int offset = varStackMap[operandStr];
         emit("  lw " + tempReg + ", " + std::to_string(offset) + "(s0)");
         return tempReg;
-    }
-
-    if(regAlloc.hasFreeRegForType(operand)){
-        if (operand->isConstant()) {
-            AllocationResult regResult = regAlloc.allocateReg(operand->toString(), operand->type);
-            std::string reg = regResult.reg;
-            emit("  li " + reg + ", " + operand->toString());
-        return reg;
-        }
-        AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
-        std::string reg = regResult.reg;
-        return reg;
     }
 
     AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
