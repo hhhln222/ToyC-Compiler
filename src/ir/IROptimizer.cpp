@@ -23,11 +23,11 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
                 algebraicSimplification(block, changed);
                 constantFolding(block, changed);
                 copyPropagation(block, changed);
-                commonSubexpressionElimination(block, changed);
+                // commonSubexpressionElimination(block, changed);
             }
 
             // 3. 基于CFG的优化（如跨块死代码消除）
-            deadCodeElimination(blocks, liveAnalyzer, changed);
+            // deadCodeElimination(blocks, liveAnalyzer, changed);
 
             // 4. 合并基本块回函数
             mergeBasicBlocks(func, blocks);
@@ -202,7 +202,7 @@ void IROptimizer::constantFolding(BasicBlock& block, bool& changed) {
             if (computed) {
                 // std::cout << "old: " << inst.toString() << std::endl;
                 inst = IRInstruction(IROpcode::ASSIGN, inst.result, computed);
-                inst.result->value = computed->value;//绑定
+                // inst.result->value = computed->value;//绑定
                 // std::cout << "new: " << inst.toString() << std::endl;
                 changed = true;
             }
@@ -217,7 +217,7 @@ void IROptimizer::constantFolding(BasicBlock& block, bool& changed) {
                 
                 // std::cout << "old: " << inst.toString() << std::endl;
                 inst = IRInstruction(IROpcode::ASSIGN, inst.result, createConstant(result));
-                inst.result->value = result;//绑定
+                // inst.result->value = result;//绑定
                 // std::cout << "new: " << inst.toString() << std::endl;
                 changed = true;
             }
@@ -247,33 +247,28 @@ void IROptimizer::copyPropagation(BasicBlock& block, bool& changed) {
                         break; // 没有更多映射，停止查找
                     }
                 }
-                // 记录最终映射关系（可能是常量）
+                // 记录最终映射关系
                 copyMap[inst.result->toString()] = source;
             }
         }
-        // 其他指令可能破坏复制/常量关系
-        else if (inst.opcode != IROpcode::PARAM) {
+        else if(inst.opcode != IROpcode::PARAM){
             // 如果指令修改了结果变量，从映射中移除
             if (inst.result) {
                 copyMap.erase(inst.result->toString());
             }
             // 有副作用的指令（如函数调用）会破坏所有映射关系
-            if (inst.opcode == IROpcode::CALL){
-                //   (inst.opcode == IROpcode::PARAM)  ||   
-                //   (inst.opcode == IROpcode::RETURN) ||  
-                //   (inst.opcode == IROpcode::GOTO)   || 
-                //   (inst.opcode == IROpcode::IF_GOTO)   ||
-                //   (inst.opcode == IROpcode::LABEL)) {
+            if (inst.opcode == IROpcode::CALL||inst.opcode == IROpcode::RETURN){
                 copyMap.clear();
             }
         }
         
-        // 替换操作数：使用映射表中的值（可能是常量）替换变量
+        
+        // 替换操作数：使用映射表中的值替换变量
         auto replaceOperand = [&](std::shared_ptr<Operand>& arg) {
             if (arg && (arg->isVar() || arg->isTEMP())) {
                 auto it = copyMap.find(arg->toString());
                 if (it != copyMap.end()) {
-                    // 找到映射值（可能是常量），进行替换
+                    // 找到映射值，进行替换
                     arg = it->second;
                     changed = true;
                 }
@@ -531,8 +526,8 @@ std::shared_ptr<Operand> IROptimizer::computeBinaryOp(
     int val2 = arg2->getConstantValue();
     if (opcode == IROpcode::DIV && val2 == 0) {
         // return nullptr; // 避免除零
-        return createConstant(0);//返回0
-        // throw std::runtime_error("Division by zero detected during constant folding");//报错
+        // return createConstant(0);//返回0
+        throw std::runtime_error("Division by zero detected during constant folding");//报错
     }
     int result;
     switch (opcode) {
