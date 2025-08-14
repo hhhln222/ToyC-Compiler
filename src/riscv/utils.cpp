@@ -28,7 +28,8 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
     if (isInReg(var)) {
         return {
             .reg = varInfoMap[var].reg,
-            .spill = {"", "", OperandType::TEMP}  // 无溢出：默认值
+            .spill = {"", "", OperandType::TEMP}, // 无溢出：默认值
+            .isSpill = false
         };
     }
 
@@ -57,7 +58,8 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
 
         return {
             .reg = reg,
-            .spill = {"", "", OperandType::TEMP}  // 无溢出：默认值
+            .spill = {"", "", OperandType::TEMP},  // 无溢出：默认值
+            .isSpill = false
         };
     }
 
@@ -93,7 +95,7 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
         .type = lruInfo.type
     };
 
-    // 移除LRU变量记录，分配复用寄存器
+    // 变量记录，分配复用寄存器
     std::string reusedReg = lruInfo.reg;
     varInfoMap.erase(lruVar);
     varInfoMap[var] = {reusedReg, type};
@@ -101,7 +103,8 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
     // 返回分配结果和溢出信息
     return {
         .reg = reusedReg,
-        .spill = spilled  // 有溢出：填充实际信息
+        .spill = spilled,  // 有溢出：填充实际信息
+        .isSpill = true
     };
 }
 

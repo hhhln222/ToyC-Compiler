@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <memory>
+#include <algorithm>
 
 // 三地址码指令类型
 enum class IROpcode {
@@ -52,7 +53,26 @@ struct Operand {
             default: return "unknown";
         }
     }
+
+    bool isConstant() const {
+        return type == OperandType::CONSTANT;
+    }
+
+    bool isVar() const{
+        return type == OperandType::VARIABLE;
+    }
+
+    bool isTEMP() const{
+        return type == OperandType::TEMP;
+    }
+
+    int getConstantValue() const {
+        if (isConstant()) return std::stoi(value);
+        throw std::logic_error("Operand is not a constant");
+    }
 };
+
+
 
 // 三地址码指令结构
 struct IRInstruction {
@@ -61,7 +81,7 @@ struct IRInstruction {
     std::shared_ptr<Operand> arg1;      // 第一个操作数
     std::shared_ptr<Operand> arg2;      // 第二个操作数
     std::string label;                  // 标签（用于跳转指令）
-    bool isLeader = false;              // 标记是否为基本块入口
+    bool markDead = false;  // 死代码标记
 
     // 构造函数
     IRInstruction(IROpcode op, std::shared_ptr<Operand> res = nullptr,
@@ -139,6 +159,7 @@ struct FunctionInfo {
     std::vector<std::shared_ptr<Operand>> params;
     std::vector<IRInstruction> instructions;
     int varCount;          // 变量（包括参数和局部变量）的总数
+    int tempVarCount;       // 临时变量实际数量
     int startTempCounter;   // 函数开始时的临时变量计数器值
     int endTempCounter;     // 函数结束时的临时变量计数器值
     
@@ -152,10 +173,10 @@ public:
     IRGenerator() : tempCounter(0), labelCounter(0), currentFunction(nullptr) {}
     
     // 获取生成的IR代码
-    std::vector<FunctionInfo> getFunctions() const { return functions; }
+    std::vector<FunctionInfo>& getFunctions() { return functions; }
     
     // 打印IR代码
-    void printIR(const std::string& outputFile = "output.txt") const;
+    void printIR(const std::string& outputFile);
     
     // --- 访问方法重写 ---
     

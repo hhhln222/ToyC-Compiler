@@ -23,7 +23,7 @@ std::shared_ptr<Operand> IRGenerator::createOperand(const std::string& value, Op
 }
 
 // 打印IR代码
-void IRGenerator::printIR(const std::string& outputFile) const {
+void IRGenerator::printIR(const std::string& outputFile) {
     std::ofstream out(outputFile);
     if (!out.is_open()) {
         std::cerr << "无法打开文件: " << outputFile << std::endl;

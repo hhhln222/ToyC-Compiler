@@ -17,6 +17,7 @@ struct SpilledVar {
 struct AllocationResult {
     std::string reg;       // 成功分配的寄存器
     SpilledVar spill; // 溢出的变量
+    bool isSpill;
 };
 
 // 变量信息结构体
