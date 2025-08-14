@@ -531,6 +531,7 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
 void CodeGenerator::spillReg(AllocationResult result){
     // 检查是否有需要溢出到栈的寄存器
     if (result.isSpill) {
+        if(isNumber(result.spill.varName)) return;
         //参数不用处理
         if(varStackMap.find(result.spill.varName) != varStackMap.end()){
             if(varStackMap[result.spill.varName]>=0) return;
