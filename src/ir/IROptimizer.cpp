@@ -23,11 +23,11 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
                 algebraicSimplification(block, changed);
                 constantFolding(block, changed);
                 copyPropagation(block, changed);
-                // commonSubexpressionElimination(block, changed);
+                commonSubexpressionElimination(block, changed);
             }
 
             // 3. 基于CFG的优化（如跨块死代码消除）
-            // deadCodeElimination(blocks, liveAnalyzer, changed);
+            deadCodeElimination(blocks, liveAnalyzer, changed);
 
             // 4. 合并基本块回函数
             mergeBasicBlocks(func, blocks);

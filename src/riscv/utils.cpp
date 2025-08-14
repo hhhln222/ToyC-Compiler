@@ -11,6 +11,7 @@ RegisterAllocator::RegisterAllocator()
       initialSavedRegs({"s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"})
 {
     reset();
+    typeVarStacks.clear();
 }
 
 // 重置分配器状态
@@ -23,7 +24,9 @@ void RegisterAllocator::reset() {
 
 
 // 分配寄存器
-AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandType type) {
+AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandType operandType) {
+    
+    OperandType type = (operandType==OperandType::CONSTANT)? OperandType::TEMP:operandType;
     // 变量已在寄存器中：更新时间戳，返回无溢出结果
     if (isInReg(var)) {
         return {
@@ -36,6 +39,7 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
     // 选择目标寄存器池
     std::vector<std::string>* targetPool = nullptr;
     switch (type) {
+        case OperandType::CONSTANT:
         case OperandType::TEMP:
             targetPool = &freeTempRegs; break;
         case OperandType::PARAM:   
@@ -50,11 +54,13 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
     if (!targetPool->empty()) {
         std::string reg = targetPool->front();
         targetPool->erase(targetPool->begin());
-
+        
         varInfoMap[var] = {
             reg,
             type,
         };
+
+        typeVarStacks[type].push_back(var); // 新变量入栈
 
         return {
             .reg = reg,
@@ -68,8 +74,7 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
         throw std::runtime_error("Register exhausted for PARAM type (not handled)");
     }
 
-    // 临时/变量寄存器不足：LRU策略溢出，返回溢出信息
-    // 查找最久未使用的寄存器
+    // 临时/变量寄存器不足
     std::string lruVar;
     for (const auto& [varName, info] : varInfoMap) {
         if (info.type == type) {
@@ -95,17 +100,17 @@ AllocationResult RegisterAllocator::allocateReg(const std::string& var, OperandT
         .type = lruInfo.type
     };
 
+    std::string filoVar = typeVarStacks[type].back(); // 取最近分配的变量
+    typeVarStacks[type].pop_back(); // 从栈中移除
+
     // 变量记录，分配复用寄存器
     std::string reusedReg = lruInfo.reg;
     varInfoMap.erase(lruVar);
     varInfoMap[var] = {reusedReg, type};
+    typeVarStacks[type].push_back(var);
 
     // 返回分配结果和溢出信息
-    return {
-        .reg = reusedReg,
-        .spill = spilled,  // 有溢出：填充实际信息
-        .isSpill = true
-    };
+    return {reusedReg,spilled,true};
 }
 
 // 释放寄存器
@@ -115,9 +120,16 @@ void RegisterAllocator::freeReg(const std::string& var) {
     
     const std::string& reg = it->second.reg;
     OperandType type = it->second.type;
+
+    auto& stack = typeVarStacks[type];
+    auto iter = std::find(stack.begin(), stack.end(), var);
+    if (iter != stack.end()) {
+        stack.erase(iter);
+    }
     
     // 归还到对应寄存器池
     switch (type) {
+        case OperandType::CONSTANT:
         case OperandType::TEMP:
             freeTempRegs.push_back(reg);
             break;
@@ -174,3 +186,20 @@ namespace RiscVUtils {
     }
     
 };
+
+bool RegisterAllocator::hasFreeRegForType(const std::shared_ptr<Operand> operand) const {
+    OperandType type = operand->type;
+    switch (type) {
+        case OperandType::CONSTANT:
+        case OperandType::TEMP:
+            // 临时变量对应临时寄存器池（t0-t6）
+            return !freeTempRegs.empty();
+        case OperandType::VARIABLE:
+            // 普通变量（如参数）对应参数寄存器池（a0-a7）
+            // 注：若VARIABLE包含非参数变量，可根据实际逻辑调整（如扩展类型枚举）
+            return !freeParamRegs.empty();
+        default:
+            // 未知类型返回false（或抛出异常）
+            throw std::invalid_argument("Unknown OperandType when checking free registers");
+    }
+}

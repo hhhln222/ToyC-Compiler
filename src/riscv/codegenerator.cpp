@@ -73,7 +73,6 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     
     int tempVarSize = func.tempVarCount;
     int paramCount = func.params.size();
-    int localConut = func.varCount - paramCount;
 
     std::vector<int> usedSRegisters;
     for (int i = 1; i <= 11; ++i) {  // 检查s1到s11
@@ -134,7 +133,7 @@ void CodeGenerator::generateAssignment(const IRInstruction& inst) {
     if (srcReg != destReg) {
         emit("  mv " + destReg + ", " + srcReg);
     }
-    if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
+    // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
 }
 
 void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
@@ -154,8 +153,8 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     std::string rd = getRegorLoad(inst.result);
 
     emit("  " + op + " " + rd + ", " + rs1 + ", " + rs2);
-    if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
-    if(inst.arg2->isConstant()) regAlloc.freeReg("const_"+inst.arg2->toString());
+    // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
+    // if(inst.arg2->isConstant()) regAlloc.freeReg("const_"+inst.arg2->toString());
 }
 
 void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
@@ -174,7 +173,7 @@ void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
             std::string condReg = getRegorLoad(inst.arg1);;
             std::string validLabel = generateValidLabel(inst.label);
             emit("  bnez " + condReg + ", " + validLabel);
-            if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
+            // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
             break;
         }
         default: break;
@@ -205,10 +204,9 @@ bool isNumber(std::string arg){
 void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     std::vector<std::string> callerSaved = {
         "t0", "t1", "t2", "t3", "t4", "t5", "t6",
-        "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"
+        "a0","a1", "a2", "a3", "a4", "a5", "a6", "a7"
     };
 
-    // 提前获取返回值的目标寄存器（若存在），避免后续被恢复操作覆盖
     std::string destReg;
     if (inst.result) {
         // 提前获取目标寄存器，确保在保存寄存器前确定它
@@ -217,7 +215,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
 
     std::vector<std::string> savedRegisters;
     for (const auto& reg : callerSaved) {
-        // 若当前寄存器被使用，且不是返回值的目标寄存器，则需要保存
+        // 若当前寄存器被使用，则需要保存
         if (regAlloc.isRegInUse(reg) && reg != destReg) {
             savedRegisters.push_back(reg);
         }
@@ -226,9 +224,9 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     int paramCount = paramStrings.size(); 
     int regParamCount = std::min(paramCount, 8); // 前8个参数用a0-a7
     int stackParamCount = std::max(0, paramCount - 8); // 超过8个的参数用栈传递
-    int stackParamSize = stackParamCount * 4;
+    // int stackParamSize = stackParamCount * 4;
     int saveRegSize = savedRegisters.size() * 4;
-    int totalStackNeed = saveRegSize + stackParamSize;
+    int totalStackNeed = saveRegSize;
     int alignPadding = (16 - (totalStackNeed % 16)) % 16;
     int totalStackSize = totalStackNeed + alignPadding;
 
@@ -276,7 +274,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         std::shared_ptr<Operand> operand=std::make_shared<Operand>(OperandType::VARIABLE, "", -1);
         std::string actualArg = arg; // 存储处理后的参数名
         if(isNumber(arg)){
-            operand->type = OperandType::CONSTANT;
+            // operand->type = OperandType::CONSTANT;
         }
         else if (arg[0] == 't') {
             operand->type = OperandType::TEMP;
@@ -288,7 +286,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         operand->value = actualArg; // 根据参数类型构建操作数
         argReg = getRegorLoad(operand);// 尝试分配寄存器
         emit("  sw " + argReg + ", " + std::to_string(stackParamOffset) + "(sp)");
-        if(operand->isConstant()) regAlloc.freeReg("const_"+arg);
+        // if(operand->isConstant()) regAlloc.freeReg("const_"+arg);
     }
 
     resetParamStrings();
@@ -298,6 +296,10 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     if (inst.result) {
         emit("  mv " + destReg + ", a0");
     }
+
+    // if (stackParamCount > 0) {
+    //     emit("  addi sp, sp, " + std::to_string(stackParamSize));
+    // }
 
     int index = savedRegisters.size() - 1;  // 从最后保存的寄存器开始恢复
     for (auto it = savedRegisters.rbegin(); it != savedRegisters.rend(); ++it, --index) {
@@ -349,7 +351,7 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
         emit("  mv " + rd + ", " + rs1);
         emit("  xori " + rd + ", " + rd + ", 1");  // 异或1实现取反
         emit("  andi " + rd + ", " + rd + ", 1");  // 确保结果只有0或1
-        if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
+        // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
         return;
     }
 
@@ -393,8 +395,8 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
         default:
             throw std::runtime_error("Unsupported comparison operator");
     }
-    if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
-    if(inst.arg2->isConstant()) regAlloc.freeReg("const_"+inst.arg2->toString());
+    // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
+    // if(inst.arg2->isConstant()) regAlloc.freeReg("const_"+inst.arg2->toString());
 }
 
 // 标签管理方法
@@ -457,12 +459,48 @@ bool CodeGenerator::isValidLabel(const std::string& label) {
     return true;
 }
 
+// 调试信息输出到文件（追加模式，支持多次写入）
+void writeDebugInfo(const std::string& operandStr, 
+                   const RegisterAllocator& regAlloc, 
+                   const std::map<std::string, int>& varStackMap) {
+    std::ofstream errorFile("debug_reg_stack.txt", std::ios::app);
+    if (errorFile.is_open()) {
+        std::string error_reg = "===== 新的调试信息 =====\n";
+        error_reg += "Variable try find in reg or stack: " + operandStr + "\n";
+        // 通过 getter 函数访问 varInfoMap，且无需括号
+        for (const auto& [varName, info] : regAlloc.getVarInfoMap()) { 
+            error_reg += " varName: " + varName + ", reg: " + info.reg + "\n";
+        }
+        error_reg += "Stack contents:\n";
+        for (const auto& [var, offset] : varStackMap) {
+            error_reg += " " + var + ": offset " + std::to_string(offset) + "\n";
+        }
+        error_reg += "========================\n\n";
+        errorFile << error_reg;
+        errorFile.close();
+    }
+}
+
 std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) {
     if (!operand) {
         throw std::runtime_error("Invalid null operand in getRegorLoad");
     }
 
     std::string operandStr = operand->toString();
+
+    // writeDebugInfo(operandStr, regAlloc, varStackMap);
+
+    if(regAlloc.hasFreeRegForType(operand)){
+        if (operand->isConstant()) {
+            AllocationResult regResult = regAlloc.allocateReg(operand->toString(), operand->type);
+            std::string reg = regResult.reg;
+            emit("  li " + reg + ", " + operand->toString());
+        return reg;
+        }
+        AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
+        std::string reg = regResult.reg;
+        return reg;
+    }
     
     // 优先检查是否已在寄存器中
     if (regAlloc.isInReg(operandStr)) {
@@ -481,48 +519,16 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
         return tempReg;
     }
 
-    // 调试信息输出
-    // std::string error_reg = "Variable not found in reg or stack: " + operandStr + "\n";
-    // for (const auto& [varName, info] : regAlloc.getVarInfoMap()) {
-    //     error_reg += " varName: " + varName + ", reg: " + info.reg + "\n";
-    // }
-    // error_reg += "Stack contents:\n";
-    // for (const auto& [var, offset] : varStackMap) {
-    //     error_reg += " " + var + ": offset " + std::to_string(offset) + "\n";
-    // }
-    // std::cout << error_reg;
-
-    // 两个都不在，分配寄存器
-    if (operand->isConstant()) {
-        AllocationResult regResult = regAlloc.allocateReg("const_" + operand->toString(), OperandType::TEMP);
-        std::string reg = regResult.reg;
-        // spillReg(regResult);//常量不存栈
-        emit("  li " + reg + ", " + operand->toString());
-        return reg;
-    }
-    else{
-        AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
-        std::string tempReg = regResult.reg;
-        return tempReg;
-    }
-
-    // 调试信息输出
-    // error_reg += "Variable not get in reg or stack: " + operandStr + "\n";
-    // for (const auto& [varName, info] : regAlloc.getVarInfoMap()) {
-    //     error_reg += " varName: " + varName + ", reg: " + info.reg + "\n";
-    // }
-    // error_reg += "Stack contents:\n";
-    // for (const auto& [var, offset] : varStackMap) {
-    //     error_reg += " " + var + ": offset " + std::to_string(offset) + "\n";
-    // }
-    // std::cout << error_reg;
-
-    return "null";
+    AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
+    std::string tempReg = regResult.reg;
+    spillReg(regResult);
+    return tempReg;
 }
 
 void CodeGenerator::spillReg(AllocationResult result){
     // 检查是否有需要溢出到栈的寄存器
     if (result.isSpill) {
+        //参数不用处理
         if(varStackMap.find(result.spill.varName) != varStackMap.end()){
             if(varStackMap[result.spill.varName]>=0) return;
         }
@@ -533,3 +539,4 @@ void CodeGenerator::spillReg(AllocationResult result){
     }
     return;
 }
+

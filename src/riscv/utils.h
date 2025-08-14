@@ -34,9 +34,13 @@ public:
     bool isInReg(const std::string& var) const;
     std::string getReg(const std::string& var) const;
     std::map<std::string, VarInfo> getVarInfoMap(){return varInfoMap;}
+    const std::map<std::string, VarInfo>& getVarInfoMap() const {
+        return varInfoMap; // 返回私有成员的只读引用
+    }
     void freeReg(const std::string& var);
     void reset();
     bool isRegInUse(const std::string& reg) const;
+    bool hasFreeRegForType(const std::shared_ptr<Operand> operand) const;
 
 private:
     std::vector<std::string> freeTempRegs;    // t0-t6
@@ -46,6 +50,7 @@ private:
     const std::vector<std::string> initialParamRegs;
     const std::vector<std::string> initialSavedRegs;
     std::map<std::string, VarInfo> varInfoMap;
+    std::map<OperandType, std::vector<std::string>> typeVarStacks; // 记录各类型变量分配顺序（FILO栈）
 };
 
 // RISC-V指令生成工具
