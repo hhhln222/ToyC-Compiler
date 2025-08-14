@@ -5,7 +5,12 @@
 void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
     for (auto& func : functions) {
         bool changed = false;
+        constexpr int MAX_ITERATIONS = 100; 
+        int iterationCount = 0;
         do {
+            if (++iterationCount > MAX_ITERATIONS) {
+                break;
+            }
             LiveAnalyzer liveAnalyzer;
             liveAnalyzer.analyze(func.instructions);
             changed = false;
@@ -18,7 +23,7 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
                 algebraicSimplification(block, changed);
                 constantFolding(block, changed);
                 copyPropagation(block, changed);
-                commonSubexpressionElimination(block, changed);
+                // commonSubexpressionElimination(block, changed);
             }
 
             // 3. 基于CFG的优化（如跨块死代码消除）
@@ -37,6 +42,13 @@ std::vector<BasicBlock> IROptimizer::splitIntoBasicBlocks(FunctionInfo& func) {
     std::vector<BasicBlock> blocks;
     if (func.instructions.empty()) return blocks;
 
+    std::unordered_map<std::string, size_t> labelMap;
+    for (size_t i = 0; i < func.instructions.size(); ++i) {
+        if (func.instructions[i].opcode == IROpcode::LABEL) {
+            labelMap[func.instructions[i].label] = i;
+        }
+    }
+
     // 第一步：标记所有基本块的入口点
     std::unordered_set<size_t> entryPoints;
     entryPoints.insert(0);  // 函数第一条指令是入口
@@ -44,6 +56,9 @@ std::vector<BasicBlock> IROptimizer::splitIntoBasicBlocks(FunctionInfo& func) {
     for (size_t i = 0; i < func.instructions.size(); ++i) {
         const auto& inst = func.instructions[i];
         if (inst.opcode == IROpcode::GOTO || inst.opcode == IROpcode::IF_GOTO) {
+            if (auto it = labelMap.find(inst.label); it != labelMap.end()) {
+                entryPoints.insert(it->second); // O(1)查找
+            }
             // 跳转指令的下一条是入口点
             if (i + 1 < func.instructions.size()) {
                 entryPoints.insert(i + 1);
@@ -155,11 +170,19 @@ void IROptimizer::buildCFG(std::vector<BasicBlock>& blocks) {
 
 // 合并基本块回函数指令列表
 void IROptimizer::mergeBasicBlocks(FunctionInfo& func, const std::vector<BasicBlock>& blocks) {
-    func.instructions.clear();
+    size_t total_instructions = 0;
     for (const auto& block : blocks) {
-        for (const auto& inst : block.instructions) {
-            func.instructions.push_back(inst);
-        }
+        total_instructions += block.instructions.size();
+    }
+    func.instructions.clear();
+    func.instructions.reserve(total_instructions); // 预分配内存
+    
+    for (const auto& block : blocks) {
+        func.instructions.insert( // 批量移动
+            func.instructions.end(),
+            std::make_move_iterator(block.instructions.begin()),
+            std::make_move_iterator(block.instructions.end())
+        );
     }
 }
 
@@ -412,46 +435,80 @@ void IROptimizer::algebraicSimplification(BasicBlock& block, bool& changed) {
     }
 }
 
-// 公共子表达式消除：识别并重用重复计算
 void IROptimizer::commonSubexpressionElimination(BasicBlock& block, bool& changed) {
-    // 表达式缓存：表达式签名 -> (结果操作数, 指令索引)
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Operand>, size_t>> exprCache;
+    // 定义缓存条目结构
+    struct CacheEntry {
+        std::shared_ptr<Operand> result;
+        size_t index;
+        std::unordered_set<std::string> dependencies; // 依赖的变量集合
+    };
+    
+    std::unordered_map<std::string, CacheEntry> exprCache;
+    std::unordered_map<std::string, std::unordered_set<std::string>> varToExprs;
     
     for (size_t i = 0; i < block.instructions.size(); i++) {
         auto& inst = block.instructions[i];
         
         // 只处理可缓存的二元运算
         if (inst.opcode >= IROpcode::ADD && inst.opcode <= IROpcode::EQ) {
-            // 创建表达式签名：操作码+操作数1+操作数2
+            // 创建表达式签名
             std::string signature = std::to_string(static_cast<int>(inst.opcode)) + 
                                    "_" + inst.arg1->toString() + 
                                    "_" + inst.arg2->toString();
             
+            // 收集依赖变量
+            std::unordered_set<std::string> deps;
+            auto addDep = [&](const std::shared_ptr<Operand>& op) {
+                if (op && (op->isVar() || op->isTEMP())) {
+                    deps.insert(op->toString());
+                }
+            };
+            addDep(inst.arg1);
+            addDep(inst.arg2);
+            
             // 如果表达式已计算过
             if (exprCache.find(signature) != exprCache.end()) {
-                auto& [cachedResult, cachedIndex] = exprCache[signature];
+                auto& cachedEntry = exprCache[signature];
                 
                 // 用之前的结果替换当前计算
-                // std::cout<<"old: " + inst.toString()<<std::endl;
-                inst = IRInstruction(IROpcode::ASSIGN, inst.result, cachedResult);
-                // std::cout<<"new: " + inst.toString()<<std::endl;
+                inst = IRInstruction(IROpcode::ASSIGN, inst.result, cachedEntry.result);
                 changed = true;
+                
+                // 不需要更新缓存，因为结果相同
             }
             // 如果是新表达式，添加到缓存
             else {
-                exprCache[signature] = {inst.result, i};
+                // 添加新缓存项
+                exprCache[signature] = {inst.result, i, deps};
+                
+                // 更新反向索引
+                for (const auto& var : deps) {
+                    varToExprs[var].insert(signature);
+                }
             }
         }
-        // 当变量被重新定义时，清除相关缓存
-        else if (inst.result) {
-            for (auto it = exprCache.begin(); it != exprCache.end();) {
-                // 如果表达式使用了被修改的变量，移除缓存项
-                if (it->second.first->toString() == inst.result->toString() || 
-                    it->first.find(inst.result->toString()) != std::string::npos) {
-                    it = exprCache.erase(it);
-                } else {
-                    ++it;
+        
+        // 当变量被重新定义时，精确清理缓存
+        if (inst.result) {
+            std::string definedVar = inst.result->toString();
+            
+            // 检查是否有表达式依赖此变量
+            if (auto it = varToExprs.find(definedVar); it != varToExprs.end()) {
+                // 收集所有受影响的表达式签名
+                std::vector<std::string> exprsToRemove(it->second.begin(), it->second.end());
+                
+                for (const auto& sig : exprsToRemove) {
+                    if (exprCache.find(sig) != exprCache.end()) {
+                        // 从所有依赖项中移除
+                        for (const auto& var : exprCache[sig].dependencies) {
+                            if (varToExprs.find(var) != varToExprs.end()) {
+                                varToExprs[var].erase(sig);
+                            }
+                        }
+                        exprCache.erase(sig);
+                    }
                 }
+                varToExprs.erase(definedVar);
             }
         }
     }
