@@ -69,10 +69,13 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     labelMap.clear();
     usedLabels.clear();
     regAlloc.reset();
+    varStackMap.clear();
+    paramStrings.clear();
     stackOffset = 0;
     
     int tempVarSize = func.tempVarCount;
     int paramCount = func.params.size();
+    int varConut = func.varCount - paramCount;
 
     std::vector<int> usedSRegisters;
     for (int i = 1; i <= 11; ++i) {  // 检查s1到s11
@@ -82,7 +85,7 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     }
 
     // 计算栈帧大小：ra(4) + s0(4) + 已使用s寄存器*4 + 临时变量*4
-    int frameSize = 4 * (2 + usedSRegisters.size() + tempVarSize);
+    int frameSize = 4 * (2 + usedSRegisters.size() + varConut + tempVarSize);
     // 确保栈帧按16字节对齐
     if (frameSize % 16 != 0) {
         frameSize += 16 - (frameSize % 16);
@@ -479,7 +482,6 @@ void writeDebugInfo(const std::string& operandStr,
     if (errorFile.is_open()) {
         std::string error_reg = "===== 新的调试信息 =====\n";
         error_reg += "Variable try find in reg or stack: " + operandStr + "\n";
-        // 通过 getter 函数访问 varInfoMap，且无需括号
         for (const auto& [varName, info] : regAlloc.getVarInfoMap()) { 
             error_reg += " varName: " + varName + ", reg: " + info.reg + "\n";
         }
@@ -493,68 +495,61 @@ void writeDebugInfo(const std::string& operandStr,
     }
 }
 
-std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) {
-    if (!operand) {
-        throw std::runtime_error("Invalid null operand in getRegorLoad");
-    }
-
-    std::string operandStr = operand->toString();
-
-    // writeDebugInfo(operandStr, regAlloc, varStackMap);
-
-    if(regAlloc.hasFreeRegForType(operand)){
-        if (operand->isConstant()) {
-            AllocationResult regResult = regAlloc.allocateReg(operand->toString(), operand->type);
-            std::string reg = regResult.reg;
-            emit("  li " + reg + ", " + operand->toString());
-        return reg;
-        }
-        AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
-        std::string reg = regResult.reg;
-        return reg;
-    }
-
-    // 优先检查是否已在寄存器中
-    if (regAlloc.isInReg(operandStr)) {
-        return regAlloc.getReg(operandStr);
-    }
-
-    // 检查是否在栈中（存在栈偏移记录）
-    if (varStackMap.find(operandStr) != varStackMap.end()) {
-        // 从栈加载到临时寄存器
-        AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
-        std::string tempReg = regResult.reg;
-        spillReg(regResult); // 处理可能的溢出
-        
-        int offset = varStackMap[operandStr];
-        emit("  lw " + tempReg + ", " + std::to_string(offset) + "(s0)");
-        return tempReg;
-    }
-
-    AllocationResult regResult = regAlloc.allocateReg(operandStr, operand->type);
-    std::string tempReg = regResult.reg;
-    spillReg(regResult);
-    
-    // 为常量生成li指令
-    if (operand->isConstant()){
-        emit("  li " + tempReg + ", " + operand->toString());
-    }
-    return tempReg;
+// 辅助函数：判断是否为临时变量（假设以't'开头）
+bool isTempVar(const std::string& var) {
+    return !var.empty() && var[0] == 't';
 }
 
-void CodeGenerator::spillReg(AllocationResult result){
-    // 检查是否有需要溢出到栈的寄存器
-    if (result.isSpill) {
-        if(isNumber(result.spill.varName)) return;
-        //参数不用处理
-        if(varStackMap.find(result.spill.varName) != varStackMap.end()){
-            if(varStackMap[result.spill.varName]>=0) return;
-        }
+// 栈分配逻辑（spillReg）：相同名称的临时变量复用同一偏移
+void CodeGenerator::spillReg(AllocationResult result) {
+    if (!result.isSpill) return;
+    std::string var = result.spill.varName;
+    if (isNumber(var)) return;
+
+    // 普通变量：固定分配，不复用（沿用之前逻辑）
+    if (!isTempVar(var)) {
+        if (varStackMap.count(var)) return; // 已分配则跳过
         stackOffset -= 4;
-        int offset = stackOffset;
-        emit("  sw " + result.spill.reg + ", " + std::to_string(offset) + "(s0)");
-        varStackMap[result.spill.varName] = offset;
+        varStackMap[var] = stackOffset;
+        emit("  sw " + result.spill.reg + ", " + std::to_string(stackOffset) + "(s0)");
+        return;
     }
-    return;
+
+    // 临时变量：按名称复用（核心逻辑）
+    if (varStackMap.count(var)) {
+        // 同名临时变量已存在，直接复用其偏移
+        int offset = varStackMap[var];
+        emit("  sw " + result.spill.reg + ", " + std::to_string(offset) + "(s0)");
+    } else {
+        // 新临时变量，首次分配并记录偏移
+        stackOffset -= 4;
+        varStackMap[var] = stackOffset;
+        emit("  sw " + result.spill.reg + ", " + std::to_string(stackOffset) + "(s0)");
+    }
 }
 
+// 栈加载逻辑（getRegorLoad）：临时变量加载后保留映射，供下次复用
+std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) {
+    std::string var = operand->toString();
+    if (regAlloc.isInReg(var)) return regAlloc.getReg(var);
+
+    // 从栈加载变量
+    if (varStackMap.count(var)) {
+        AllocationResult reg = regAlloc.allocateReg(var, operand->type);
+        spillReg(reg);
+        int offset = varStackMap[var];
+        emit("  lw " + reg.reg + ", " + std::to_string(offset) + "(s0)");
+
+        // 关键：临时变量加载后不删除映射（保留偏移供下次复用）
+        // 普通变量也不删除（维持原有逻辑）
+        return reg.reg;
+    }
+
+    // 新变量分配（非栈中变量）
+    AllocationResult reg = regAlloc.allocateReg(var, operand->type);
+    spillReg(reg);
+    if (operand->isConstant()) {
+        emit("  li " + reg.reg + ", " + var);
+    }
+    return reg.reg;
+}
