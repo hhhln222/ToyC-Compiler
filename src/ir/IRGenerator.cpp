@@ -132,25 +132,6 @@ std::any IRGenerator::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
         
-        // 常量折叠优化：条件为常量
-        if (condOperand->type == OperandType::CONSTANT) {
-            int condVal = std::stoi(condOperand->value);
-            
-            // 条件恒真
-            if (condVal != 0) {
-                visit(ctx->stmt(0)); // 只生成then分支
-                return nullptr;
-            } 
-            // 条件恒假且有else分支
-            else if (ctx->stmt().size() > 1) {
-                visit(ctx->stmt(1)); // 只生成else分支
-                return nullptr;
-            } else {
-                // 没有else分支且条件恒假，跳过整个if
-                return nullptr;
-            }
-        }
-
         if (ctx->stmt().size() > 1) {
             // 有else部分的if语句
             std::string thenLabel = generateLabel();
@@ -249,12 +230,6 @@ std::any IRGenerator::visitWhileStmt(ToyCParser::WhileStmtContext *ctx) {
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
         
-        // 常量折叠优化：条件恒假
-        if (condOperand->type == OperandType::CONSTANT && 
-            condOperand->value == "0") {
-            // 完全跳过循环体的访问
-            return nullptr;
-        }
         
         // 如果条件为真，跳转到循环体
         addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, bodyLabel));

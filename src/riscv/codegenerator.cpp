@@ -133,9 +133,26 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
 void CodeGenerator::generateAssignment(const IRInstruction& inst) {
     std::string srcReg = getRegorLoad(inst.arg1);
     std::string destReg = getRegorLoad(inst.result);
+    std::string srcVar = inst.arg1->toString();
+    std::string destVar = inst.result->toString();
     if (srcReg != destReg) {
         emit("  mv " + destReg + ", " + srcReg);
     }
+
+    // 处理结果为栈中普通变量的情况：写回栈中
+    if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(srcVar)) {
+        regAlloc.freeReg(srcVar);
+    }
+
+    // 处理结果为栈中普通变量的情况：写回栈中
+    if (inst.result->type == OperandType::VARIABLE && varStackMap.count(destVar)) {
+        int offset = varStackMap[destVar];
+        // 写回栈中
+        emit("  sw " + destReg + ", " + std::to_string(offset) + "(s0)");
+        // 释放临时寄存器
+        regAlloc.freeReg(destVar);
+    }
+
     if(inst.arg1 && inst.arg1->isConstant()) {
         regAlloc.freeReg(inst.arg1->toString());
     }
@@ -156,8 +173,32 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
     std::string rs1 = getRegorLoad(inst.arg1);
     std::string rs2 = getRegorLoad(inst.arg2);
     std::string rd = getRegorLoad(inst.result);
+    std::string rs1Var = inst.arg1->toString();
+    std::string rs2Var = inst.arg2->toString();
+    std::string rdVar = inst.result->toString();
 
     emit("  " + op + " " + rd + ", " + rs1 + ", " + rs2);
+    
+    // 处理结果为栈中普通变量的情况：写回栈中
+    if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(rs1Var)) {
+        // 释放临时寄存器
+        regAlloc.freeReg(rs1Var);
+    }
+
+    if (inst.arg2->type == OperandType::VARIABLE && varStackMap.count(rs2Var)) {
+        // 释放临时寄存器
+        regAlloc.freeReg(rs1Var);
+    }
+
+    // 处理结果为栈中普通变量的情况：写回栈中
+    if (inst.result->type == OperandType::VARIABLE && varStackMap.count(rdVar)) {
+        int offset = varStackMap[rs1Var];
+        // 写回栈中
+        emit("  sw " + rd + ", " + std::to_string(offset) + "(s0)");
+        // 释放临时寄存器
+        regAlloc.freeReg(rs1Var);
+    }
+
     // 释放常量寄存器
     if(inst.arg1 && inst.arg1->isConstant()) {
         regAlloc.freeReg(inst.arg1->toString());
@@ -183,7 +224,12 @@ void CodeGenerator::generateControlFlow(const IRInstruction& inst) {
             std::string condReg = getRegorLoad(inst.arg1);;
             std::string validLabel = generateValidLabel(inst.label);
             emit("  bnez " + condReg + ", " + validLabel);
-            // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
+            std::string rs1Var = inst.arg1->toString();
+        
+            if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(rs1Var)) {
+                regAlloc.freeReg(rs1Var);
+            }
+            if(inst.arg1->isConstant()) regAlloc.freeReg(inst.arg1->toString());
             break;
         }
         default: break;
@@ -226,7 +272,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     std::vector<std::string> savedRegisters;
     for (const auto& reg : callerSaved) {
         // 若当前寄存器被使用，则需要保存
-        if (regAlloc.isRegInUse(reg) && reg != destReg) {
+        if (regAlloc.isRegInUse(reg)&&reg!=destReg) {
             savedRegisters.push_back(reg);
         }
     }
@@ -272,7 +318,14 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
             regAlloc.freeReg(arg);
         } else {
             std::string srcReg = getRegorLoad(operand);
+
             emit("  mv " + destReg + ", " + srcReg);
+
+            if (operand->type == OperandType::VARIABLE && varStackMap.count(arg)) {
+                // 释放临时寄存器
+                regAlloc.freeReg(arg);
+            }
+            
         }
     }
 
@@ -292,6 +345,11 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
 
         argReg = getRegorLoad(operand);
         emit("  sw " + argReg + ", " + std::to_string(stackParamOffset) + "(sp)");
+        
+        if (operand->type == OperandType::VARIABLE && varStackMap.count(arg)) {
+            // 释放临时寄存器
+            regAlloc.freeReg(arg);
+        }
         
         // 释放常量寄存器
         if (isNumber(arg)) {
@@ -344,7 +402,12 @@ void CodeGenerator::generateReturn(const IRInstruction& inst) {
             emit("  li a0, " + inst.arg1->toString());
         } else {
             std::string retReg = getRegorLoad(inst.arg1);
+            std::string retVar = inst.arg1->toString();
             emit("  mv a0, " + retReg);
+            if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(retVar)) {
+                // 释放临时寄存器
+                regAlloc.freeReg(retReg);
+            }
         }
     }
     emit("  j " + currentFuncExitLabel);
@@ -356,18 +419,38 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
     if (inst.opcode == IROpcode::NOT) {
         std::string rs1 = getRegorLoad(inst.arg1);
         std::string rd = getRegorLoad(inst.result);
-        
+        std::string srcVar = inst.arg1->toString();
+        std::string destVar = inst.result->toString();
+    
         // 逻辑非：将非0值变为0，0变为1
         emit("  mv " + rd + ", " + rs1);
         emit("  xori " + rd + ", " + rd + ", 1");  // 异或1实现取反
         emit("  andi " + rd + ", " + rd + ", 1");  // 确保结果只有0或1
-        // if(inst.arg1->isConstant()) regAlloc.freeReg("const_"+inst.arg1->toString());
+        
+        // 处理结果为栈中普通变量的情况：写回栈中
+        if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(srcVar)) {
+            // 释放临时寄存器
+            regAlloc.freeReg(srcVar);
+        }
+
+        // 处理结果为栈中普通变量的情况：写回栈中
+        if (inst.result->type == OperandType::VARIABLE && varStackMap.count(destVar)) {
+            int offset = varStackMap[srcVar];
+            // 写回栈中
+            emit("  sw " + rd + ", " + std::to_string(offset) + "(s0)");
+            // 释放临时寄存器
+            regAlloc.freeReg(srcVar);
+        }
+        if(inst.arg1->isConstant()) regAlloc.freeReg(inst.arg1->toString());
         return;
     }
 
     std::string rs1 = getRegorLoad(inst.arg1);
     std::string rs2 = getRegorLoad(inst.arg2);
     std::string rd = getRegorLoad(inst.result);
+    std::string rs1Var = inst.arg1->toString();
+    std::string rs2Var = inst.arg2->toString();
+    std::string rdVar = inst.result->toString();
     
     switch (inst.opcode) {
         case IROpcode::LT: 
@@ -405,6 +488,24 @@ void CodeGenerator::generateComparison(const IRInstruction& inst) {
         default:
             throw std::runtime_error("Unsupported comparison operator");
     }
+
+    if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(rs1Var)) {
+        regAlloc.freeReg(rs1Var);
+    }
+
+    if (inst.arg2->type == OperandType::VARIABLE && varStackMap.count(rs2Var)) {
+        regAlloc.freeReg(rs2Var);
+    }
+
+    // 处理结果为栈中普通变量的情况：写回栈中
+    if (inst.result->type == OperandType::VARIABLE && varStackMap.count(rdVar)) {
+        int offset = varStackMap[rdVar];
+        // 写回栈中
+        emit("  sw " + rd + ", " + std::to_string(offset) + "(s0)");
+        // 释放临时寄存器
+        regAlloc.freeReg(rdVar);
+    }
+
     // 释放常量寄存器
     if(inst.arg1 && inst.arg1->isConstant()) {
         regAlloc.freeReg(inst.arg1->toString());
@@ -528,20 +629,16 @@ void CodeGenerator::spillReg(AllocationResult result) {
     }
 }
 
-// 栈加载逻辑（getRegorLoad）：临时变量加载后保留映射，供下次复用
 std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) {
     std::string var = operand->toString();
     if (regAlloc.isInReg(var)) return regAlloc.getReg(var);
 
     // 从栈加载变量
     if (varStackMap.count(var)) {
-        AllocationResult reg = regAlloc.allocateReg(var, operand->type);
+        AllocationResult reg = regAlloc.allocateReg(var, OperandType::TEMP);
         spillReg(reg);
         int offset = varStackMap[var];
         emit("  lw " + reg.reg + ", " + std::to_string(offset) + "(s0)");
-
-        // 关键：临时变量加载后不删除映射（保留偏移供下次复用）
-        // 普通变量也不删除（维持原有逻辑）
         return reg.reg;
     }
 
