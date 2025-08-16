@@ -3,7 +3,17 @@
 #include <sstream>
 #include <cctype>
 
-CodeGenerator::CodeGenerator() : stackOffset(0) {}
+CodeGenerator::CodeGenerator() : stackOffset(0) {
+    // 尝试打开日志文件，以追加模式打开，不存在则创建
+    logFile.open("RegAndStackLog.txt", std::ios::out | std::ios::trunc);
+}
+
+// 析构函数：关闭日志文件
+CodeGenerator::~CodeGenerator() {
+    if (logFile.is_open()) {
+        logFile.close();
+    }
+}
 
 void CodeGenerator::generate(const std::vector<FunctionInfo>& irFunctions) {
     emit(".global main");
@@ -23,9 +33,10 @@ void CodeGenerator::emit(const std::string& instruction) {
 }
 
 void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize, const std::vector<int>& usedSRegisters) {
-    std::string exitLabel = "." + funcName + "_func_end";
+    std::string exitLabel = funcName + "_func_end";
     currentFuncExitLabel = exitLabel;
     emit(funcName + ":");
+    logFile<<funcName + ":"<<std::endl;
     emit("  addi sp, sp, -" + std::to_string(frameSize));
     
     // 保存返回地址ra
@@ -263,6 +274,8 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         "a0","a1", "a2", "a3", "a4", "a5", "a6", "a7"
     };
 
+    logFile<< inst.arg1->toString() + "函数调用准备："<<std::endl;
+
     std::string destReg;
     if (inst.result) {
         // 提前获取目标寄存器，确保在保存寄存器前确定它
@@ -280,9 +293,9 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     int paramCount = paramStrings.size(); 
     int regParamCount = std::min(paramCount, 8); // 前8个参数用a0-a7
     int stackParamCount = std::max(0, paramCount - 8); // 超过8个的参数用栈传递
-    // int stackParamSize = stackParamCount * 4;
+    int stackParamSize = stackParamCount * 4;
     int saveRegSize = savedRegisters.size() * 4;
-    int totalStackNeed = saveRegSize;
+    int totalStackNeed = saveRegSize + stackParamSize;
     int alignPadding = (16 - (totalStackNeed % 16)) % 16;
     int totalStackSize = totalStackNeed + alignPadding;
 
@@ -379,6 +392,8 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     if (totalStackSize > 0) {
         emit("  addi sp, sp, " + std::to_string(totalStackSize));
     }
+
+     logFile<< inst.arg1->toString() + "函数调用结束："<<std::endl;
 
 }
 
@@ -575,27 +590,6 @@ bool CodeGenerator::isValidLabel(const std::string& label) {
     return true;
 }
 
-// 调试信息输出到文件（追加模式，支持多次写入）
-void writeDebugInfo(const std::string& operandStr, 
-                   const RegisterAllocator& regAlloc, 
-                   const std::map<std::string, int>& varStackMap) {
-    std::ofstream errorFile("debug_reg_stack.txt", std::ios::app);
-    if (errorFile.is_open()) {
-        std::string error_reg = "===== 新的调试信息 =====\n";
-        error_reg += "Variable try find in reg or stack: " + operandStr + "\n";
-        for (const auto& [varName, info] : regAlloc.getVarInfoMap()) { 
-            error_reg += " varName: " + varName + ", reg: " + info.reg + "\n";
-        }
-        error_reg += "Stack contents:\n";
-        for (const auto& [var, offset] : varStackMap) {
-            error_reg += " " + var + ": offset " + std::to_string(offset) + "\n";
-        }
-        error_reg += "========================\n\n";
-        errorFile << error_reg;
-        errorFile.close();
-    }
-}
-
 // 辅助函数：判断是否为临时变量（假设以't'开头）
 bool isTempVar(const std::string& var) {
     return !var.empty() && var[0] == 't';
@@ -609,9 +603,13 @@ void CodeGenerator::spillReg(AllocationResult result) {
 
     // 普通变量：固定分配，不复用（沿用之前逻辑）
     if (!isTempVar(var)) {
-        if (varStackMap.count(var)) return; // 已分配则跳过
+        if (varStackMap.count(var)) {
+            logRegisterSpill(var, result.spill.reg, varStackMap[var]);
+            return; // 已分配则跳过
+        }
         stackOffset -= 4;
         varStackMap[var] = stackOffset;
+        logRegisterSpill(var, result.spill.reg, stackOffset);
         emit("  sw " + result.spill.reg + ", " + std::to_string(stackOffset) + "(s0)");
         return;
     }
@@ -620,24 +618,32 @@ void CodeGenerator::spillReg(AllocationResult result) {
     if (varStackMap.count(var)) {
         // 同名临时变量已存在，直接复用其偏移
         int offset = varStackMap[var];
+        logRegisterSpill(var, result.spill.reg, offset);
         emit("  sw " + result.spill.reg + ", " + std::to_string(offset) + "(s0)");
     } else {
         // 新临时变量，首次分配并记录偏移
         stackOffset -= 4;
         varStackMap[var] = stackOffset;
+        logRegisterSpill(var, result.spill.reg, stackOffset);
         emit("  sw " + result.spill.reg + ", " + std::to_string(stackOffset) + "(s0)");
     }
 }
 
 std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) {
     std::string var = operand->toString();
-    if (regAlloc.isInReg(var)) return regAlloc.getReg(var);
+    if (regAlloc.isInReg(var)){
+        std::string reg = regAlloc.getReg(var);
+        logFile << "变量 '" << var << "' 已在寄存器: " << reg << std::endl;
+        return reg;
+    } 
 
     // 从栈加载变量
     if (varStackMap.count(var)) {
         AllocationResult reg = regAlloc.allocateReg(var, OperandType::TEMP);
         spillReg(reg);
         int offset = varStackMap[var];
+        logFile << "变量 '" << var << "' 从栈偏移 " << offset 
+                << " 加载到寄存器: " << reg.reg << std::endl;
         emit("  lw " + reg.reg + ", " + std::to_string(offset) + "(s0)");
         return reg.reg;
     }
@@ -648,5 +654,27 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
     if (operand->isConstant()) {
         emit("  li " + reg.reg + ", " + var);
     }
+    logFile << "变量 '" << var << "' 被分配给寄存器: " << reg.reg << std::endl;
     return reg.reg;
+}
+
+// 寄存器溢出日志函数实现
+void CodeGenerator::logRegisterSpill(const std::string& var, 
+                                    const std::string& reg, 
+                                    int stackOffset) {
+    if (!logFile.is_open()) {
+        return;
+    }
+    if(!isTempVar(var)){
+        if(varStackMap.count(var)){
+            logFile << "普通变量 '" << var <<  " 在栈中，栈偏移: " << stackOffset << std::endl;
+        }
+        logFile << "普通变量 '" << var << "' 从寄存器 " << reg  << " 溢出到栈偏移: " << stackOffset << std::endl;
+    }
+
+    if(varStackMap.count(var)){
+        logFile << "临时变量 '" << var <<  " 在栈中，栈偏移: " << stackOffset << std::endl;
+    }
+    logFile << "临时变量 '" << var << "' 从寄存器 " << reg  << " 溢出到栈偏移: " << stackOffset << std::endl;
+    
 }

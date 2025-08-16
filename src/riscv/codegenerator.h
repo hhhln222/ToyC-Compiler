@@ -5,15 +5,19 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <fstream>
+#include <string>
 
 class CodeGenerator {
 public:
     CodeGenerator();
+    ~CodeGenerator();
     void generate(const std::vector<FunctionInfo>& irFunctions);
     std::string getAssemblyCode() const;
 
 private:
     std::string asmCode;
+    std::ofstream logFile;
     std::string currentFuncExitLabel;
     RegisterAllocator regAlloc;
     int stackOffset;
@@ -46,6 +50,8 @@ private:
     const std::vector<std::string>& getParamStrings() const { return paramStrings; }
     std::string getRegorLoad(const std::shared_ptr<Operand> operand);
     void spillReg(AllocationResult result);
+    void logRegisterAllocation(const std::shared_ptr<Operand> operand, const std::string& reg, bool isFromStack = false, int stackOffset = 0);
+    void logRegisterSpill(const std::string& var, const std::string& reg, int stackOffset);
 
     // 标签管理
     std::string generateValidLabel(const std::string& irLabel);
