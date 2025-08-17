@@ -42,6 +42,8 @@ public:
     void reset();
     bool isRegInUse(const std::string& reg) const;
     bool hasFreeRegForType(const std::shared_ptr<Operand> operand) const;
+    void bindVarToReg(const std::string& var, const std::string& reg);
+    void freeRegByRegName(const std::string& reg);
 
 private:
     std::vector<std::string> freeTempRegs;    // t0-t6

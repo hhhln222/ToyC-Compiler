@@ -199,3 +199,60 @@ bool RegisterAllocator::hasFreeRegForType(const std::shared_ptr<Operand> operand
             throw std::invalid_argument("Unknown OperandType when checking free registers");
     }
 }
+
+void RegisterAllocator::bindVarToReg(const std::string& var, const std::string& reg) {
+    // 1. 忽略a开头的寄存器（不处理其绑定）
+    if (reg.size() > 0 && reg[0] == 'a') {
+        return; // 直接返回，不进行绑定操作
+    }
+
+    // 2. 校验寄存器格式合法性（字母+数字组合）
+    if (reg.size() < 2 || !std::isalpha(reg[0]) || !std::isdigit(reg.substr(1)[0])) {
+        throw std::runtime_error("bindVarToReg: 寄存器 " + reg + " 格式无效（应为字母+数字，如s1、t0）");
+    }
+
+    // 3. 解析寄存器类型和编号
+    char regType = reg[0];
+    int regNum;
+    try {
+        regNum = std::stoi(reg.substr(1));
+    } catch (...) {
+        throw std::runtime_error("bindVarToReg: 寄存器 " + reg + " 数字部分无效");
+    }
+
+    // 4. 根据变量名判断预期的寄存器类型
+    char expectedType;
+    if (std::isdigit(var[0]) || (var.size() > 0 && var[0] == 't')) {
+        // 变量名以数字或t开头 → 预期绑定临时寄存器（t系列）
+        expectedType = 't';
+    } else {
+        // 其他变量 → 预期绑定变量寄存器（s系列）
+        expectedType = 's';
+    }
+
+    // 5. 校验寄存器类型与预期匹配
+    if (regType != expectedType) {
+        throw std::runtime_error("bindVarToReg: 变量 " + var + " 预期绑定" + expectedType + 
+                               "类型寄存器，实际为" + regType);
+    }
+
+    // 6. 校验寄存器范围合法性
+    bool isValid = false;
+    switch (regType) {
+        case 't':  // 临时寄存器 t0-t6
+            isValid = (regNum >= 0 && regNum <= 6);
+            break;
+        case 's':  // 变量寄存器 s0-s11
+            isValid = (regNum >= 0 && regNum <= 11);
+            break;
+        default:
+            isValid = false; // 理论上不会走到这里，因为已过滤a开头寄存器
+    }
+    if (!isValid) {
+        throw std::runtime_error("bindVarToReg: 寄存器 " + reg + " 不在有效范围内");
+    }
+
+    // 建立绑定关系（覆盖原有绑定）
+    varInfoMap[var] = {reg, 
+                      (expectedType == 't' ? OperandType::TEMP : OperandType::VARIABLE)};
+}

@@ -162,6 +162,8 @@ struct FunctionInfo {
     int tempVarCount;       // 临时变量实际数量
     int startTempCounter;   // 函数开始时的临时变量计数器值
     int endTempCounter;     // 函数结束时的临时变量计数器值
+    std::unordered_set<std::string> paramIds;       // 参数变量ID集合
+    std::unordered_set<std::string> normalVarIds;   // 非参数普通变量ID集合
     
     FunctionInfo(const std::string& n, const std::string& rt) 
         : name(n), returnType(rt), varCount(0), startTempCounter(0), endTempCounter(0) {}

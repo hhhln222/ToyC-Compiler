@@ -131,7 +131,7 @@ std::any IRGenerator::visitIfStmt(ToyCParser::IfStmtContext *ctx) {
     auto condResult = visit(ctx->expr());
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
-        
+
         if (ctx->stmt().size() > 1) {
             // 有else部分的if语句
             std::string thenLabel = generateLabel();
@@ -229,7 +229,6 @@ std::any IRGenerator::visitWhileStmt(ToyCParser::WhileStmtContext *ctx) {
     auto condResult = visit(ctx->expr());
     if (condResult.has_value()) {
         auto condOperand = std::any_cast<std::shared_ptr<Operand>>(condResult);
-        
         
         // 如果条件为真，跳转到循环体
         addInstruction(IRInstruction(IROpcode::IF_GOTO, nullptr, condOperand, nullptr, bodyLabel));

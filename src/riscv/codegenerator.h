@@ -26,10 +26,11 @@ private:
     std::map<std::string, std::string> labelMap; // IR标签到汇编标签的映射
     int paramCounter = 0;  // 用于记录参数顺序的计数器
     std::vector<std::string> paramStrings;
+    std::unordered_map<std::string, bool> varInitialized; // 记录变量是否已初始化
 
     // 生成函数框架
-    void emitPrologue(const std::string& funcName, int frameSize, const std::vector<int>& usedSRegisters);
-    void emitEpilogue(int frameSize, const std::vector<int>& usedSRegisters);
+    void emitPrologue(const std::string& funcName, int frameSize);
+    void emitEpilogue(int frameSize);
 
     // 指令生成
     void emit(const std::string& instruction);

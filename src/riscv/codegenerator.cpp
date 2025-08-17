@@ -32,7 +32,7 @@ void CodeGenerator::emit(const std::string& instruction) {
     asmCode += instruction + "\n";
 }
 
-void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize, const std::vector<int>& usedSRegisters) {
+void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize) {
     std::string exitLabel = funcName + "_func_end";
     currentFuncExitLabel = exitLabel;
     emit(funcName + ":");
@@ -45,25 +45,10 @@ void CodeGenerator::emitPrologue(const std::string& funcName, int frameSize, con
     // 保存s0寄存器
     emit("  sw s0, " + std::to_string(frameSize - 8) + "(sp)");
     
-    // 保存使用的s1-s11寄存器，从s0下方开始存放
-    int offset = frameSize - 12;  // 预留ra(4字节)和s0(4字节)的空间
-    for (int reg : usedSRegisters) {
-        emit("  sw s" + std::to_string(reg) + ", " + std::to_string(offset) + "(sp)");
-        offset -= 4;  // 每个寄存器占4字节
-    }
-    
     emit("  addi s0, sp, " + std::to_string(frameSize));
 }
 
-void CodeGenerator::emitEpilogue(int frameSize, const std::vector<int>& usedSRegisters) {
-    emit(currentFuncExitLabel + ":");
-    
-    // 恢复使用的s1-s11寄存器，顺序与保存时一致
-    int offset = frameSize - 12;
-    for (int reg : usedSRegisters) {
-        emit("  lw s" + std::to_string(reg) + ", " + std::to_string(offset) + "(sp)");
-        offset -= 4;
-    }
+void CodeGenerator::emitEpilogue(int frameSize) {
     
     // 恢复s0寄存器
     emit("  lw s0, " + std::to_string(frameSize - 8) + "(sp)");
@@ -86,25 +71,75 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
     
     int tempVarSize = func.tempVarCount;
     int paramCount = func.params.size();
-    int varConut = func.varCount - paramCount;
+    int varCount = func.varCount - paramCount; // 有效变量数量（排除参数）
 
+    // 判断当前函数是否为main
+    bool isMainFunction = (func.name == "main");
+    
     std::vector<int> usedSRegisters;
-    for (int i = 1; i <= 11; ++i) {  // 检查s1到s11
-        if (regAlloc.isRegInUse("s"+std::to_string(i))) {
+    std::map<std::string, std::string> sRegToVar; // 记录s寄存器到变量的映射
+
+    // 非main函数才处理s寄存器保存（根据变量数量决定保存哪些）
+    if (!isMainFunction) {
+        // 计算需要保存的s寄存器数量：最多11个（s1-s11），最少为变量数量
+        int sRegNeedCount = std::min(varCount, 11);
+        // 若变量数量超过11，则保存全部s1-s11
+        if (varCount > 11) {
+            sRegNeedCount = 11;
+        }
+
+        // 生成需要保存的s寄存器列表（s1到sN，N为需要的数量）
+        for (int i = 1; i <= sRegNeedCount; ++i) {
             usedSRegisters.push_back(i);
+        }
+
+        // 记录这些s寄存器与变量的绑定关系
+        for (int i : usedSRegisters) {
+            std::string reg = "s" + std::to_string(i);
+            // 查找该寄存器绑定的变量
+            for (const auto& [var, info] : regAlloc.getVarInfoMap()) {
+                if (info.reg == reg) {
+                    sRegToVar[reg] = var;
+                    regAlloc.freeReg(var); // 临时解除绑定
+                    break;
+                }
+            }
         }
     }
 
-    // 计算栈帧大小：ra(4) + s0(4) + 已使用s寄存器*4 + 临时变量*4
-    int frameSize = 4 * (2 + usedSRegisters.size() + varConut + tempVarSize);
+    // 计算栈帧大小：ra(4) + s0(4) + 需保存的s寄存器*4 + 普通变量*4 + 临时变量*4
+    int frameSize = 4 * (2 + 
+                         (!isMainFunction ? usedSRegisters.size() : 0) + 
+                         varCount +  // 新增：普通变量空间
+                         tempVarSize);
     // 确保栈帧按16字节对齐
     if (frameSize % 16 != 0) {
         frameSize += 16 - (frameSize % 16);
     }
     
-    emitPrologue(func.name, frameSize, usedSRegisters);
+    emitPrologue(func.name, frameSize);
 
-    stackOffset = - 4 * (2 + usedSRegisters.size());
+    // 非main函数保存s寄存器到栈
+    if (!isMainFunction) {
+        int offset = frameSize - 12; 
+        for (int reg : usedSRegisters) {
+            emit("  sw s" + std::to_string(reg) + ", " + std::to_string(offset) + "(sp)");
+            offset -= 4;
+        }
+    }
+
+    // 计算普通变量的栈偏移基准（从栈帧底部向上分配）
+    // 偏移计算：跳过ra(4)、s0(4)、保存的s寄存器(usedSRegisters.size()*4)
+    int varBaseOffset = -4 * (2 + usedSRegisters.size()) - 4;
+    
+    // (假设func.normalVarIds)
+    for (const std::string& var : func.normalVarIds) {
+        varStackMap[var] = varBaseOffset;  // 记录变量到偏移的映射
+        varBaseOffset -= 4;  // 每个变量占4字节（32位）
+    }
+    
+    // 更新栈偏移指针（跳过普通变量区域）
+    stackOffset = varBaseOffset;
 
     // 处理函数参数
     for (int i = 0; i < func.params.size(); ++i) {
@@ -137,35 +172,66 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
             default: break;
         }
     }
+
+    emit(currentFuncExitLabel + ":");
+
+    // 非main函数恢复s寄存器并重建绑定
+    if (!isMainFunction) {
+        int offset = frameSize - 12;
+        for (int reg : usedSRegisters) {
+            std::string regStr = "s" + std::to_string(reg);
+            emit("  lw " + regStr + ", " + std::to_string(offset) + "(sp)");
+            offset -= 4;
+
+            // 恢复后重建变量与寄存器的绑定
+            if (sRegToVar.count(regStr)) {
+                std::string var = sRegToVar.at(regStr);
+                regAlloc.bindVarToReg(var, regStr);
+            }
+        }
+    }
     
-    emitEpilogue(frameSize, usedSRegisters);
+    emitEpilogue(frameSize);
 }
 
 void CodeGenerator::generateAssignment(const IRInstruction& inst) {
     std::string srcReg = getRegorLoad(inst.arg1);
     std::string destReg = getRegorLoad(inst.result);
-    std::string srcVar = inst.arg1->toString();
+    std::string srcVar = inst.arg1 ? inst.arg1->toString() : "";
     std::string destVar = inst.result->toString();
+    OperandType destType = inst.result->type;
+
+    // 执行寄存器间赋值
     if (srcReg != destReg) {
         emit("  mv " + destReg + ", " + srcReg);
     }
 
-    // 处理结果为栈中普通变量的情况：写回栈中
-    if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(srcVar)) {
-        regAlloc.freeReg(srcVar);
-    }
-
-    // 处理结果为栈中普通变量的情况：写回栈中
-    if (inst.result->type == OperandType::VARIABLE && varStackMap.count(destVar)) {
+    // 处理普通变量的栈写回（区分首次赋值和后续赋值）
+    if (destType == OperandType::VARIABLE && varStackMap.count(destVar)) {
         int offset = varStackMap[destVar];
-        // 写回栈中
+        // 写回栈空间（无论首次还是后续赋值，都保持内存同步）
         emit("  sw " + destReg + ", " + std::to_string(offset) + "(s0)");
-        // 释放临时寄存器
+
+        // 判断是否为首次赋值（初始化）
+        if (!varInitialized[destVar]) {
+            logFile << "变量 '" << destVar << "' 首次赋值，初始化栈偏移: " << offset << std::endl;
+            varInitialized[destVar] = true; // 标记为已初始化
+        } else {
+            logFile << "变量 '" << destVar << "' 后续赋值，更新栈偏移: " << offset << std::endl;
+        }
+
+        // 释放目标变量的寄存器（根据需要调整，若频繁使用可保留）
         regAlloc.freeReg(destVar);
     }
 
-    if(inst.arg1 && inst.arg1->isConstant()) {
-        regAlloc.freeReg(inst.arg1->toString());
+    // 处理源操作数的寄存器释放
+    if (inst.arg1) {
+        // 释放源变量寄存器（常量或已写回栈的变量）
+        if (inst.arg1->isConstant()) {
+            regAlloc.freeReg(srcVar);
+        } else if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(srcVar)) {
+            regAlloc.freeReg(srcVar);
+        }
     }
 }
 
@@ -198,16 +264,16 @@ void CodeGenerator::generateArithmetic(const IRInstruction& inst) {
 
     if (inst.arg2->type == OperandType::VARIABLE && varStackMap.count(rs2Var)) {
         // 释放临时寄存器
-        regAlloc.freeReg(rs1Var);
+        regAlloc.freeReg(rs2Var);
     }
 
     // 处理结果为栈中普通变量的情况：写回栈中
     if (inst.result->type == OperandType::VARIABLE && varStackMap.count(rdVar)) {
-        int offset = varStackMap[rs1Var];
+        int offset = varStackMap[rdVar];
         // 写回栈中
         emit("  sw " + rd + ", " + std::to_string(offset) + "(s0)");
         // 释放临时寄存器
-        regAlloc.freeReg(rs1Var);
+        regAlloc.freeReg(rdVar);
     }
 
     // 释放常量寄存器
@@ -274,25 +340,23 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         "a0","a1", "a2", "a3", "a4", "a5", "a6", "a7"
     };
 
-    logFile<< inst.arg1->toString() + "函数调用准备："<<std::endl;
+    logFile << inst.arg1->toString() + "函数调用准备：" << std::endl;
 
     std::string destReg;
     if (inst.result) {
-        // 提前获取目标寄存器，确保在保存寄存器前确定它
         destReg = getRegorLoad(inst.result);
     }
 
     std::vector<std::string> savedRegisters;
     for (const auto& reg : callerSaved) {
-        // 若当前寄存器被使用，则需要保存
-        if (regAlloc.isRegInUse(reg)&&reg!=destReg) {
+        if (regAlloc.isRegInUse(reg) && reg != destReg) {
             savedRegisters.push_back(reg);
         }
     }
 
     int paramCount = paramStrings.size(); 
-    int regParamCount = std::min(paramCount, 8); // 前8个参数用a0-a7
-    int stackParamCount = std::max(0, paramCount - 8); // 超过8个的参数用栈传递
+    int regParamCount = std::min(paramCount, 8);
+    int stackParamCount = std::max(0, paramCount - 8);
     int stackParamSize = stackParamCount * 4;
     int saveRegSize = savedRegisters.size() * 4;
     int totalStackNeed = saveRegSize + stackParamSize;
@@ -303,20 +367,21 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         emit("  addi sp, sp, -" + std::to_string(totalStackSize));
     }
 
-    // 保存调用者寄存器到栈
+    // 保存调用者寄存器到栈，并记录寄存器到变量的映射
     int offset = alignPadding;
+    std::map<std::string, std::string> regToVar;
     for (const auto& reg : savedRegisters) {
+        // 保存寄存器值到栈
         offset += 4;
-        // 栈是向下增长的，保存地址 = sp + (totalStackSize - offset)
         emit("  sw " + reg + ", " + std::to_string(totalStackSize - offset) + "(sp)");
     }
 
-    // 寄存器参数（a0-a7）
+    // 处理寄存器参数（a0-a7）
     for (int i = 0; i < regParamCount; ++i) {
         const auto& arg = paramStrings[i];
-        std::string destReg = "a" + std::to_string(i); // 目标参数寄存器a0-a7
+        std::string destReg = "a" + std::to_string(i);
         std::shared_ptr<Operand> operand;
-        std::string actualArg = arg; // 存储处理后的参数名
+        
         if (isNumber(arg)) {
             operand = std::make_shared<Operand>(OperandType::CONSTANT, arg, -1);
         } else if (arg[0] == 't') {
@@ -327,27 +392,23 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         
         if (isNumber(arg)) {
             emit("  li " + destReg + ", " + arg);
-            // 立即释放常量寄存器
             regAlloc.freeReg(arg);
         } else {
             std::string srcReg = getRegorLoad(operand);
-
             emit("  mv " + destReg + ", " + srcReg);
-
+            
             if (operand->type == OperandType::VARIABLE && varStackMap.count(arg)) {
-                // 释放临时寄存器
                 regAlloc.freeReg(arg);
             }
-            
         }
     }
 
-     // 栈参数
+    // 处理栈参数
     for (int i = 0; i < stackParamCount; ++i) {
         int stackParamOffset = (stackParamCount - 1 - i) * 4;
         const auto& arg = paramStrings[8 + i];
-        std::string argReg;
         std::shared_ptr<Operand> operand;
+        
         if (isNumber(arg)) {
             operand = std::make_shared<Operand>(OperandType::CONSTANT, arg, -1);
         } else if (arg[0] == 't') {
@@ -356,15 +417,12 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
             operand = std::make_shared<Operand>(OperandType::VARIABLE, arg, -1);
         }
 
-        argReg = getRegorLoad(operand);
+        std::string argReg = getRegorLoad(operand);
         emit("  sw " + argReg + ", " + std::to_string(stackParamOffset) + "(sp)");
         
         if (operand->type == OperandType::VARIABLE && varStackMap.count(arg)) {
-            // 释放临时寄存器
             regAlloc.freeReg(arg);
         }
-        
-        // 释放常量寄存器
         if (isNumber(arg)) {
             regAlloc.freeReg(arg);
         }
@@ -378,13 +436,9 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         emit("  mv " + destReg + ", a0");
     }
 
-    // if (stackParamCount > 0) {
-    //     emit("  addi sp, sp, " + std::to_string(stackParamSize));
-    // }
-
-    int index = savedRegisters.size() - 1;  // 从最后保存的寄存器开始恢复
+    // 恢复寄存器并重建绑定
+    int index = savedRegisters.size() - 1;
     for (auto it = savedRegisters.rbegin(); it != savedRegisters.rend(); ++it, --index) {
-        // 计算该寄存器保存时的偏移量（与保存阶段完全一致）
         int restoreOffset = alignPadding + 4 * (index + 1);
         emit("  lw " + *it + ", " + std::to_string(totalStackSize - restoreOffset) + "(sp)");
     }
@@ -393,8 +447,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
         emit("  addi sp, sp, " + std::to_string(totalStackSize));
     }
 
-     logFile<< inst.arg1->toString() + "函数调用结束："<<std::endl;
-
+    logFile << inst.arg1->toString() + "函数调用结束：" << std::endl;
 }
 
 // 重置参数计数器（在函数调用前调用）
@@ -630,32 +683,70 @@ void CodeGenerator::spillReg(AllocationResult result) {
 }
 
 std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) {
+    if (!operand) {
+        throw std::runtime_error("getRegorLoad: 空操作数");
+    }
+
     std::string var = operand->toString();
-    if (regAlloc.isInReg(var)){
+    OperandType opType = operand->type;
+
+    // 1. 已在寄存器中，直接返回
+    if (regAlloc.isInReg(var)) {
         std::string reg = regAlloc.getReg(var);
         logFile << "变量 '" << var << "' 已在寄存器: " << reg << std::endl;
         return reg;
-    } 
-
-    // 从栈加载变量
-    if (varStackMap.count(var)) {
-        AllocationResult reg = regAlloc.allocateReg(var, OperandType::TEMP);
-        spillReg(reg);
-        int offset = varStackMap[var];
-        logFile << "变量 '" << var << "' 从栈偏移 " << offset 
-                << " 加载到寄存器: " << reg.reg << std::endl;
-        emit("  lw " + reg.reg + ", " + std::to_string(offset) + "(s0)");
-        return reg.reg;
     }
 
-    // 新变量分配（非栈中变量）
-    AllocationResult reg = regAlloc.allocateReg(var, operand->type);
-    spillReg(reg);
+    // 处理普通变量（已预分配栈空间）
+    if (opType == OperandType::VARIABLE) {
+        if (!varStackMap.count(var)) {
+            throw std::runtime_error("变量 '" + var + "' 未预分配栈空间");
+        }
+
+        AllocationResult alloc = regAlloc.allocateReg(var, opType);
+        spillReg(alloc);
+        std::string reg = alloc.reg;
+
+        // 判断是否为首次使用（未初始化）
+        if (!varInitialized[var]) { 
+            logFile << "变量 '" << var << "' 首次使用，分配寄存器: " << reg << std::endl;
+            return reg; // 首次使用不加载，等待赋值初始化
+        } else {
+            // 非首次使用，从栈加载
+            int offset = varStackMap[var];
+            emit("  lw " + reg + ", " + std::to_string(offset) + "(s0)");
+            logFile << "变量 '" << var << "' 从栈偏移 " << offset << " 加载到寄存器: " << reg << std::endl;
+            return reg;
+        }
+    }
+
+    // 3. 处理参数变量
+    if (opType == OperandType::PARAM) {
+        AllocationResult alloc = regAlloc.allocateReg(var, opType);
+        spillReg(alloc);
+        logFile << "参数 '" << var << "' 分配寄存器: " << alloc.reg << std::endl;
+        return alloc.reg;
+    }
+
+    // 4. 处理临时变量
+    if (operand->isTEMP()) {
+        AllocationResult alloc = regAlloc.allocateReg(var, OperandType::TEMP);
+        spillReg(alloc);
+        logFile << "临时变量 '" << var << "' 分配寄存器: " << alloc.reg << std::endl;
+        return alloc.reg;
+    }
+
+    // 5. 处理常量
     if (operand->isConstant()) {
-        emit("  li " + reg.reg + ", " + var);
+        AllocationResult alloc = regAlloc.allocateReg(var, OperandType::CONSTANT);
+        spillReg(alloc);
+        emit("  li " + alloc.reg + ", " + var);
+        logFile << "常量 '" << var << "' 加载到寄存器: " << alloc.reg << std::endl;
+        return alloc.reg;
     }
-    logFile << "变量 '" << var << "' 被分配给寄存器: " << reg.reg << std::endl;
-    return reg.reg;
+
+    // 未知类型处理
+    throw std::runtime_error("getRegorLoad: 不支持的操作数类型 - " + var);
 }
 
 // 寄存器溢出日志函数实现

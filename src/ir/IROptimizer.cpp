@@ -577,7 +577,7 @@ void IROptimizer::printIR(const std::string& outputFile,std::vector<FunctionInfo
     for (const auto& func : functions) {
         out << "\n=== Function: " << func.name << " ===" << std::endl;
         out << "Return type: " << func.returnType << std::endl;
-        out << "Number of variables (including parameters): " << func.varCount << std::endl;
+        out << "Number of variables (including parameters): " << func.normalVarIds.size() - func.paramIds.size() << std::endl;
         int tempCount = func.tempVarCount;
         out << "Number of temporary variables: " << tempCount << std::endl;
         if (!func.params.empty()) {
@@ -598,18 +598,27 @@ void IROptimizer::printIR(const std::string& outputFile,std::vector<FunctionInfo
 }
 
 void IROptimizer::updateVariableCounts(FunctionInfo& func) {
-    std::unordered_set<std::string> variableIds;  // 普通变量（含参数）ID集合
-    std::unordered_set<int> tempIds;              // 临时变量ID（数字）集合
+    std::unordered_set<std::string> paramIds;       // 参数变量ID集合（从func的参数数组获取）
+    std::unordered_set<std::string> normalVarIds;   // 非参数普通变量ID集合
+    std::unordered_set<int> tempIds;                // 临时变量ID（数字）集合
 
-    // 处理操作数的lambda函数
+    // 1. 先从func的参数数组中收集所有参数ID
+    for (size_t i = 0; i < func.params.size(); ++i) {
+        paramIds.insert(func.params[i]->toString());
+    }
+
+    // 处理操作数的lambda函数：区分普通变量和临时变量
     auto processOperand = [&](const std::shared_ptr<Operand>& op) {
         if (!op) return;
 
-        if (op->isVar() || op->type == OperandType::PARAM) {
-            // 普通变量：直接用字符串ID去重
-            variableIds.insert(op->toString());
+        if (op->isVar()) {
+            // 普通变量：如果不在参数集合中，才计入普通变量
+            std::string varId = op->toString();
+            if (paramIds.find(varId) == paramIds.end()) {
+                normalVarIds.insert(varId);
+            }
         } else if (op->isTEMP()) {
-            // 临时变量：解析ID为整数（假设格式为"0", "1", ...）
+            // 临时变量：解析ID为整数（格式为"0", "1", ...）
             try {
                 int tempId = std::stoi(op->value);
                 tempIds.insert(tempId);  // 用整数ID去重
@@ -621,20 +630,23 @@ void IROptimizer::updateVariableCounts(FunctionInfo& func) {
         }
     };
 
-    // 遍历所有指令的操作数（result、arg1、arg2）
+    // 2. 遍历所有指令的操作数（result、arg1、arg2）
     for (const auto& inst : func.instructions) {
         processOperand(inst.result);
         processOperand(inst.arg1);
         processOperand(inst.arg2);
+        // 控制流指令的标签处理（如果需要）
+        if (inst.opcode == IROpcode::LABEL || inst.opcode == IROpcode::GOTO || inst.opcode == IROpcode::IF_GOTO) {
+            // 如需处理标签关联的变量，可在此添加逻辑
+        }
     }
 
-    // 更新普通变量数量（正确）
-    func.varCount = variableIds.size();
+    // 3. 更新变量计数
+    // func.paramCount = paramIds.size();            // 参数数量（单独记录）
+    func.varCount = normalVarIds.size();          // 普通变量数量（排除参数）
+    func.tempVarCount = tempIds.size();           // 临时变量数量
 
-    // 更新临时变量数量
-    func.tempVarCount = tempIds.size();  // 直接用唯一ID的数量作为实际数量
-
-    // 维护start/end计数器（用于后续生成新临时变量，不影响当前计数）
+    // 4. 维护临时变量计数器范围（用于生成新临时变量）
     if (tempIds.empty()) {
         func.startTempCounter = 0;
         func.endTempCounter = 0;
@@ -642,8 +654,12 @@ void IROptimizer::updateVariableCounts(FunctionInfo& func) {
         int minTemp = *std::min_element(tempIds.begin(), tempIds.end());
         int maxTemp = *std::max_element(tempIds.begin(), tempIds.end());
         func.startTempCounter = minTemp;
-        func.endTempCounter = maxTemp + 1;  // 确保新生成的ID不重复
+        func.endTempCounter = maxTemp + 1;  // 确保新ID不重复
     }
+
+    // 5. 存储收集的变量信息（需FunctionInfo支持对应字段）
+    func.paramIds = paramIds;
+    func.normalVarIds = normalVarIds;
 }
 
 void IROptimizer::printBasicBlocks(const std::string& outputFile, const std::vector<BasicBlock>& blocks) {
