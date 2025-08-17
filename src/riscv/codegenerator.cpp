@@ -433,6 +433,7 @@ void CodeGenerator::generateFunctionCall(const IRInstruction& inst) {
     emit("  call " + funcName);
 
     if (inst.result) {
+        regAlloc.bindVarToReg(inst.result->toString(),destReg);
         emit("  mv " + destReg + ", a0");
     }
 
@@ -703,6 +704,15 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
             throw std::runtime_error("变量 '" + var + "' 未预分配栈空间");
         }
 
+        if (varStackMap.count(var)&&varStackMap[var]>=0) {
+            AllocationResult alloc = regAlloc.allocateReg(var, OperandType::TEMP);
+            spillReg(alloc);
+            int offset = varStackMap[var];
+            emit("  lw " + alloc.reg + ", " + std::to_string(offset) + "(s0)");
+            logFile << "参数 '" << var << "' 分配寄存器: " << alloc.reg << std::endl;
+            return alloc.reg;
+        }
+
         AllocationResult alloc = regAlloc.allocateReg(var, opType);
         spillReg(alloc);
         std::string reg = alloc.reg;
@@ -720,18 +730,16 @@ std::string CodeGenerator::getRegorLoad(const std::shared_ptr<Operand> operand) 
         }
     }
 
-    // 3. 处理参数变量
-    if (opType == OperandType::PARAM) {
-        AllocationResult alloc = regAlloc.allocateReg(var, opType);
-        spillReg(alloc);
-        logFile << "参数 '" << var << "' 分配寄存器: " << alloc.reg << std::endl;
-        return alloc.reg;
-    }
-
     // 4. 处理临时变量
     if (operand->isTEMP()) {
         AllocationResult alloc = regAlloc.allocateReg(var, OperandType::TEMP);
         spillReg(alloc);
+        if (varStackMap.count(var)) {
+            int offset = varStackMap[var];
+            emit("  lw " + alloc.reg + ", " + std::to_string(offset) + "(s0)");
+            logFile << "参数 '" << var << "' 分配寄存器: " << alloc.reg << std::endl;
+            return alloc.reg;
+        }
         logFile << "临时变量 '" << var << "' 分配寄存器: " << alloc.reg << std::endl;
         return alloc.reg;
     }
