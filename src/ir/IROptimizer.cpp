@@ -34,6 +34,7 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
             constantConditionOptimization(blocks, changed);
             // eliminateUnreachableBlocks(blocks, changed);
             deadCodeElimination(blocks, liveAnalyzer, changed);
+            tailRecursionElimination(func, blocks, changed);
 
             // 4. 合并基本块回函数
             mergeBasicBlocks(func, blocks);
@@ -786,6 +787,114 @@ void IROptimizer::applyInterBlockConstantPropagation(std::vector<BasicBlock>& bl
                 }
             }
             if (inst.opcode == IROpcode::CALL) constMap.clear(); // 函数调用破坏映射
+        }
+    }
+}
+
+void IROptimizer::tailRecursionElimination(FunctionInfo& func, std::vector<BasicBlock>& blocks, bool& changed) {
+    const std::string& funcName = func.name;
+    if (blocks.empty()) return;
+
+    // 1. 确定函数入口标签（首个基本块的入口标签）
+    std::string entryLabel;
+    if (!blocks[0].label.empty()) {
+        entryLabel = blocks[0].label;
+    } else {
+        // 若入口块无标签，生成并添加一个唯一标签
+        entryLabel = funcName + "_entry_" + std::to_string(rand()); // 避免冲突
+        blocks[0].instructions.insert(
+            blocks[0].instructions.begin(),
+            IRInstruction(IROpcode::LABEL, nullptr, nullptr, nullptr, entryLabel)
+        );
+        changed = true;
+    }
+
+    // 2. 遍历所有基本块，寻找尾递归模式：PARAM序列（可非连续） + CALL自身 + RETURN
+    for (auto& block : blocks) {
+        auto& insts = block.instructions;
+        for (size_t i = 0; i < insts.size(); ++i) {
+            // 找到调用自身的CALL指令（arg1存储函数名）
+            if (insts[i].opcode != IROpcode::CALL || insts[i].arg1->toString() != funcName) {
+                continue;
+            }
+
+            // 2.1 解析CALL的参数数量（arg2存储参数个数）
+            int paramCount;
+            try {
+                paramCount = std::stoi(insts[i].arg2->value);
+            } catch (...) {
+                continue; // 参数数量解析失败，跳过
+            }
+            if (paramCount != static_cast<int>(func.params.size())) {
+                continue; // 参数数量不匹配，跳过
+            }
+
+            // 2.2 收集CALL之前的PARAM指令（支持非连续，按出现顺序取最近的paramCount个）
+            std::vector<std::shared_ptr<Operand>> actualParams;
+            std::vector<size_t> paramIndices; // 记录PARAM指令的索引
+            for (int j = i - 1; j >= 0 && actualParams.size() < paramCount; --j) {
+                if (insts[j].opcode == IROpcode::PARAM) {
+                    actualParams.push_back(insts[j].arg1);
+                    paramIndices.push_back(j);
+                }
+            }
+            // 反转以恢复参数顺序（从早到晚）
+            std::reverse(actualParams.begin(), actualParams.end());
+            std::reverse(paramIndices.begin(), paramIndices.end());
+            if (actualParams.size() != paramCount) {
+                continue; // 未找到足够的PARAM，跳过
+            }
+
+            // 2.3 检查CALL后是否紧跟RETURN（尾递归核心特征）
+            if (i + 1 >= insts.size() || insts[i + 1].opcode != IROpcode::RETURN) {
+                continue;
+            }
+
+            // 3. 生成参数更新指令：形式参数 = 实际参数（按顺序对应）
+            std::vector<IRInstruction> newInsts;
+            for (size_t j = 0; j < func.params.size(); ++j) {
+                newInsts.emplace_back(
+                    IROpcode::ASSIGN,
+                    func.params[j],  // 目标：形式参数
+                    actualParams[j]  // 源：实际参数
+                );
+            }
+
+            // 4. 生成跳转到函数入口的指令（使用入口标签）
+            newInsts.emplace_back(
+                IROpcode::GOTO,
+                nullptr, nullptr, nullptr,
+                entryLabel  // 跳转目标：函数入口标签（关键修正）
+            );
+
+            // 5. 替换原有指令：删除PARAM序列 + CALL + RETURN，插入新指令
+            // 先删除指令（保持原逻辑）
+            size_t callIndex = i;
+            size_t returnIndex = i + 1;
+            insts.erase(insts.begin() + returnIndex); // 删除RETURN
+            insts.erase(insts.begin() + callIndex);   // 删除CALL
+            for (auto it = paramIndices.rbegin(); it != paramIndices.rend(); ++it) {
+                insts.erase(insts.begin() + *it); // 删除PARAM
+            }
+
+            // 关键修改1：找到所有实际参数依赖的临时变量的最后定义位置
+            size_t lastTempDefPos = 0;
+            for (auto& param : actualParams) {
+                // 遍历当前指令列表，找到临时变量（如t1、t2）的定义位置
+                for (size_t j = 0; j < insts.size(); ++j) {
+                    if (insts[j].result && insts[j].result->toString() == param->toString()) {
+                        lastTempDefPos = std::max(lastTempDefPos, j);
+                    }
+                }
+            }
+            // 插入位置在最后一个临时变量定义之后（确保变量已定义）
+            size_t insertPos = lastTempDefPos + 1;
+
+            // 插入新指令（参数更新 + 跳转）
+            insts.insert(insts.begin() + insertPos, newInsts.begin(), newInsts.end());
+
+            changed = true;
+            return; // 处理一次即可（避免重复处理）
         }
     }
 }

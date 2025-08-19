@@ -67,6 +67,7 @@ private:
     void applyInterBlockConstantPropagation(std::vector<BasicBlock>& blocks, 
                                            const std::vector<BlockConstantInfo>& blockInfos, 
                                            bool& changed);
+    void tailRecursionElimination(FunctionInfo& func, std::vector<BasicBlock>& blocks, bool& changed);
 
     // 辅助函数
     std::shared_ptr<Operand> computeBinaryOp(
