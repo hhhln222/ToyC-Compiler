@@ -1,6 +1,7 @@
 #include "IROptimizer.h"
 #include <algorithm>
 #include <sstream>
+#include <queue>
 
 void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
     for (auto& func : functions) {
@@ -18,6 +19,9 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
             auto blocks = splitIntoBasicBlocks(func);
             buildCFG(blocks);
 
+            auto blockConstInfos = analyzeInterBlockConstants(blocks);
+            applyInterBlockConstantPropagation(blocks, blockConstInfos, changed);
+
             // 2. 对每个基本块应用优化
             for (auto& block : blocks) {
                 algebraicSimplification(block, changed);
@@ -27,6 +31,8 @@ void IROptimizer::optimize(std::vector<FunctionInfo>& functions) {
             }
 
             // 3. 基于CFG的优化（如跨块死代码消除）
+            constantConditionOptimization(blocks, changed);
+            // eliminateUnreachableBlocks(blocks, changed);
             deadCodeElimination(blocks, liveAnalyzer, changed);
 
             // 4. 合并基本块回函数
@@ -511,47 +517,315 @@ void IROptimizer::commonSubexpressionElimination(BasicBlock& block, bool& change
     }
 }
 
+// 常量条件优化：处理IF_GOTO的常量条件判断
+void IROptimizer::constantConditionOptimization(std::vector<BasicBlock>& blocks, bool& changed) {
+    // 建立标号到基本块的映射
+    std::unordered_map<std::string, BasicBlock*> labelToBlock;
+    for (auto& block : blocks) {
+        if (!block.label.empty()) {
+            labelToBlock[block.label] = &block;
+        }
+    }
+
+    for (auto& block : blocks) {
+        if (block.instructions.empty()) continue;
+        
+        auto& lastInst = block.instructions.back();
+        // 只处理IF_GOTO指令
+        if (lastInst.opcode != IROpcode::IF_GOTO) continue;
+        
+        // 检查条件是否为常量
+        if (lastInst.arg1 && lastInst.arg1->isConstant()) {
+            int condValue = lastInst.arg1->getConstantValue();
+            changed = true;
+            
+            if (condValue != 0) { // 条件为真，总是跳转
+                // 转换为无条件跳转
+                lastInst = IRInstruction(IROpcode::GOTO, lastInst.label);
+                
+                // 更新CFG关系
+                auto targetIt = labelToBlock.find(lastInst.label);
+                if (targetIt != labelToBlock.end()) {
+                    BasicBlock* targetBlock = targetIt->second;
+                    
+                    // 移除所有非目标后继
+                    for (auto it = block.successors.begin(); it != block.successors.end(); ) {
+                        if (*it != targetBlock) {
+                            // 从前驱中移除当前块
+                            (*it)->predecessors.erase(&block);
+                            it = block.successors.erase(it);
+                        } else {
+                            ++it;
+                        }
+                    }
+                }
+            } else { // 条件为假，永不跳转
+                // 移除跳转指令，让执行流程继续到下一个块
+                block.instructions.pop_back();
+                
+                // 更新CFG关系
+                auto targetIt = labelToBlock.find(lastInst.label);
+                if (targetIt != labelToBlock.end()) {
+                    BasicBlock* targetBlock = targetIt->second;
+                    // 从目标块的前驱中移除当前块
+                    targetBlock->predecessors.erase(&block);
+                    // 从当前块的后继中移除目标块
+                    block.successors.erase(targetBlock);
+                }
+                
+                // 如果移除跳转指令后，块为空，可能需要添加一个NOP指令
+                if (block.instructions.empty()) {
+                    block.instructions.push_back(IRInstruction(IROpcode::NOP));
+                }
+            }
+        }
+    }
+}
+
+// 消除不可到达的基本块
+void IROptimizer::eliminateUnreachableBlocks(std::vector<BasicBlock>& blocks, bool& changed) {
+    if (blocks.empty()) return;
+
+    // 步骤1：标记所有可达块（BFS遍历）
+    std::unordered_set<BasicBlock*> reachable;
+    std::queue<BasicBlock*> queue;
+
+    // 从函数入口块（第一个块）开始
+    BasicBlock* entry = &blocks[0];
+    reachable.insert(entry);
+    queue.push(entry);
+
+    while (!queue.empty()) {
+        BasicBlock* current = queue.front();
+        queue.pop();
+
+        // 遍历当前块的所有后继，标记可达性
+        for (BasicBlock* succ : current->successors) {
+            if (!reachable.count(succ)) {
+                reachable.insert(succ);
+                queue.push(succ);
+            }
+        }
+    }
+
+    // 步骤2：收集不可达块（未被标记的块）
+    std::vector<BasicBlock*> unreachableBlocks;
+    for (auto& block : blocks) {
+        if (!reachable.count(&block)) {
+            unreachableBlocks.push_back(&block);
+        }
+    }
+
+    if (unreachableBlocks.empty()) return; // 无不可达块，直接返回
+
+    // 步骤3：删除不可达块，并清理剩余块的前驱/后继引用
+    std::vector<BasicBlock> newBlocks;
+    newBlocks.reserve(blocks.size() - unreachableBlocks.size());
+
+    for (auto& block : blocks) {
+        if (reachable.count(&block)) {
+            // 清理当前块的前驱：移除指向不可达块的引用
+            std::unordered_set<BasicBlock*> filteredPreds;
+            for (BasicBlock* pred : block.predecessors) {
+                if (reachable.count(pred)) { // 仅保留可达的前驱
+                    filteredPreds.insert(pred);
+                }
+            }
+            block.predecessors.swap(filteredPreds);
+
+            // 清理当前块的后继：移除指向不可达块的引用
+            std::unordered_set<BasicBlock*> filteredSuccs;
+            for (BasicBlock* succ : block.successors) {
+                if (reachable.count(succ)) { // 仅保留可达的后继
+                    filteredSuccs.insert(succ);
+                }
+            }
+            block.successors.swap(filteredSuccs);
+
+            // 将清理后的可达块加入新列表
+            newBlocks.push_back(std::move(block));
+        }
+    }
+
+    // 替换原块列表，标记优化发生
+    blocks = std::move(newBlocks);
+    changed = true;
+}
+
+std::vector<IROptimizer::BlockConstantInfo> IROptimizer::analyzeInterBlockConstants(const std::vector<BasicBlock>& blocks) {
+    size_t numBlocks = blocks.size();
+    std::vector<BlockConstantInfo> blockInfos(numBlocks);
+    bool changed;
+
+    // 迭代直到数据流稳定
+    do {
+        changed = false;
+        // 反向遍历基本块（从后往前）
+        for (int i = numBlocks - 1; i >= 0; --i) {
+            const auto& block = blocks[i];
+            auto& info = blockInfos[i];
+            ConstantMap newIn;
+
+            // 计算入口常量：所有前驱出口的交集（仅保留所有前驱都一致的常量）
+            if (i == 0) { // 入口块无前置，初始为空
+                newIn = ConstantMap();
+            } else {
+                std::vector<size_t> predIndices;
+                for (const auto* pred : block.predecessors) {
+                    auto it = std::find_if(blocks.begin(), blocks.end(), [pred](const BasicBlock& b) { 
+                        return &b == pred; 
+                    });
+                    if (it != blocks.end()) {
+                        predIndices.push_back(std::distance(blocks.begin(), it));
+                    }
+                }
+                if (!predIndices.empty()) {
+                    newIn = blockInfos[predIndices[0]].out;
+                    for (size_t j = 1; j < predIndices.size(); ++j) {
+                        const auto& predOut = blockInfos[predIndices[j]].out;
+                        ConstantMap temp;
+                        for (const auto& [var, val] : newIn) {
+                            if (predOut.count(var) && predOut.at(var) == val) {
+                                temp[var] = val; // 仅保留共同常量
+                            }
+                        }
+                        newIn.swap(temp);
+                    }
+                }
+            }
+
+            // 更新入口信息
+            if (newIn != info.in) {
+                info.in = newIn;
+                changed = true;
+            }
+
+            // 计算出口常量：处理块内指令更新映射
+            ConstantMap current = info.in;
+            for (const auto& inst : block.instructions) {
+                if (inst.result && (inst.result->isVar() || inst.result->isTEMP())) {
+                    std::string var = inst.result->toString();
+                    // 处理常量赋值（如 x = 5）
+                    if (inst.opcode == IROpcode::ASSIGN && inst.arg1->isConstant()) {
+                        current[var] = inst.arg1->getConstantValue();
+                    }
+                    // 处理二元运算（如 x = a + b，a和b为常量）
+                    else if (inst.opcode >= IROpcode::ADD && inst.opcode <= IROpcode::EQ) {
+                        bool arg1Const = inst.arg1 && (inst.arg1->isConstant() || current.count(inst.arg1->toString()));
+                        bool arg2Const = inst.arg2 && (inst.arg2->isConstant() || current.count(inst.arg2->toString()));
+                        if (arg1Const && arg2Const) {
+                            int v1 = inst.arg1->isConstant() ? inst.arg1->getConstantValue() : current[inst.arg1->toString()];
+                            int v2 = inst.arg2->isConstant() ? inst.arg2->getConstantValue() : current[inst.arg2->toString()];
+                            auto res = computeBinaryOp(inst.opcode, createConstant(v1), createConstant(v2));
+                            if (res && res->isConstant()) {
+                                current[var] = res->getConstantValue();
+                            } else {
+                                current.erase(var); // 计算无效，移除常量映射
+                            }
+                        } else {
+                            current.erase(var); // 操作数非常量，移除映射
+                        }
+                    }
+                    // 其他指令（如函数调用）破坏常量性
+                    else {
+                        current.erase(var);
+                    }
+                }
+                // 函数调用可能修改任意变量，保守清空所有常量
+                if (inst.opcode == IROpcode::CALL) {
+                    current.clear();
+                }
+            }
+
+            // 更新出口信息
+            if (current != info.out) {
+                info.out = current;
+                changed = true;
+            }
+        }
+    } while (changed);
+
+    return blockInfos;
+}
+
+void IROptimizer::applyInterBlockConstantPropagation(std::vector<BasicBlock>& blocks, 
+                                                   const std::vector<BlockConstantInfo>& blockInfos, 
+                                                   bool& changed) {
+    for (size_t i = 0; i < blocks.size(); ++i) {
+        auto& block = blocks[i];
+        const auto& info = blockInfos[i];
+        if (info.in.empty()) continue;
+
+        // 基于入口常量映射替换变量
+        std::unordered_map<std::string, std::shared_ptr<Operand>> constMap;
+        for (const auto& [var, val] : info.in) {
+            constMap[var] = createConstant(val);
+        }
+
+        // 替换块内指令的操作数
+        for (auto& inst : block.instructions) {
+            auto replaceOperand = [&](std::shared_ptr<Operand>& arg) {
+                if (arg && (arg->isVar() || arg->isTEMP())) {
+                    auto it = constMap.find(arg->toString());
+                    if (it != constMap.end()) {
+                        arg = it->second; // 替换为常量
+                        changed = true;
+                    }
+                }
+            };
+            replaceOperand(inst.arg1);
+            replaceOperand(inst.arg2);
+
+            // 更新映射（变量被重新定义后可能不再是常量）
+            if (inst.result && (inst.result->isVar() || inst.result->isTEMP())) {
+                std::string var = inst.result->toString();
+                if (inst.opcode == IROpcode::ASSIGN && inst.arg1->isConstant()) {
+                    constMap[var] = inst.arg1; // 新常量赋值
+                } else {
+                    constMap.erase(var); // 变量值不确定，移除映射
+                }
+            }
+            if (inst.opcode == IROpcode::CALL) constMap.clear(); // 函数调用破坏映射
+        }
+    }
+}
+
 std::shared_ptr<Operand> IROptimizer::computeBinaryOp(
     IROpcode opcode, 
     const std::shared_ptr<Operand>& arg1, 
     const std::shared_ptr<Operand>& arg2
 ) {
+    // 检查是否为常量
     if (!arg1->isConstant() || !arg2->isConstant()) {
         return nullptr; // 非常量，无法计算
     }
 
-    // 用int获取原始值（假设输入值本身在int范围内）
+    // 直接用int获取值（不考虑溢出）
     int val1 = arg1->getConstantValue();
     int val2 = arg2->getConstantValue();
 
-    // 处理除法除零
-    if (opcode == IROpcode::DIV && val2 == 0) {
+    // 处理除法除零（即使不考虑溢出，除零仍需处理）
+    if ((opcode == IROpcode::DIV || opcode == IROpcode::MOD) && val2 == 0) {
         throw std::runtime_error("Division by zero detected during constant folding");
     }
 
-    // 用long long暂存计算结果，避免中间溢出
-    long long result_long = 0;
+    int result = 0;
     bool valid = true;
 
     switch (opcode) {
-        case IROpcode::ADD: result_long = static_cast<long long>(val1) + val2; break;
-        case IROpcode::SUB: result_long = static_cast<long long>(val1) - val2; break;
-        case IROpcode::MUL: result_long = static_cast<long long>(val1) * val2; break;
-        case IROpcode::DIV: 
-            // 除法结果本身不会溢出（商一定小于等于被除数），但需确保val2非零（已提前检查）
-            result_long = static_cast<long long>(val1) / val2; 
-            break;
-        case IROpcode::MOD: 
-            result_long = static_cast<long long>(val1) % val2; 
-            break;
-        case IROpcode::AND: result_long = (val1 && val2) ? 1 : 0; break;
-        case IROpcode::OR:  result_long = (val1 || val2) ? 1 : 0; break;
-        case IROpcode::LT:  result_long = (val1 < val2) ? 1 : 0; break;
-        case IROpcode::GT:  result_long = (val1 > val2) ? 1 : 0; break;
-        case IROpcode::LE:  result_long = (val1 <= val2) ? 1 : 0; break;
-        case IROpcode::GE:  result_long = (val1 >= val2) ? 1 : 0; break;
-        case IROpcode::EQ:  result_long = (val1 == val2) ? 1 : 0; break;
-        case IROpcode::NE:  result_long = (val1 != val2) ? 1 : 0; break;
+        case IROpcode::ADD: result = val1 + val2; break;
+        case IROpcode::SUB: result = val1 - val2; break;
+        case IROpcode::MUL: result = val1 * val2; break;
+        case IROpcode::DIV: result = val1 / val2; break;
+        case IROpcode::MOD: result = val1 % val2; break;
+        case IROpcode::AND: result = (val1 && val2) ? 1 : 0; break;
+        case IROpcode::OR:  result = (val1 || val2) ? 1 : 0; break;
+        case IROpcode::LT:  result = (val1 < val2) ? 1 : 0; break;
+        case IROpcode::GT:  result = (val1 > val2) ? 1 : 0; break;
+        case IROpcode::LE:  result = (val1 <= val2) ? 1 : 0; break;
+        case IROpcode::GE:  result = (val1 >= val2) ? 1 : 0; break;
+        case IROpcode::EQ:  result = (val1 == val2) ? 1 : 0; break;
+        case IROpcode::NE:  result = (val1 != val2) ? 1 : 0; break;
         default: valid = false; break;
     }
 
@@ -559,13 +833,8 @@ std::shared_ptr<Operand> IROptimizer::computeBinaryOp(
         return nullptr;
     }
 
-    // 检查结果是否超出int范围
-    if (result_long < INT_MIN || result_long > INT_MAX) {
-        return nullptr; // 溢出，不进行常量传递
-    }
-
-    // 结果在int范围内，正常返回常量
-    return createConstant(static_cast<int>(result_long));
+    // 直接返回计算结果（不检查溢出）
+    return createConstant(result);
 }
 
 void IROptimizer::printIR(const std::string& outputFile,std::vector<FunctionInfo>& functions) {

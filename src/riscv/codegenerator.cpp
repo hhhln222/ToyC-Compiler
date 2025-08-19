@@ -195,38 +195,59 @@ void CodeGenerator::emitFunction(const FunctionInfo& func) {
 }
 
 void CodeGenerator::generateAssignment(const IRInstruction& inst) {
-    std::string srcReg = getRegorLoad(inst.arg1);
     std::string destReg = getRegorLoad(inst.result);
-    std::string srcVar = inst.arg1 ? inst.arg1->toString() : "";
     std::string destVar = inst.result->toString();
     OperandType destType = inst.result->type;
+
+    // 处理常量赋值：直接使用li指令加载
+    if (inst.arg1 && inst.arg1->isConstant()) {
+        int constantValue = inst.arg1->getConstantValue();
+        // 生成li指令加载常量到目标寄存器
+        emit("  li " + destReg + ", " + std::to_string(constantValue));
+        
+        // 处理变量的栈写回（与之前逻辑一致）
+        if (destType == OperandType::VARIABLE && varStackMap.count(destVar)) {
+            int offset = varStackMap[destVar];
+            emit("  sw " + destReg + ", " + std::to_string(offset) + "(s0)");
+
+            if (!varInitialized[destVar]) {
+                logFile << "变量 '" << destVar << "' 首次赋值(常量)，初始化栈偏移: " << offset << std::endl;
+                varInitialized[destVar] = true;
+            } else {
+                logFile << "变量 '" << destVar << "' 后续赋值(常量)，更新栈偏移: " << offset << std::endl;
+            }
+
+            regAlloc.freeReg(destVar);
+        }
+        return; // 常量处理完毕，直接返回
+    }
+
+    // 非常量赋值：原有逻辑
+    std::string srcReg = getRegorLoad(inst.arg1);
+    std::string srcVar = inst.arg1 ? inst.arg1->toString() : "";
 
     // 执行寄存器间赋值
     if (srcReg != destReg) {
         emit("  mv " + destReg + ", " + srcReg);
     }
 
-    // 处理普通变量的栈写回（区分首次赋值和后续赋值）
+    // 处理普通变量的栈写回
     if (destType == OperandType::VARIABLE && varStackMap.count(destVar)) {
         int offset = varStackMap[destVar];
-        // 写回栈空间（无论首次还是后续赋值，都保持内存同步）
         emit("  sw " + destReg + ", " + std::to_string(offset) + "(s0)");
 
-        // 判断是否为首次赋值（初始化）
         if (!varInitialized[destVar]) {
             logFile << "变量 '" << destVar << "' 首次赋值，初始化栈偏移: " << offset << std::endl;
-            varInitialized[destVar] = true; // 标记为已初始化
+            varInitialized[destVar] = true;
         } else {
             logFile << "变量 '" << destVar << "' 后续赋值，更新栈偏移: " << offset << std::endl;
         }
 
-        // 释放目标变量的寄存器（根据需要调整，若频繁使用可保留）
         regAlloc.freeReg(destVar);
     }
 
     // 处理源操作数的寄存器释放
     if (inst.arg1) {
-        // 释放源变量寄存器（常量或已写回栈的变量）
         if (inst.arg1->isConstant()) {
             regAlloc.freeReg(srcVar);
         } else if (inst.arg1->type == OperandType::VARIABLE && varStackMap.count(srcVar)) {
